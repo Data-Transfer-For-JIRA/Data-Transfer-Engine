@@ -1,6 +1,10 @@
 package com.transfer.project.controller;
 
+import com.transfer.project.model.ProjectData;
 import com.transfer.project.model.ProjectInfo;
+import com.transfer.project.service.TransferProjcet;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +18,12 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping("/transfer/projcet")
 public class TransferDataController {
 
+    @Autowired
+    @Qualifier("transferProjcet")
+    private TransferProjcet transferProjcet;
+
+
+
     /*
     * 프로젝트 생성 하기위한 컨트롤러
     * */
@@ -22,9 +32,10 @@ public class TransferDataController {
             value = {"/create"},
             method = {RequestMethod.POST}
     )
-    public int TransferProjectData(@RequestBody ProjectInfo projectInfo,
-                               ModelMap model, HttpServletRequest request) throws Exception {
-        return 0;
+    public ProjectData TransferProjectData(@RequestBody ProjectInfo projectInfo,
+                                           ModelMap model, HttpServletRequest request) throws Exception {
+
+        return transferProjcet.createProject(projectInfo);
     }
 
     /*
