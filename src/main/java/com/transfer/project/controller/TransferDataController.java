@@ -15,11 +15,10 @@ import javax.servlet.http.HttpServletRequest;
  *  해당 컨트롤러는 디비에 있는데이터를 지라 서버로 이관하기 위한 컨트롤러이다
  * */
 @RestController
-@RequestMapping("/transfer/projcet")
+@RequestMapping("/transfer/project")
 public class TransferDataController {
 
     @Autowired
-    @Qualifier("transferProjcet")
     private TransferProjcet transferProjcet;
 
 
@@ -32,7 +31,7 @@ public class TransferDataController {
             value = {"/create"},
             method = {RequestMethod.POST}
     )
-    public ProjectData TransferProjectData(@RequestBody ProjectInfo projectInfo,
+    public String  TransferProjectData(@RequestBody ProjectInfo projectInfo,
                                            ModelMap model, HttpServletRequest request) throws Exception {
 
         return transferProjcet.createProject(projectInfo);

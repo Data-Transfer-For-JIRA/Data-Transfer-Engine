@@ -20,7 +20,7 @@ public class MiningIssueController {
 
 
     @Autowired
-    @Qualifier("MiningIssue")
+    @Qualifier("miningIssue")
     private MiningIssue miningIssue;
 
     /*

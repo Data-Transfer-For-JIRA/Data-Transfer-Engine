@@ -29,6 +29,12 @@ dependencies {
 
 	// mysql
 	runtimeOnly 'mysql:mysql-connector-java'
+
+	//webclient
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+	compileOnly 'org.projectlombok:lombok:1.18.22'
+	annotationProcessor 'org.projectlombok:lombok:1.18.22'
 }
 
 tasks.named('test') {

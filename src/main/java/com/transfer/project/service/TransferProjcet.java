@@ -5,5 +5,5 @@ import com.transfer.project.model.ProjectInfo;
 
 public interface TransferProjcet {
 
-    public ProjectData createProject( ProjectInfo projectInfo) throws Exception;
+    public String createProject( ProjectInfo projectInfo) throws Exception;
 }

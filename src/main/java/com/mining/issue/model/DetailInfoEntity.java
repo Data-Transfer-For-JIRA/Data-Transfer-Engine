@@ -1,3 +1,4 @@
+/*
 package com.mining.issue.model;
 
 
@@ -16,4 +17,7 @@ import javax.persistence.Entity;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DetailInfoEntity {
+
+
 }
+*/
