@@ -1,10 +1,9 @@
 package com.transfer.project.controller;
 
-import com.transfer.project.model.ProjectData;
-import com.transfer.project.model.ProjectInfo;
+import com.transfer.project.model.ProjectCreateDTO;
+import com.transfer.project.model.ProjectInfoData;
 import com.transfer.project.service.TransferProjcet;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,10 +30,10 @@ public class TransferDataController {
             value = {"/create"},
             method = {RequestMethod.POST}
     )
-    public String  TransferProjectData(@RequestBody ProjectInfo projectInfo,
-                                           ModelMap model, HttpServletRequest request) throws Exception {
+    public ProjectCreateDTO TransferProjectData(@RequestBody ProjectCreateDTO projectCreateDTO,
+                                                    ModelMap model, HttpServletRequest request) throws Exception {
 
-        return transferProjcet.createProject(projectInfo);
+        return transferProjcet.createProject(projectCreateDTO);
     }
 
     /*

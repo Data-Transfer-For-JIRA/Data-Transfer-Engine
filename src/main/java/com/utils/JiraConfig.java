@@ -22,20 +22,6 @@ public class JiraConfig {
     @Value("${jira.info.baseurl}")
     public String baseUrl;
 
-    @Bean
-    public WebClient getJiraWebClient() {
 
-        return WebClient.builder()
-                .baseUrl(baseUrl)
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader("Authorization", "Basic " + getBase64Credentials(jiraID, apiToken))
-                .build();
-    }
-
-    private String getBase64Credentials(String jiraID, String jiraPass) {
-        String credentials = jiraID + ":" + jiraPass;
-        return new String(Base64.getEncoder().encode(credentials.getBytes()));
-    }
 
 }

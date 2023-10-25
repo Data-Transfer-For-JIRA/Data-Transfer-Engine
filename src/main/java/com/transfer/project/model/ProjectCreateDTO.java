@@ -1,6 +1,5 @@
 package com.transfer.project.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
@@ -11,7 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ProjectInfo {
+public class ProjectCreateDTO {
 
      String assigneType;
     // 설정값: UNASSIGNED
