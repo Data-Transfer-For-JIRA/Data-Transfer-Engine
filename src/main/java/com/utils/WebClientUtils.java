@@ -45,8 +45,6 @@ public class WebClientUtils {
 
     public static <T> Mono<T> post(WebClient webClient, String uri, Object requestBody, Class<T> responseType) {
 
-
-
         return webClient.post()
                 .uri(uri)
                 .body(BodyInserters.fromValue(requestBody))
