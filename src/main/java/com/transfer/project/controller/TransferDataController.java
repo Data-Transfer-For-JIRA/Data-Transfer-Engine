@@ -5,6 +5,9 @@ import com.transfer.project.model.ProjectInfoData;
 import com.transfer.project.model.TB_PJT_BASE_Entity;
 import com.transfer.project.service.TransferProjcet;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,9 +48,9 @@ public class TransferDataController {
             value = {"/db/list"},
             method = {RequestMethod.GET}
     )
-    public List<TB_PJT_BASE_Entity> GetDataBaseProjectData() throws Exception {
+    public Page<TB_PJT_BASE_Entity> GetDataBaseProjectData(@RequestParam int pageIndex, @RequestParam int pageSize) throws Exception {
 
-        return transferProjcet.getDataBaseProjectData();
+        return transferProjcet.getDataBaseProjectData(pageIndex,pageSize);
     }
 
 }

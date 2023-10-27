@@ -9,7 +9,11 @@ import com.utils.ProjectConfig;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -37,9 +41,14 @@ public class TransferProjcetImpl implements TransferProjcet{
 
 
     @Override
-    public List<TB_PJT_BASE_Entity> getDataBaseProjectData() throws Exception{
+    @Transactional
+    public Page<TB_PJT_BASE_Entity> getDataBaseProjectData(int pageIndex, int pageSize) throws Exception{
 
-        return TB_PJT_BASE_JpaRepository.findAll().subList(0, Math.min(TB_PJT_BASE_JpaRepository.findAll().size(), 10));
+        Pageable pageable = PageRequest.of(pageIndex, pageSize);
+
+        Page<TB_PJT_BASE_Entity> page = TB_PJT_BASE_JpaRepository.findAllByOrderByBSSYSDATEDesc(pageable);
+
+        return page;
     }
 
 }
