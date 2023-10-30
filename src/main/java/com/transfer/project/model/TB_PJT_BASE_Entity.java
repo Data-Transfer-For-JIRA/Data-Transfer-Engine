@@ -17,8 +17,8 @@ import java.util.Date;
 @Table(name = "TB_PJT_BASE",schema="dbo")
 public class TB_PJT_BASE_Entity {
 
-    @Column(unique = true) // primary key
-    private String BS_PJTCD;
+    @Column(unique = true , name = "BS_PJTCD") // primary key
+    private String ProjectCode;
     // 프로젝트 코드
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) //unique key
@@ -30,6 +30,6 @@ public class TB_PJT_BASE_Entity {
 
     @Temporal(TemporalType.DATE)
     @Column(name = "BS_SYSDATE")
-    private Date BSSYSDATE;
+    private Date CreatedDate;
     // 생성시간
 }

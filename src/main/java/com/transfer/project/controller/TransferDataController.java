@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Map;
 
 
 /*
@@ -32,7 +33,7 @@ public class TransferDataController {
     * */
     @ResponseBody
     @RequestMapping(
-            value = {"/create"},
+            value = {"/create/test"},
             method = {RequestMethod.POST}
     )
     public ProjectInfoData CreateProjectData(@RequestBody ProjectCreateDTO projectCreateDTO,
@@ -53,4 +54,30 @@ public class TransferDataController {
         return transferProjcet.getDataBaseProjectData(pageIndex,pageSize);
     }
 
+
+    @ResponseBody
+    @RequestMapping(
+            value = {"/test"},
+            method = {RequestMethod.GET}
+    )
+    public int  test(@RequestParam int test) throws Exception {
+        return  test+10 ;
+    }
+
+    /*
+     * 해당 프로젝트 정보를 통해 지라 프로젝트 생성
+     *
+     * 1. 선택한 프로젝트 정보 수신
+     * 2. 프로젝트 정보 조회
+     * 3. 해당 정보 + 원하는 키 + 원하는 프로젝트 이름
+     * */
+    @ResponseBody
+    @RequestMapping(
+            value = {"/create"},
+            method = {RequestMethod.POST}
+    )
+    public Map<String, String> CreateProjectFrom(@RequestParam String projectCode ) throws Exception {
+
+        return transferProjcet.CreateProjectFromDB(projectCode);
+    }
 }

@@ -6,10 +6,13 @@ import com.transfer.project.model.TB_PJT_BASE_Entity;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
+import java.util.Map;
 
 public interface TransferProjcet {
 
     public ProjectInfoData createProject(ProjectCreateDTO projectCreateDTO) throws Exception;
 
     public Page<TB_PJT_BASE_Entity> getDataBaseProjectData(int pageIndex, int pageSize) throws Exception;
+
+    public Map<String, String> CreateProjectFromDB(String projectCode) throws Exception;
 }
