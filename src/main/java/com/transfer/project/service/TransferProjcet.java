@@ -1,11 +1,10 @@
 package com.transfer.project.service;
 
-import com.transfer.project.model.ProjectCreateDTO;
-import com.transfer.project.model.ProjectInfoData;
-import com.transfer.project.model.TB_PJT_BASE_Entity;
+import com.transfer.project.model.dto.ProjectCreateDTO;
+import com.transfer.project.model.dto.ProjectInfoData;
+import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 import org.springframework.data.domain.Page;
 
-import java.util.List;
 import java.util.Map;
 
 public interface TransferProjcet {
@@ -14,5 +13,5 @@ public interface TransferProjcet {
 
     public Page<TB_PJT_BASE_Entity> getDataBaseProjectData(int pageIndex, int pageSize) throws Exception;
 
-    public Map<String, String> CreateProjectFromDB(String projectCode) throws Exception;
+    public Map<String, Boolean> CreateProjectFromDB(String projectCode) throws Exception;
 }

@@ -1,11 +1,14 @@
 package com.transfer.project.service;
 
-import com.transfer.project.dao.TB_PJT_BASE_JpaRepository;
-import com.transfer.project.model.ProjectInfoData;
-import com.transfer.project.model.TB_PJT_BASE_Entity;
+import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
+import com.transfer.project.model.dao.TB_JML_JpaRepository;
+import com.transfer.project.model.dto.ProjectInfoData;
+
+import com.transfer.project.model.entity.TB_JML_Entity;
+import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 import com.utils.HashString;
 import com.utils.JiraConfig;
-import com.transfer.project.model.ProjectCreateDTO;
+import com.transfer.project.model.dto.ProjectCreateDTO;
 import com.utils.ProjectConfig;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
@@ -16,13 +19,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
-import java.security.NoSuchAlgorithmException;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @AllArgsConstructor
 @Service("transferProjcet")
@@ -36,6 +36,12 @@ public class TransferProjcetImpl implements TransferProjcet{
 
     @Autowired
     private TB_PJT_BASE_JpaRepository TB_PJT_BASE_JpaRepository;
+
+    @Autowired
+    private TB_JML_JpaRepository TB_JML_JpaRepository;
+
+    @Autowired
+    private TB_JML_Entity TB_JML_Entity;
 
     @Override
     public ProjectInfoData createProject(ProjectCreateDTO projectCreateDTO) throws Exception{
@@ -60,48 +66,65 @@ public class TransferProjcetImpl implements TransferProjcet{
     }
     @Override
     @Transactional
-    public Map<String, String> CreateProjectFromDB(String projectCode) throws Exception{
+    public Map<String, Boolean> CreateProjectFromDB(String projectCode) throws Exception {
 
-        TB_PJT_BASE_Entity  table_info = TB_PJT_BASE_JpaRepository.findByProjectCode(projectCode);
+        try {
+            Optional<TB_PJT_BASE_Entity> table_info = TB_PJT_BASE_JpaRepository.findById(projectCode);
+            if (table_info.isPresent()) {
 
-        String flag  = table_info.getBS_PJTFLAG();
+                String flag = table_info.get().getProjectFlag();
+                String projectName = table_info.get().getProjectName();
+                String projectKey = HashString.hashing(projectCode);
+                String jiraProjectName;
 
-        String projectName = table_info.getBS_PJTNAME();
+                ProjectCreateDTO projectInfo = new ProjectCreateDTO();
 
-        String projectKey = HashString.hashing(projectCode);
+                projectInfo.setAssigneeType(projectConfig.assigneType);
+                projectInfo.setCategoryId(projectConfig.categoryId);
+                projectInfo.setKey(projectKey);
+                projectInfo.setLeadAccountId(projectConfig.leadAccountId);
+                projectInfo.setProjectTypeKey(projectConfig.projectTypeKey);
 
-        ProjectCreateDTO projectInfo = new ProjectCreateDTO();
+                if (flag.equals("P")) { //프로젝트
+                    jiraProjectName = "전자문서_프로젝트_WSS_" + projectName + ")";
+                    projectInfo.setName(projectName);
 
-        projectInfo.setAssigneeType(projectConfig.assigneType);
-        projectInfo.setCategoryId(projectConfig.categoryId);
-        projectInfo.setKey(projectKey);
-        projectInfo.setLeadAccountId(projectConfig.leadAccountId);
+                } else { // 유지보수
+                    jiraProjectName = "전자문서_유지보수_WSS_(" + projectName + ")";
+                    projectInfo.setName(projectName);
+                }
 
-        projectInfo.setProjectTypeKey(projectConfig.projectTypeKey);
+                ProjectInfoData Response = createProject(projectInfo);
 
-        if (flag.equals("P")){ //프로젝트
-            projectName = "전자문서_프로젝트_WSS_"+ projectName +")";
-            projectInfo.setName(projectName);
+                TB_JML_Entity save_success_data  = new TB_JML_Entity();
+                save_success_data.setKey(Response.getKey());
+                save_success_data.setJiraProjectName(jiraProjectName);
+                save_success_data.setProjectCode(projectCode);
+                save_success_data.setWssProjectName(projectName);
 
-        }else{ // 유지보수
-            projectName = "전자문서_유지보수_WSS_("+ projectName +")";
-            projectInfo.setName(projectName);
+                TB_JML_JpaRepository.save(save_success_data);
+
+                Map<String, Boolean> result = new HashMap<>();
+
+                result.put("migration", true);
+
+                return result;
+            } else {
+                Map<String, Boolean> project_find = new HashMap<>();
+
+                project_find.put("project_find", false);
+
+                return project_find;
+            }
+        }catch (Exception e){
+            Map<String, Boolean> result = new HashMap<>();
+
+            result.put("migration", false);
+
+            return result;
         }
 
-        WebClient webClient = WebClientUtils.createJiraWebClient(jiraConfig.baseUrl, jiraConfig.jiraID, jiraConfig.apiToken);
-        String endpoint = "/rest/api/3/project";
-        ProjectInfoData Response = WebClientUtils.post(webClient, endpoint, projectInfo, ProjectInfoData.class).block();
 
-        Map<String, String> result = new HashMap<>();
 
-        if(Response.getKey().isEmpty()){
-
-            result.put(projectKey , "생성 실패");
-        }
-
-        return null;
     }
-
-
-
 }

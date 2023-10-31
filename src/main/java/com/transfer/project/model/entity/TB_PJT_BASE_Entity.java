@@ -1,4 +1,4 @@
-package com.transfer.project.model;
+package com.transfer.project.model.entity;
 
 
 import lombok.AllArgsConstructor;
@@ -16,20 +16,21 @@ import java.util.Date;
 @Builder
 @Table(name = "TB_PJT_BASE",schema="dbo")
 public class TB_PJT_BASE_Entity {
-
-    @Column(unique = true , name = "BS_PJTCD") // primary key
-    private String ProjectCode;
-    // 프로젝트 코드
     @Id
+    @Column(name = "BS_PJTCD") // primary key
+    private String projectCode;
+    // 프로젝트 코드
+
     @GeneratedValue(strategy = GenerationType.IDENTITY) //unique key
-    private String BS_PJTNAME;
+    @Column(unique = true , name = "BS_PJTNAME")
+    private String projectName;
 
-
-    private String BS_PJTFLAG;
+    @Column(name = "BS_PJTFLAG")
+    private String projectFlag;
     // 프로젝트 P , 유지보수 M
 
     @Temporal(TemporalType.DATE)
     @Column(name = "BS_SYSDATE")
-    private Date CreatedDate;
+    private Date createdDate;
     // 생성시간
 }

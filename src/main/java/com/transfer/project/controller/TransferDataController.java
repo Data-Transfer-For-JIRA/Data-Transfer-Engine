@@ -1,18 +1,15 @@
 package com.transfer.project.controller;
 
-import com.transfer.project.model.ProjectCreateDTO;
-import com.transfer.project.model.ProjectInfoData;
-import com.transfer.project.model.TB_PJT_BASE_Entity;
+import com.transfer.project.model.dto.ProjectCreateDTO;
+import com.transfer.project.model.dto.ProjectInfoData;
+import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 import com.transfer.project.service.TransferProjcet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 import java.util.Map;
 
 
@@ -76,7 +73,7 @@ public class TransferDataController {
             value = {"/create"},
             method = {RequestMethod.POST}
     )
-    public Map<String, String> CreateProjectFrom(@RequestParam String projectCode ) throws Exception {
+    public Map<String, Boolean> CreateProjectFrom(@RequestParam String projectCode ) throws Exception {
 
         return transferProjcet.CreateProjectFromDB(projectCode);
     }

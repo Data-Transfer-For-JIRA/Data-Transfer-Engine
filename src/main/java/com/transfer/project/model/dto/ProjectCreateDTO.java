@@ -1,4 +1,4 @@
-package com.transfer.project.model;
+package com.transfer.project.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
@@ -10,7 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ProjectCreateEntity {
+public class ProjectCreateDTO {
 
     private String assigneeType;
     // 설정값: UNASSIGNED

@@ -1,12 +1,10 @@
-package com.transfer.project.dao;
+package com.transfer.project.model.dao;
 
-import com.transfer.project.model.TB_PJT_BASE_Entity;
+import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 @Repository
 public interface TB_PJT_BASE_JpaRepository extends JpaRepository<TB_PJT_BASE_Entity,String> {
@@ -15,5 +13,4 @@ public interface TB_PJT_BASE_JpaRepository extends JpaRepository<TB_PJT_BASE_Ent
     * */
     Page<TB_PJT_BASE_Entity> findAllByOrderByCreatedDateDesc(Pageable pageable);
 
-    TB_PJT_BASE_Entity  findByProjectCode(String projectcode);
 }

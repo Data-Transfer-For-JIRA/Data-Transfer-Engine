@@ -1,4 +1,4 @@
-package com.transfer.project.model;
+package com.transfer.project.model.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
