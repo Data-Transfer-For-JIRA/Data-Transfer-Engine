@@ -6,11 +6,7 @@ import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import javax.persistence.*;
 import java.util.Date;
 
 @Getter
@@ -20,21 +16,25 @@ import java.util.Date;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL)
 @Table(name = "TB_JML",schema="dbo")
 public class TB_JML_Entity {
 
     @Id
+    @Column(name = "JP_KEY")
     private String key;
 
+    @Column(name = "JP_NAME")
     private String jiraProjectName;
 
     @CreatedDate
     @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "M_DATE")
     private Date migratedDate;
 
+    @Column(name = "WP_CODE")
     private String projectCode;
 
+    @Column(name = "WP_NAME")
     private String wssProjectName;
 
 

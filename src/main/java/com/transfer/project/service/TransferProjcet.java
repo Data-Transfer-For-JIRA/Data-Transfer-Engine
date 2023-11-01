@@ -13,5 +13,5 @@ public interface TransferProjcet {
 
     public Page<TB_PJT_BASE_Entity> getDataBaseProjectData(int pageIndex, int pageSize) throws Exception;
 
-    public Map<String, Boolean> CreateProjectFromDB(String projectCode) throws Exception;
+    public Map<String, Boolean> CreateProjectFromDB(int personalId,String projectCode) throws Exception;
 }

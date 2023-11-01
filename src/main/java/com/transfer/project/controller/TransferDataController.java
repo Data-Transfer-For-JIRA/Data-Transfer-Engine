@@ -4,6 +4,8 @@ import com.transfer.project.model.dto.ProjectCreateDTO;
 import com.transfer.project.model.dto.ProjectInfoData;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 import com.transfer.project.service.TransferProjcet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.ui.ModelMap;
@@ -23,7 +25,7 @@ public class TransferDataController {
     @Autowired
     private TransferProjcet transferProjcet;
 
-
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /*
     * 지라 프로젝트 생성 하기위한 컨트롤러
@@ -48,6 +50,8 @@ public class TransferDataController {
     )
     public Page<TB_PJT_BASE_Entity> GetDataBaseProjectData(@RequestParam int pageIndex, @RequestParam int pageSize) throws Exception {
 
+        logger.info("디비 목록 조회");
+
         return transferProjcet.getDataBaseProjectData(pageIndex,pageSize);
     }
 
@@ -61,20 +65,15 @@ public class TransferDataController {
         return  test+10 ;
     }
 
-    /*
-     * 해당 프로젝트 정보를 통해 지라 프로젝트 생성
-     *
-     * 1. 선택한 프로젝트 정보 수신
-     * 2. 프로젝트 정보 조회
-     * 3. 해당 정보 + 원하는 키 + 원하는 프로젝트 이름
-     * */
     @ResponseBody
     @RequestMapping(
-            value = {"/create"},
+            value = {"/{personalId}/create"},
             method = {RequestMethod.POST}
     )
-    public Map<String, Boolean> CreateProjectFrom(@RequestParam String projectCode ) throws Exception {
+    public Map<String, Boolean> CreateProjectFrom(@PathVariable int personalId, @RequestParam String projectCode ) throws Exception {
 
-        return transferProjcet.CreateProjectFromDB(projectCode);
+        logger.info("프로젝트 생성");
+
+        return transferProjcet.CreateProjectFromDB(personalId,projectCode);
     }
 }

@@ -18,6 +18,6 @@ public class HashString {
             }
             hexString.append(hex);
         }
-        return hexString.toString();
+        return hexString.length() >= 10 ? hexString.substring(0, 10) : hexString.toString();
     }
 }
