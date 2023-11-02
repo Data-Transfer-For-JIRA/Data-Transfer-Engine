@@ -20,7 +20,7 @@ import java.util.Map;
  * */
 @RestController
 @RequestMapping("/transfer/project")
-public class TransferDataController {
+public class TransferProjectController {
 
     @Autowired
     private TransferProjcet transferProjcet;
