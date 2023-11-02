@@ -7,6 +7,7 @@ import org.springframework.data.annotation.CreatedDate;
 
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Getter
@@ -26,10 +27,8 @@ public class TB_JML_Entity {
     @Column(name = "JP_NAME")
     private String jiraProjectName;
 
-    @CreatedDate
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "M_DATE")
-    private Date migratedDate;
+    @Column(name = "M_DATE", nullable = false, updatable = false)
+    private LocalDateTime  migratedDate;
 
     @Column(name = "WP_CODE")
     private String projectCode;
@@ -37,5 +36,12 @@ public class TB_JML_Entity {
     @Column(name = "WP_NAME")
     private String wssProjectName;
 
+
+    @PrePersist
+    public void prePersist() {
+        LocalDateTime now = LocalDateTime.now();
+        this.migratedDate = now;
+
+    }
 
 }

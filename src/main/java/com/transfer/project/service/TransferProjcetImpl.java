@@ -8,7 +8,7 @@ import com.transfer.project.model.dto.ProjectInfoData;
 
 import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
-import com.utils.HashString;
+
 import com.utils.JiraConfig;
 import com.transfer.project.model.dto.ProjectCreateDTO;
 import com.utils.ProjectConfig;
@@ -24,9 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @AllArgsConstructor
@@ -97,29 +97,21 @@ public class TransferProjcetImpl implements TransferProjcet{
         Map<String, Boolean> result = new HashMap<>();
         try {
             // 프로젝트 조회
-
             Optional<TB_PJT_BASE_Entity> table_info = TB_PJT_BASE_JpaRepository.findById(projectCode);
             if (table_info.isPresent()) { // 프로젝트 조회 성공
-
+                logger.info("WSS 프로젝트 조회");
                 String flag = table_info.get().getProjectFlag();
                 String projectName = table_info.get().getProjectName();
-                String projectKey = HashString.hashing(projectCode);
+                String projectKey = NamingJiraKey();
 
                 // 프로젝트 정보 Setting
                 ProjectCreateDTO projectInfo = RequiredData(flag,projectName, projectKey);
-                System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@"+projectInfo);
                 // 프로젝트 생성
                 ProjectInfoData Response = createJiraProject(personalId, projectInfo);
-                System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@"+Response);
                 // 생성 결과 DB 저장
-                TB_JML_Entity save_success_data  = new TB_JML_Entity();
-                save_success_data.setKey(Response.getKey());
-                save_success_data.setProjectCode(projectCode);
-                save_success_data.setWssProjectName(projectName);
-                save_success_data.setJiraProjectName(projectInfo.getName());
-                TB_JML_JpaRepository.save(save_success_data);
-
-                System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@"+save_success_data);
+                SaveSuccessData(Response.getKey(),projectCode,projectName,projectInfo.getName());
+                // 이관 flag 변경
+                CheckMigrateFlag(projectCode);
 
                 result.put("이관", true);
 
@@ -127,13 +119,12 @@ public class TransferProjcetImpl implements TransferProjcet{
             } else { //프로젝트 조회 실패
 
                 result.put("프로젝트 조회", false);
-
                 return result;
             }
         }catch (Exception e){ // 프로젝트 이관 실패 시
 
             result.put("이관", false);
-            System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@"+e);
+            logger.error(e.getMessage());
 
         }
 
@@ -142,7 +133,7 @@ public class TransferProjcetImpl implements TransferProjcet{
     }
 
     public ProjectInfoData createJiraProject(int personalId ,ProjectCreateDTO projectCreateDTO) throws Exception{
-
+        logger.info("JIRA 프로젝트 생성 시작");
         AdminInfoDTO info = adminInfo.getAdminInfo(personalId);
 
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
@@ -173,6 +164,35 @@ public class TransferProjcetImpl implements TransferProjcet{
             projectInfo.setName(jiraProjectName);
         }
         return projectInfo;
+    }
+    @Transactional
+    public String NamingJiraKey() throws Exception{
+
+        long count = TB_JML_JpaRepository.count();
+        if (count == 0) {
+            return "TWSS1";
+        }else{
+            String recent_key =TB_JML_JpaRepository.findTopByOrderByMigratedDateDesc().getKey();
+            int num = Integer.parseInt(recent_key.substring(4));
+            return "TWSS" + (num + 1);
+        }
+    }
+    @Transactional
+    public void SaveSuccessData(String key, String projectCode ,String projectName ,String jiraProjectName) throws Exception{
+
+        logger.info("JIRA 프로젝트 생성 결과 저장");
+        TB_JML_Entity save_success_data  = new TB_JML_Entity();
+        save_success_data.setKey(key);
+        save_success_data.setProjectCode(projectCode);
+        save_success_data.setWssProjectName(projectName);
+        save_success_data.setJiraProjectName(jiraProjectName);
+        TB_JML_JpaRepository.save(save_success_data);
+    }
+    @Transactional
+    public void CheckMigrateFlag(String projectCode){
+        logger.info("이관 여부 체크");
+        TB_PJT_BASE_Entity entity =  TB_PJT_BASE_JpaRepository.findById(projectCode).orElseThrow(() -> new NoSuchElementException("프로젝트 코드 조회에 실패하였습니다.: " + projectCode));
+        entity.setMigrateFlag(true);
     }
 
 }

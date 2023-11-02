@@ -1,16 +1,14 @@
 package com.transfer.project.model.entity;
 
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.Date;
 
 @AllArgsConstructor
 @Getter
+@Setter
 @NoArgsConstructor
 @Entity
 @Builder
@@ -33,4 +31,7 @@ public class TB_PJT_BASE_Entity {
     @Column(name = "BS_SYSDATE")
     private Date createdDate;
     // 생성시간
+    @Column(name = "MJ_FLAG")
+    private Boolean migrateFlag;
+
 }
