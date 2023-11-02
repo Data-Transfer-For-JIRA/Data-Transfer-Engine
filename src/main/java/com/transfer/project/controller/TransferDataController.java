@@ -55,6 +55,35 @@ public class TransferDataController {
         return transferProjcet.getDataBaseProjectData(pageIndex,pageSize);
     }
 
+    /*
+     * DB에서 이관 전 프로젝트 정보 가져오는 컨트롤러
+     * */
+    @ResponseBody
+    @RequestMapping(
+            value = {"/before/list"},
+            method = {RequestMethod.GET}
+    )
+    public Page<TB_PJT_BASE_Entity> GetDataBeforeProjectData(@RequestParam int pageIndex, @RequestParam int pageSize) throws Exception {
+
+        logger.info("디비 목록 조회");
+
+        return transferProjcet.getDataBeforeProjectData(pageIndex,pageSize);
+    }
+
+    /*
+     * DB에서 이관 된 프로젝트 정보 가져오는 컨트롤러 박민흠짱
+     * */
+    @ResponseBody
+    @RequestMapping(
+            value = {"/after/list"},
+            method = {RequestMethod.GET}
+    )
+    public Page<TB_PJT_BASE_Entity> GetDataAfterProjectData(@RequestParam int pageIndex, @RequestParam int pageSize) throws Exception {
+
+        logger.info("디비 목록 조회");
+
+        return transferProjcet.getDataAfterProjectData(pageIndex,pageSize);
+    }
 
     @ResponseBody
     @RequestMapping(

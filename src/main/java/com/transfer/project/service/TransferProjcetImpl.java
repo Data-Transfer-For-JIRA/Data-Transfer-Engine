@@ -90,6 +90,27 @@ public class TransferProjcetImpl implements TransferProjcet{
     }
     @Override
     @Transactional
+    public Page<TB_PJT_BASE_Entity> getDataBeforeProjectData(int pageIndex, int pageSize) throws Exception{
+
+        Pageable pageable = PageRequest.of(pageIndex, pageSize);
+
+        Page<TB_PJT_BASE_Entity> page = TB_PJT_BASE_JpaRepository.findAllByMigrateFlagFalseOrderByCreatedDateDesc(pageable);
+
+        return page;
+    }
+    @Override
+    @Transactional
+    public Page<TB_PJT_BASE_Entity> getDataAfterProjectData(int pageIndex, int pageSize) throws Exception{
+
+        Pageable pageable = PageRequest.of(pageIndex, pageSize);
+
+        Page<TB_PJT_BASE_Entity> page = TB_PJT_BASE_JpaRepository.findAllByMigrateFlagTrueOrderByCreatedDateDesc(pageable);
+
+        return page;
+    }
+
+    @Override
+    @Transactional
     public Map<String, Boolean> CreateProjectFromDB(int personalId,String projectCode) throws Exception {
 
         logger.info("프로젝트 생성 시작");

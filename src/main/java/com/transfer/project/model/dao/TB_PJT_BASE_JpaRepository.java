@@ -13,4 +13,8 @@ public interface TB_PJT_BASE_JpaRepository extends JpaRepository<TB_PJT_BASE_Ent
     * */
     Page<TB_PJT_BASE_Entity> findAllByOrderByCreatedDateDesc(Pageable pageable);
 
+    Page<TB_PJT_BASE_Entity> findAllByMigrateFlagTrueOrderByCreatedDateDesc(Pageable pageable);
+
+    Page<TB_PJT_BASE_Entity> findAllByMigrateFlagFalseOrderByCreatedDateDesc(Pageable pageable);
+
 }
