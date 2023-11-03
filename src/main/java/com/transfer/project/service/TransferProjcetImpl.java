@@ -9,7 +9,6 @@ import com.transfer.project.model.dto.ProjectInfoData;
 import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 
-import com.utils.JiraConfig;
 import com.transfer.project.model.dto.ProjectCreateDTO;
 import com.utils.ProjectConfig;
 import com.utils.WebClientUtils;
@@ -34,9 +33,7 @@ import java.util.Optional;
 public class TransferProjcetImpl implements TransferProjcet{
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    @Autowired
-    private JiraConfig jiraConfig;
+    
 
     @Autowired
     private  ProjectConfig projectConfig;
