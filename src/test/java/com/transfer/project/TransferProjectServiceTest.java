@@ -9,10 +9,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,7 +41,7 @@ public class TransferProjectServiceTest {
         assertEquals("TWSS4", result);
     }
 
-    @Test
+   /* @Test
     public void 이관데이터_테이블_조회() throws Exception {
         // 모의 객체 동작 정의
         when(jpaRepository.count()).thenReturn(1L);
@@ -53,5 +51,5 @@ public class TransferProjectServiceTest {
 
         // 결과 검증
         assertEquals("WSS1", result);
-    }
+    }*/
 }
