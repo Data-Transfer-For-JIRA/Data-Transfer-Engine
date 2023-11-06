@@ -12,5 +12,5 @@ import lombok.*;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class IssueTypeConnectDTO {
     String issueTypeSchemeId;
-    String projectId;
+    Integer projectId;
 }

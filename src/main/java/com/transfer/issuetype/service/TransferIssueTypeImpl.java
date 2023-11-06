@@ -27,14 +27,14 @@ public class TransferIssueTypeImpl implements TransferIssueType{
 
 
     @Override
-    public void setIssueType(String projectId) throws Exception{
+    public void setIssueType(Integer projectId) throws Exception{
 
         AdminInfoDTO info = adminInfo.getAdminInfo(1);
 
         IssueTypeConnectDTO issueTypeConnectDTO = new IssueTypeConnectDTO();
         issueTypeConnectDTO.setIssueTypeSchemeId(projectConfig.issuetypeId);
-        issueTypeConnectDTO.setIssueTypeSchemeId(projectId);
-
+        issueTypeConnectDTO.setProjectId(projectId);
+        
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
         String endpoint = "/rest/api/3/issuetypescheme/project";
         WebClientUtils.put(webClient, endpoint,issueTypeConnectDTO,void.class).block();

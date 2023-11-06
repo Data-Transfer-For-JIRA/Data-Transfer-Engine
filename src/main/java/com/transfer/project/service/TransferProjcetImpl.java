@@ -126,6 +126,8 @@ public class TransferProjcetImpl implements TransferProjcet{
                 ProjectCreateDTO projectInfo = RequiredData(flag,projectName, projectKey);
                 // 프로젝트 생성
                 ProjectInfoData Response = createJiraProject(personalId, projectInfo);
+                // 프로젝트에 이슈타입 연결
+                SetIssueType(Response.getSelf());
                 // 생성 결과 DB 저장
                 SaveSuccessData(Response.getKey(),projectCode,projectName,projectInfo.getName());
                 // 이관 flag 변경
@@ -174,7 +176,7 @@ public class TransferProjcetImpl implements TransferProjcet{
         String jiraProjectName;
 
         if (flag.equals("P")) { //프로젝트
-            jiraProjectName = "전자문서_프로젝트_WSS_" + projectName + ")";
+            jiraProjectName = "전자문서_프로젝트_WSS_(" + projectName + ")";
             projectInfo.setName(jiraProjectName);
 
         } else { // 유지보수
@@ -211,6 +213,22 @@ public class TransferProjcetImpl implements TransferProjcet{
         logger.info("이관 여부 체크");
         TB_PJT_BASE_Entity entity =  TB_PJT_BASE_JpaRepository.findById(projectCode).orElseThrow(() -> new NoSuchElementException("프로젝트 코드 조회에 실패하였습니다.: " + projectCode));
         entity.setMigrateFlag(true);
+    }
+
+    public void SetIssueType(String self) throws Exception {
+        logger.info("프로젝트 이슈타입 연결");
+        Integer projectId = Integer.valueOf(self.substring(self.lastIndexOf("/") + 1));
+
+        AdminInfoDTO info = adminInfo.getAdminInfo(1);
+
+        IssueTypeConnectDTO issueTypeConnectDTO = new IssueTypeConnectDTO();
+        issueTypeConnectDTO.setIssueTypeSchemeId(projectConfig.issuetypeId);
+        issueTypeConnectDTO.setProjectId(projectId);
+
+        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
+        String endpoint = "/rest/api/3/issuetypescheme/project";
+        WebClientUtils.put(webClient, endpoint,issueTypeConnectDTO,void.class).block();
+
     }
 
 }

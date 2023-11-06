@@ -34,7 +34,7 @@ public class TransferIssueTypeController {
             value = {"/set"},
             method = {RequestMethod.PUT}
     )
-    public void SetIssueType(@RequestParam String projectId) throws Exception {
+    public void SetIssueType(@RequestParam Integer projectId) throws Exception {
 
         transferIssueType.setIssueType(projectId);
 
@@ -50,7 +50,6 @@ public class TransferIssueTypeController {
     )
     public void SetIssueTypeScheduler() throws Exception {
         transferIssueType.setIssueTypeScheduler();
-
     }
 
 }
