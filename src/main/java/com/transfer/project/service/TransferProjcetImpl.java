@@ -2,6 +2,7 @@ package com.transfer.project.service;
 
 import com.admininfo.dto.AdminInfoDTO;
 import com.admininfo.service.AdminInfo;
+import com.transfer.issuetype.model.dto.IssueTypeConnectDTO;
 import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.dao.TB_JML_JpaRepository;
 import com.transfer.project.model.dto.ProjectInfoData;
@@ -23,10 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 
 @AllArgsConstructor
 @Service("transferProjcet")
@@ -52,7 +50,7 @@ public class TransferProjcetImpl implements TransferProjcet{
     public ProjectInfoData createProject(ProjectCreateDTO projectCreateDTO) throws Exception{
 
         try {
-        AdminInfoDTO info = adminInfo.getAdminInfo(1);
+        AdminInfoDTO info = adminInfo.getAdminInfo(1); //회원 가입 고려시 변경
 
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
 
@@ -85,6 +83,7 @@ public class TransferProjcetImpl implements TransferProjcet{
 
         return page;
     }
+
     @Override
     @Transactional
     public Page<TB_PJT_BASE_Entity> getDataBeforeProjectData(int pageIndex, int pageSize) throws Exception{
@@ -95,15 +94,34 @@ public class TransferProjcetImpl implements TransferProjcet{
 
         return page;
     }
+
+    @Override
+    @Transactional
+    public List<TB_PJT_BASE_Entity> getDataBeforeSeachProjectData(String seachKeyWord) throws Exception{
+
+        List<TB_PJT_BASE_Entity> searchResult = TB_PJT_BASE_JpaRepository.findByProjectNameContainingAndMigrateFlagFalseOrderByCreatedDateDesc(seachKeyWord);
+
+        return searchResult;
+    }
+
+
     @Override
     @Transactional
     public Page<TB_PJT_BASE_Entity> getDataAfterProjectData(int pageIndex, int pageSize) throws Exception{
 
         Pageable pageable = PageRequest.of(pageIndex, pageSize);
-
         Page<TB_PJT_BASE_Entity> page = TB_PJT_BASE_JpaRepository.findAllByMigrateFlagTrueOrderByCreatedDateDesc(pageable);
 
         return page;
+    }
+
+    @Override
+    @Transactional
+    public List<TB_PJT_BASE_Entity> getDataAfterSeachProjectData(String seachKeyWord) throws Exception{
+
+        List<TB_PJT_BASE_Entity> searchResult = TB_PJT_BASE_JpaRepository.findByProjectNameContainingAndMigrateFlagTrueOrderByCreatedDateDesc(seachKeyWord);
+
+        return searchResult;
     }
 
     @Override

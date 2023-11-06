@@ -12,6 +12,7 @@ import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 import java.util.Map;
 
 
@@ -69,6 +70,21 @@ public class TransferProjectController {
 
         return transferProjcet.getDataBeforeProjectData(pageIndex,pageSize);
     }
+    /*
+     * DB에서 이관 전 프로젝트 정보 프로젝트 이름으로 가져오는 컨트롤러
+     * */
+    @ResponseBody
+    @RequestMapping(
+            value = {"/before/list/search"},
+            method = {RequestMethod.GET}
+    )
+    public List<TB_PJT_BASE_Entity> GetDataBeforeSearchProjectData(@RequestParam String seachKeyWord) throws Exception {
+
+        logger.info("이관전 목록에서 검색");
+
+        return transferProjcet.getDataBeforeSeachProjectData(seachKeyWord);
+    }
+
 
     /*
      * DB에서 이관 된 프로젝트 정보 가져오는 컨트롤러 박민흠짱
@@ -83,6 +99,21 @@ public class TransferProjectController {
         logger.info("디비 목록 조회");
 
         return transferProjcet.getDataAfterProjectData(pageIndex,pageSize);
+    }
+
+    /*
+     * DB에서 이관 된 프로젝트 정보 가져오는 컨트롤러 박민흠짱
+     * */
+    @ResponseBody
+    @RequestMapping(
+            value = {"/after/list/search"},
+            method = {RequestMethod.GET}
+    )
+    public List<TB_PJT_BASE_Entity> GetDataAfterSearchProjectData(@RequestParam String seachKeyWord) throws Exception {
+
+        logger.info("이관후 목록에서 검색");
+
+        return transferProjcet.getDataAfterSeachProjectData(seachKeyWord);
     }
 
     @ResponseBody
@@ -105,4 +136,5 @@ public class TransferProjectController {
 
         return transferProjcet.CreateProjectFromDB(personalId,projectCode);
     }
+
 }

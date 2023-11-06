@@ -6,6 +6,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface TB_PJT_BASE_JpaRepository extends JpaRepository<TB_PJT_BASE_Entity,String> {
     /*
@@ -13,8 +15,16 @@ public interface TB_PJT_BASE_JpaRepository extends JpaRepository<TB_PJT_BASE_Ent
     * */
     Page<TB_PJT_BASE_Entity> findAllByOrderByCreatedDateDesc(Pageable pageable);
 
+    /*
+    * 이관후
+    * */
     Page<TB_PJT_BASE_Entity> findAllByMigrateFlagTrueOrderByCreatedDateDesc(Pageable pageable);
+    List<TB_PJT_BASE_Entity> findByProjectNameContainingAndMigrateFlagTrueOrderByCreatedDateDesc(String keyword);
 
+    /*
+    이관전
+    * */
     Page<TB_PJT_BASE_Entity> findAllByMigrateFlagFalseOrderByCreatedDateDesc(Pageable pageable);
+    List<TB_PJT_BASE_Entity> findByProjectNameContainingAndMigrateFlagFalseOrderByCreatedDateDesc(String keyword);
 
 }
