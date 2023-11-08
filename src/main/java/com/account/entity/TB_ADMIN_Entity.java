@@ -1,4 +1,4 @@
-package com.admininfo.entity;
+package com.account.entity;
 
 
 import lombok.*;

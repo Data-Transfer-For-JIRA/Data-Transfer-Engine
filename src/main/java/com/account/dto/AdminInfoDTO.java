@@ -1,4 +1,4 @@
-package com.admininfo.dto;
+package com.account.dto;
 
 import lombok.*;
 

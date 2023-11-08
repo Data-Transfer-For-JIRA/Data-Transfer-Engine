@@ -1,9 +1,8 @@
 package com.transfer.issuetype.service;
 
-import com.admininfo.dto.AdminInfoDTO;
-import com.admininfo.service.AdminInfo;
+import com.account.dto.AdminInfoDTO;
+import com.account.service.Account;
 import com.transfer.issuetype.model.dto.IssueTypeConnectDTO;
-import com.transfer.project.model.dto.ProjectInfoData;
 import com.utils.ProjectConfig;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
@@ -20,7 +19,7 @@ public class TransferIssueTypeImpl implements TransferIssueType{
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private AdminInfo adminInfo;
+    private Account account;
 
     @Autowired
     private ProjectConfig projectConfig;
@@ -29,7 +28,7 @@ public class TransferIssueTypeImpl implements TransferIssueType{
     @Override
     public void setIssueType(Integer projectId) throws Exception{
 
-        AdminInfoDTO info = adminInfo.getAdminInfo(1);
+        AdminInfoDTO info = account.getAdminInfo(1);
 
         IssueTypeConnectDTO issueTypeConnectDTO = new IssueTypeConnectDTO();
         issueTypeConnectDTO.setIssueTypeSchemeId(projectConfig.issuetypeId);

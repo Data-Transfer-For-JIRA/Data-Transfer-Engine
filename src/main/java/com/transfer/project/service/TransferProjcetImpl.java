@@ -1,7 +1,7 @@
 package com.transfer.project.service;
 
-import com.admininfo.dto.AdminInfoDTO;
-import com.admininfo.service.AdminInfo;
+import com.account.dto.AdminInfoDTO;
+import com.account.service.Account;
 import com.transfer.issuetype.model.dto.IssueTypeConnectDTO;
 import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.dao.TB_JML_JpaRepository;
@@ -43,14 +43,14 @@ public class TransferProjcetImpl implements TransferProjcet{
     private TB_JML_JpaRepository TB_JML_JpaRepository;
 
     @Autowired
-    private AdminInfo adminInfo;
+    private Account account;
 
 
     @Override
     public ProjectInfoData createProject(ProjectCreateDTO projectCreateDTO) throws Exception{
 
         try {
-        AdminInfoDTO info = adminInfo.getAdminInfo(1); //회원 가입 고려시 변경
+        AdminInfoDTO info = account.getAdminInfo(1); //회원 가입 고려시 변경
 
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
 
@@ -172,7 +172,7 @@ public class TransferProjcetImpl implements TransferProjcet{
 
     public ProjectInfoData createJiraProject(int personalId ,ProjectCreateDTO projectCreateDTO) throws Exception{
         logger.info("JIRA 프로젝트 생성 시작");
-        AdminInfoDTO info = adminInfo.getAdminInfo(personalId);
+        AdminInfoDTO info = account.getAdminInfo(personalId);
 
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
         String endpoint = "/rest/api/3/project";
@@ -237,7 +237,7 @@ public class TransferProjcetImpl implements TransferProjcet{
         logger.info("프로젝트 이슈타입 연결");
         Integer projectId = Integer.valueOf(self.substring(self.lastIndexOf("/") + 1));
 
-        AdminInfoDTO info = adminInfo.getAdminInfo(1);
+        AdminInfoDTO info = account.getAdminInfo(1);
 
         IssueTypeConnectDTO issueTypeConnectDTO = new IssueTypeConnectDTO();
         issueTypeConnectDTO.setIssueTypeSchemeId(projectConfig.issuetypeId);

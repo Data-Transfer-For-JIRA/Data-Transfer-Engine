@@ -1,7 +1,7 @@
 package com.transfer.issue.service;
 
 
-import com.admininfo.service.AdminInfo;
+import com.account.service.Account;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 public class TransferIssueImpl implements TransferIssue {
 
     @Autowired
-    private AdminInfo adminInfo;
+    private Account account;
 
     @Override
     public String transferIssuTypeeData(String jiraKey, String projectCode) throws Exception{

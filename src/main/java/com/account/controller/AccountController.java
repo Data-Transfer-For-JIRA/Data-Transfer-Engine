@@ -1,7 +1,7 @@
-package com.admininfo.controller;
+package com.account.controller;
 
-import com.admininfo.dto.AdminInfoDTO;
-import com.admininfo.service.AdminInfo;
+import com.account.dto.AdminInfoDTO;
+import com.account.service.Account;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,10 +10,10 @@ import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/admin")
-public class AdminInfroController {
+public class AccountController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     @Autowired
-    private AdminInfo adminInfo;
+    private Account account;
 
     @ResponseBody
     @RequestMapping(
@@ -24,7 +24,7 @@ public class AdminInfroController {
 
         logger.info("사용자 조회");
 
-        return adminInfo.getAdminInfo(personalId);
+        return account.getAdminInfo(personalId);
     }
 
 

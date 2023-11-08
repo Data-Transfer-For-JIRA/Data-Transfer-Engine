@@ -109,11 +109,11 @@ public class TransferProjectController {
             value = {"/after/list/search"},
             method = {RequestMethod.GET}
     )
-    public List<TB_PJT_BASE_Entity> GetDataAfterSearchProjectData(@RequestParam String seachKeyWord) throws Exception {
+    public List<TB_PJT_BASE_Entity> GetDataAfterSearchProjectData(@RequestParam String searchKeyWord) throws Exception {
 
         logger.info("이관후 목록에서 검색");
 
-        return transferProjcet.getDataAfterSeachProjectData(seachKeyWord);
+        return transferProjcet.getDataAfterSeachProjectData(searchKeyWord);
     }
 
     @ResponseBody

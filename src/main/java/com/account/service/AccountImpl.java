@@ -1,8 +1,8 @@
-package com.admininfo.service;
+package com.account.service;
 
-import com.admininfo.dao.TB_ADMIN_JpaRepository;
-import com.admininfo.dto.AdminInfoDTO;
-import com.admininfo.entity.TB_ADMIN_Entity;
+import com.account.dao.TB_ADMIN_JpaRepository;
+import com.account.dto.AdminInfoDTO;
+import com.account.entity.TB_ADMIN_Entity;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +12,7 @@ import java.util.Optional;
 
 @AllArgsConstructor
 @Service("AdminInfo")
-public class AdminInfoImpl implements AdminInfo {
+public class AccountImpl implements Account {
 
     @Autowired
     private TB_ADMIN_JpaRepository TB_ADMIN_JpaRepository;

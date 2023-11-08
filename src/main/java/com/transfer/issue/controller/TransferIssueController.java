@@ -29,7 +29,7 @@ public class TransferIssueController {
     )
     public String TransferIssuTypeeData(@RequestParam String jiraKey, @RequestParam String projectCode) throws Exception {
 
-        logger.info("이슈 타입 생성");
+        logger.info("이슈 타입 연결");
         return transferIssue.transferIssuTypeeData(jiraKey,projectCode);
     }
 
