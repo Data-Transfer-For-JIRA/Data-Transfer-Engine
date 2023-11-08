@@ -1,17 +1,11 @@
 package com.transfer.issuetype.controller;
 
-import com.transfer.issuetype.model.dto.IssueTypeConnectDTO;
+import com.transfer.issuetype.model.dto.IssueTypeScreenSchemeDTO;
 import com.transfer.issuetype.service.TransferIssueType;
-import com.transfer.project.model.dto.ProjectCreateDTO;
-import com.transfer.project.model.dto.ProjectInfoData;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
-
-import javax.servlet.http.HttpServletRequest;
 
 /*
  *  해당 컨트롤러는 이관한 지라 프로젝트에 이슈 타입을 연결하기 위한 컨트롤러이다.
@@ -27,16 +21,16 @@ public class TransferIssueTypeController {
 
 
     /*
-     * 지라 이슈 타입 연결하기 위한 컨트롤러
+     * 지라 이슈 타입 연결하기 위한 컨트롤러 나중에 스케줄러를 위해 임시로 생성해둔 것 프로젝트 생성로직에 포함X
      * */
     @ResponseBody
     @RequestMapping(
             value = {"/set"},
             method = {RequestMethod.PUT}
     )
-    public void SetIssueType(@RequestParam Integer projectId) throws Exception {
+    public void SetIssueType(@RequestBody IssueTypeScreenSchemeDTO issueTypeScreenSchemeDTO,@RequestParam String flag) throws Exception {
 
-        transferIssueType.setIssueType(projectId);
+        transferIssueType.setIssueType(issueTypeScreenSchemeDTO,flag);
 
     }
 

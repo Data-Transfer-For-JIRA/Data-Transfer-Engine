@@ -2,7 +2,7 @@ package com.transfer.project.service;
 
 import com.account.dto.AdminInfoDTO;
 import com.account.service.Account;
-import com.transfer.issuetype.model.dto.IssueTypeConnectDTO;
+import com.transfer.issuetype.model.dto.IssueTypeScreenSchemeDTO;
 import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.dao.TB_JML_JpaRepository;
 import com.transfer.project.model.dto.ProjectInfoData;
@@ -146,7 +146,7 @@ public class TransferProjcetImpl implements TransferProjcet{
                 // 프로젝트 생성
                 ProjectInfoData Response = createJiraProject(personalId, projectInfo);
                 // 프로젝트에 이슈타입 연결
-                SetIssueType(Response.getSelf());
+                SetIssueType(Response.getSelf(),flag);
                 // 생성 결과 DB 저장
                 SaveSuccessData(Response.getKey(),projectCode,projectName,projectInfo.getName());
                 // 이관 flag 변경
@@ -234,19 +234,24 @@ public class TransferProjcetImpl implements TransferProjcet{
         entity.setMigrateFlag(true);
     }
 
-    public void SetIssueType(String self) throws Exception {
+    public void SetIssueType(String self ,String flag) throws Exception {
         logger.info("프로젝트 이슈타입 연결");
         Integer projectId = Integer.valueOf(self.substring(self.lastIndexOf("/") + 1));
 
         AdminInfoDTO info = account.getAdminInfo(1);
 
-        IssueTypeConnectDTO issueTypeConnectDTO = new IssueTypeConnectDTO();
-        issueTypeConnectDTO.setIssueTypeSchemeId(projectConfig.issuetypeId);
-        issueTypeConnectDTO.setProjectId(projectId);
+        IssueTypeScreenSchemeDTO issueTypeScreenSchemeDTO = new IssueTypeScreenSchemeDTO();
+        if(flag.equals("P")){
+            issueTypeScreenSchemeDTO.setIssueTypeScreenSchemeId(projectConfig.projectIssueType);
+        }else{
+            issueTypeScreenSchemeDTO.setIssueTypeScreenSchemeId(projectConfig.maintenanceIssueType);
+        }
+
+        issueTypeScreenSchemeDTO.setProjectId(projectId);
 
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-        String endpoint = "/rest/api/3/issuetypescheme/project";
-        WebClientUtils.put(webClient, endpoint,issueTypeConnectDTO,void.class).block();
+        String endpoint = "/rest/api/3/issuetypescreenscheme/project";
+        WebClientUtils.put(webClient, endpoint, issueTypeScreenSchemeDTO,void.class).block();
 
     }
 
