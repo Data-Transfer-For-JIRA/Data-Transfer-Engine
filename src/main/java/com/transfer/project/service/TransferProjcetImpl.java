@@ -97,9 +97,10 @@ public class TransferProjcetImpl implements TransferProjcet{
 
     @Override
     @Transactional
-    public List<TB_PJT_BASE_Entity> getDataBeforeSeachProjectData(String seachKeyWord) throws Exception{
+    public Page<TB_PJT_BASE_Entity> getDataBeforeSeachProjectData(String seachKeyWord,int pageIndex, int pageSize) throws Exception{
 
-        List<TB_PJT_BASE_Entity> searchResult = TB_PJT_BASE_JpaRepository.findByProjectNameContainingAndMigrateFlagFalseOrderByCreatedDateDesc(seachKeyWord);
+        Pageable pageable = PageRequest.of(pageIndex, pageSize);
+        Page<TB_PJT_BASE_Entity> searchResult = TB_PJT_BASE_JpaRepository.findByProjectNameContainingAndMigrateFlagFalseOrderByCreatedDateDesc(seachKeyWord,pageable);
 
         return searchResult;
     }
@@ -117,9 +118,9 @@ public class TransferProjcetImpl implements TransferProjcet{
 
     @Override
     @Transactional
-    public List<TB_PJT_BASE_Entity> getDataAfterSeachProjectData(String seachKeyWord) throws Exception{
-
-        List<TB_PJT_BASE_Entity> searchResult = TB_PJT_BASE_JpaRepository.findByProjectNameContainingAndMigrateFlagTrueOrderByCreatedDateDesc(seachKeyWord);
+    public Page<TB_PJT_BASE_Entity> getDataAfterSeachProjectData(String seachKeyWord,int pageIndex, int pageSize) throws Exception{
+        Pageable pageable = PageRequest.of(pageIndex, pageSize);
+        Page<TB_PJT_BASE_Entity> searchResult = TB_PJT_BASE_JpaRepository.findByProjectNameContainingAndMigrateFlagTrueOrderByCreatedDateDesc(seachKeyWord,pageable);
 
         return searchResult;
     }

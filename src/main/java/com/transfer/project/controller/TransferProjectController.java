@@ -78,11 +78,11 @@ public class TransferProjectController {
             value = {"/before/list/search"},
             method = {RequestMethod.GET}
     )
-    public List<TB_PJT_BASE_Entity> GetDataBeforeSearchProjectData(@RequestParam String seachKeyWord) throws Exception {
+    public Page<TB_PJT_BASE_Entity> GetDataBeforeSearchProjectData(@RequestParam String seachKeyWord, @RequestParam int pageIndex, @RequestParam int pageSize) throws Exception {
 
         logger.info("이관전 목록에서 검색");
 
-        return transferProjcet.getDataBeforeSeachProjectData(seachKeyWord);
+        return transferProjcet.getDataBeforeSeachProjectData(seachKeyWord,pageIndex,pageSize);
     }
 
 
@@ -109,11 +109,11 @@ public class TransferProjectController {
             value = {"/after/list/search"},
             method = {RequestMethod.GET}
     )
-    public List<TB_PJT_BASE_Entity> GetDataAfterSearchProjectData(@RequestParam String searchKeyWord) throws Exception {
+    public Page<TB_PJT_BASE_Entity> GetDataAfterSearchProjectData(@RequestParam String searchKeyWord,@RequestParam int pageIndex, @RequestParam int pageSize) throws Exception {
 
         logger.info("이관후 목록에서 검색");
 
-        return transferProjcet.getDataAfterSeachProjectData(searchKeyWord);
+        return transferProjcet.getDataAfterSeachProjectData(searchKeyWord,pageIndex,pageSize);
     }
 
     @ResponseBody

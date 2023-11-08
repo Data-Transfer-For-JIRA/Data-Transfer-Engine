@@ -19,12 +19,12 @@ public interface TB_PJT_BASE_JpaRepository extends JpaRepository<TB_PJT_BASE_Ent
     * 이관후
     * */
     Page<TB_PJT_BASE_Entity> findAllByMigrateFlagTrueOrderByCreatedDateDesc(Pageable pageable);
-    List<TB_PJT_BASE_Entity> findByProjectNameContainingAndMigrateFlagTrueOrderByCreatedDateDesc(String keyword);
+    Page<TB_PJT_BASE_Entity> findByProjectNameContainingAndMigrateFlagTrueOrderByCreatedDateDesc(String keyword,Pageable pageable);
 
     /*
     이관전
     * */
     Page<TB_PJT_BASE_Entity> findAllByMigrateFlagFalseOrderByCreatedDateDesc(Pageable pageable);
-    List<TB_PJT_BASE_Entity> findByProjectNameContainingAndMigrateFlagFalseOrderByCreatedDateDesc(String keyword);
+    Page<TB_PJT_BASE_Entity> findByProjectNameContainingAndMigrateFlagFalseOrderByCreatedDateDesc(String keyword,Pageable pageable);
 
 }
