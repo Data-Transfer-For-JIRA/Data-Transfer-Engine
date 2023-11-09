@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/admin")
 public class AccountController {
@@ -25,6 +27,18 @@ public class AccountController {
         logger.info("사용자 조회");
 
         return account.getAdminInfo(personalId);
+    }
+
+    @ResponseBody
+    @RequestMapping(
+            value = {"/collect"},
+            method = {RequestMethod.GET}
+    )
+    public Map<String,String> GetCollectUserInfo() throws Exception {
+
+        logger.info("사용자 조회");
+
+        return account.getCollectUserInfo();
     }
 
 
