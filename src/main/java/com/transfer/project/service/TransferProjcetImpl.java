@@ -128,11 +128,11 @@ public class TransferProjcetImpl implements TransferProjcet{
 
     @Override
     @Transactional
-    public Map<String, Boolean> CreateProjectFromDB(int personalId,String projectCode) throws Exception {
+    public Map<String, String> CreateProjectFromDB(int personalId,String projectCode) throws Exception {
 
         logger.info("프로젝트 생성 시작");
 
-        Map<String, Boolean> result = new HashMap<>();
+        Map<String, String> result = new HashMap<>();
         try {
             // 프로젝트 조회
             Optional<TB_PJT_BASE_Entity> table_info = TB_PJT_BASE_JpaRepository.findById(projectCode);
@@ -153,17 +153,17 @@ public class TransferProjcetImpl implements TransferProjcet{
                 // 이관 flag 변경
                 CheckMigrateFlag(projectCode);
 
-                result.put("이관", true);
+                result.put("이관 성공",projectCode );
 
                 return result;
             } else { //프로젝트 조회 실패
 
-                result.put("프로젝트 조회", false);
+                result.put("프로젝트 조회 실패", projectCode);
                 return result;
             }
         }catch (Exception e){ // 프로젝트 이관 실패 시
 
-            result.put("이관", false);
+            result.put("이관 실패", projectCode);
             logger.error(e.getMessage());
 
         }

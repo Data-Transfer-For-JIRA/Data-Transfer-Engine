@@ -1,6 +1,7 @@
 package com.transfer.project.controller;
 
 import com.transfer.project.model.dao.TB_JML_JpaRepository;
+import com.transfer.project.model.dto.CreateBulkResultDTO;
 import com.transfer.project.model.dto.ProjectCreateDTO;
 import com.transfer.project.model.dto.ProjectInfoData;
 import com.transfer.project.model.entity.TB_JML_Entity;
@@ -12,8 +13,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.spring.web.json.Json;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -92,7 +96,7 @@ public class TransferProjectController {
 
 
     /*
-     * DB에서 이관 된 프로젝트 정보 가져오는 컨트롤러 박민흠짱
+     * DB에서 이관 된 프로젝트 정보 가져오는 컨트롤러
      * */
     @ResponseBody
     @RequestMapping(
@@ -107,7 +111,7 @@ public class TransferProjectController {
     }
 
     /*
-     * DB에서 이관 된 프로젝트 정보 가져오는 컨트롤러 박민흠짱
+     * DB에서 이관 된 프로젝트 정보 가져오는 컨트롤러
      * */
     @ResponseBody
     @RequestMapping(
@@ -135,11 +139,53 @@ public class TransferProjectController {
             value = {"/{personalId}/create"},
             method = {RequestMethod.POST}
     )
-    public Map<String, Boolean> CreateProjectFrom(@PathVariable int personalId, @RequestParam String projectCode ) throws Exception {
+    public Map<String, String> CreateProjectFrom(@PathVariable int personalId, @RequestParam String projectCode ) throws Exception {
 
         logger.info("프로젝트 생성");
 
         return transferProjcet.CreateProjectFromDB(personalId,projectCode);
+    }
+
+    @ResponseBody
+    @RequestMapping(
+            value = {"/{personalId}/create/bulk"},
+            method = {RequestMethod.POST}
+    )
+    public CreateBulkResultDTO CreateBulkProjectFrom(@PathVariable int personalId, @RequestParam List<String> projectCodeList ) throws Exception {
+
+        logger.info("프로젝트 생성");
+        List<String> success = new ArrayList<>();
+        List<String> fail = new ArrayList<>();
+        List<String> search_fail = new ArrayList<>();
+
+        Map<String, String> result = new HashMap<>();
+
+        for(int i=0;i<projectCodeList.size();i++){
+            String projectCode = projectCodeList.get(i);
+            result = transferProjcet.CreateProjectFromDB(personalId, projectCode);
+
+            // 이관 실패인 경우
+            if (result.containsKey("이관 실패") && result.get("이관 실패").equals(projectCode)) {
+                fail.add(projectCode);
+            }
+
+            // 프로젝트 조회 실패인 경우
+            if (result.containsKey("프로젝트 조회 실패") && result.get("프로젝트 조회 실패").equals(projectCode)) {
+                search_fail.add(projectCode);
+            }
+
+            // 이관 성공인 경우
+            if (result.containsKey("이관 성공") && result.get("이관 성공").equals(projectCode)) {
+                success.add(projectCode);
+            }
+
+        }
+
+        CreateBulkResultDTO createBulkResultDTO = new CreateBulkResultDTO();
+        createBulkResultDTO.setFail(fail);
+        createBulkResultDTO.setSuccess(search_fail);
+        createBulkResultDTO.setSuccess(success);
+        return createBulkResultDTO;
     }
 
 }

@@ -22,6 +22,6 @@ public interface TransferProjcet {
     public Page<TB_JML_Entity>  getDataAfterProjectData(int pageIndex, int pageSize) throws Exception;
     public Page<TB_JML_Entity>  getDataAfterSeachProjectData(String seachKeyWord, int pageIndex, int pageSize) throws Exception;
 
-    public Map<String, Boolean> CreateProjectFromDB(int personalId,String projectCode) throws Exception;
+    public Map<String, String> CreateProjectFromDB(int personalId,String projectCode) throws Exception;
 
 }
