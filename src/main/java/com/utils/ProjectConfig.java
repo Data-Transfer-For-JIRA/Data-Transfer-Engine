@@ -33,7 +33,5 @@ public class ProjectConfig {
     @Value("${issueTypeScreenScheme.maintenance}")
     public  String maintenanceIssueType;
 
-    @Value("${markany.users}")
-    public List<String> users;
 
 }
