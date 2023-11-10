@@ -1,7 +1,9 @@
 package com.transfer.project.controller;
 
+import com.transfer.project.model.dao.TB_JML_JpaRepository;
 import com.transfer.project.model.dto.ProjectCreateDTO;
 import com.transfer.project.model.dto.ProjectInfoData;
+import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 import com.transfer.project.service.TransferProjcet;
 import org.slf4j.Logger;
@@ -97,7 +99,7 @@ public class TransferProjectController {
             value = {"/after/list"},
             method = {RequestMethod.GET}
     )
-    public Page<TB_PJT_BASE_Entity> GetDataAfterProjectData(@RequestParam int pageIndex, @RequestParam int pageSize) throws Exception {
+    public Page<TB_JML_Entity>  GetDataAfterProjectData(@RequestParam int pageIndex, @RequestParam int pageSize) throws Exception {
 
         logger.info("디비 목록 조회");
 
@@ -112,7 +114,7 @@ public class TransferProjectController {
             value = {"/after/list/search"},
             method = {RequestMethod.GET}
     )
-    public Page<TB_PJT_BASE_Entity> GetDataAfterSearchProjectData(@RequestParam String searchKeyWord,@RequestParam int pageIndex, @RequestParam int pageSize) throws Exception {
+    public Page<TB_JML_Entity>  GetDataAfterSearchProjectData(@RequestParam String searchKeyWord, @RequestParam int pageIndex, @RequestParam int pageSize) throws Exception {
 
         logger.info("이관후 목록에서 검색");
 

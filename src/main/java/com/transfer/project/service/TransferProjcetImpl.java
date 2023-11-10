@@ -108,19 +108,20 @@ public class TransferProjcetImpl implements TransferProjcet{
 
     @Override
     @Transactional
-    public Page<TB_PJT_BASE_Entity> getDataAfterProjectData(int pageIndex, int pageSize) throws Exception{
+    public Page<TB_JML_Entity> getDataAfterProjectData(int pageIndex, int pageSize) throws Exception{
 
         Pageable pageable = PageRequest.of(pageIndex, pageSize);
-        Page<TB_PJT_BASE_Entity> page = TB_PJT_BASE_JpaRepository.findAllByMigrateFlagTrueOrderByCreatedDateDesc(pageable);
+        Page<TB_JML_Entity> page = TB_JML_JpaRepository.findAllByOrderByCreatedDateDesc(pageable);
+
 
         return page;
     }
 
     @Override
     @Transactional
-    public Page<TB_PJT_BASE_Entity> getDataAfterSeachProjectData(String seachKeyWord,int pageIndex, int pageSize) throws Exception{
+    public Page<TB_JML_Entity> getDataAfterSeachProjectData(String seachKeyWord,int pageIndex, int pageSize) throws Exception{
         Pageable pageable = PageRequest.of(pageIndex, pageSize);
-        Page<TB_PJT_BASE_Entity> searchResult = TB_PJT_BASE_JpaRepository.findByProjectNameContainingAndMigrateFlagTrueOrderByCreatedDateDesc(seachKeyWord,pageable);
+        Page<TB_JML_Entity> searchResult = TB_JML_JpaRepository.findByProjectNameContainingAndOrderByCreatedDateDesc(seachKeyWord,pageable);
 
         return searchResult;
     }
