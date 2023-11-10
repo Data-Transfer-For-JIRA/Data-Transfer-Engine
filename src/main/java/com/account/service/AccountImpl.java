@@ -1,9 +1,11 @@
 package com.account.service;
 
 import com.account.dao.TB_ADMIN_JpaRepository;
+import com.account.dao.TB_JIRA_USER_JpaRepository;
 import com.account.dto.AdminInfoDTO;
 import com.account.dto.UserInfoDTO;
 import com.account.entity.TB_ADMIN_Entity;
+import com.account.entity.TB_JIRA_USER_Entity;
 import com.utils.ProjectConfig;
 import com.utils.WebClientUtils;
 import com.utils.전자문서직원;
@@ -13,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
@@ -27,6 +30,9 @@ public class AccountImpl implements Account {
 
     @Autowired
     private TB_ADMIN_JpaRepository TB_ADMIN_JpaRepository;
+
+    @Autowired
+    private TB_JIRA_USER_JpaRepository TB_JIRA_USER_JpaRepository;
 
     @Autowired
     private 전자문서직원 전자문서직원;
@@ -57,6 +63,7 @@ public class AccountImpl implements Account {
     *  마크애니 전자문서 직원의 지라 아이디를 가져오기 위한 데이터로 최조에만 실행
     * */
     @Override
+    @Transactional
     public  Flux<UserInfoDTO> getCollectUserInfo() {
 
         System.out.println(전자문서직원.직원);
@@ -83,8 +90,28 @@ public class AccountImpl implements Account {
                     }
                     return markany.contains(name);
                 });
-        System.out.println(response);
+
+
+        response.doOnNext(userInfo -> {
+            String teamName =  checkTeamName(userInfo.getDisplayName());
+
+            TB_JIRA_USER_Entity userEntity = new TB_JIRA_USER_Entity();
+
+            userEntity.setAccountId(userInfo.getAccountId());
+            userEntity.setEmailAddress(userInfo.getEmailAddress());
+            userEntity.setDisplayName(userInfo.getDisplayName());
+            userEntity.setTeam(teamName);
+
+            TB_JIRA_USER_JpaRepository.save(userEntity);
+
+        }).subscribe();
+
 
         return response;
+    }
+    public String checkTeamName(String userName){
+
+
+        return null;
     }
 }

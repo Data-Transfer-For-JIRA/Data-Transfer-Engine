@@ -12,5 +12,7 @@ import lombok.*;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserInfoDTO {
     private String accountId;
+    private String emailAddress;
     private String displayName;
+    private String teamName;
 }
