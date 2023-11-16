@@ -9,8 +9,8 @@ public interface TB_JML_JpaRepository extends JpaRepository<TB_JML_Entity,String
 
     TB_JML_Entity findTopByOrderByMigratedDateDesc();
 
-    Page<TB_JML_Entity> findByProjectNameContainingAndOrderByCreatedDateDesc(String keyword, Pageable pageable);
+    Page<TB_JML_Entity> findByWssProjectNameContainingOrderByMigratedDateDesc(String keyword, Pageable pageable);
 
-    Page<TB_JML_Entity> findAllByOrderByCreatedDateDesc(Pageable pageable);
+    Page<TB_JML_Entity> findAllByOrderByMigratedDateDesc(Pageable pageable);
 
 }

@@ -2,6 +2,7 @@ package com.transfer.project.controller;
 
 import com.transfer.project.model.dao.TB_JML_JpaRepository;
 import com.transfer.project.model.dto.CreateBulkResultDTO;
+import com.transfer.project.model.dto.ProjcetCodeDTO;
 import com.transfer.project.model.dto.ProjectCreateDTO;
 import com.transfer.project.model.dto.ProjectInfoData;
 import com.transfer.project.model.entity.TB_JML_Entity;
@@ -151,8 +152,10 @@ public class TransferProjectController {
             value = {"/{personalId}/create/bulk"},
             method = {RequestMethod.POST}
     )
-    public CreateBulkResultDTO CreateBulkProjectFrom(@PathVariable int personalId, @RequestParam List<String> projectCodeList ) throws Exception {
+    //public CreateBulkResultDTO CreateBulkProjectFrom(@PathVariable int personalId, @RequestBody ProjcetCodeDTO[] projectCodeDTO ) throws Exception {
+    public CreateBulkResultDTO CreateBulkProjectFrom(@PathVariable int personalId, @RequestBody ProjcetCodeDTO projectCodeDTO ) throws Exception {
 
+        // ProjcetCodeDTO projectCodeDTO = projectCodeDTO[0];
         logger.info("프로젝트 생성");
         List<String> success = new ArrayList<>();
         List<String> fail = new ArrayList<>();
@@ -160,8 +163,8 @@ public class TransferProjectController {
 
         Map<String, String> result = new HashMap<>();
 
-        for(int i=0;i<projectCodeList.size();i++){
-            String projectCode = projectCodeList.get(i);
+        for(int i=0;i<projectCodeDTO.getProjectCode().size();i++){
+            String projectCode = projectCodeDTO.getProjectCode().get(i);
             result = transferProjcet.CreateProjectFromDB(personalId, projectCode);
 
             // 이관 실패인 경우
@@ -183,7 +186,7 @@ public class TransferProjectController {
 
         CreateBulkResultDTO createBulkResultDTO = new CreateBulkResultDTO();
         createBulkResultDTO.setFail(fail);
-        createBulkResultDTO.setSuccess(search_fail);
+        createBulkResultDTO.setSearchFail(search_fail);
         createBulkResultDTO.setSuccess(success);
         return createBulkResultDTO;
     }
