@@ -142,20 +142,25 @@ public class TransferProjcetImpl implements TransferProjcet{
                 String projectName = table_info.get().getProjectName();
                 String projectKey = NamingJiraKey();
 
-                // 프로젝트 정보 Setting
-                ProjectCreateDTO projectInfo = RequiredData(flag,projectName, projectKey);
-                // 프로젝트 생성
-                ProjectInfoData Response = createJiraProject(personalId, projectInfo);
-                // 프로젝트에 이슈타입 연결
-                SetIssueType(Response.getSelf(),flag);
-                // 생성 결과 DB 저장
-                SaveSuccessData(Response.getKey(),projectCode,projectName,projectInfo.getName());
-                // 이관 flag 변경
-                CheckMigrateFlag(projectCode);
+                if ("0".equals(flag)) {
+                    // 프로젝트 정보 Setting
+                    ProjectCreateDTO projectInfo = RequiredData(flag,projectName, projectKey);
+                    // 프로젝트 생성
+                    ProjectInfoData Response = createJiraProject(personalId, projectInfo);
+                    // 프로젝트에 이슈타입 연결
+                    SetIssueType(Response.getSelf(),flag);
+                    // 생성 결과 DB 저장
+                    SaveSuccessData(Response.getKey(),projectCode,projectName,projectInfo.getName());
+                    // 이관 flag 변경
+                    CheckMigrateFlag(projectCode);
 
-                result.put("이관 성공",projectCode );
+                    result.put("이관 성공",projectCode );
+                    return result;
+                }else{
+                    result.put("이미 이관한 프로젝트",projectCode );
+                    return result;
+                }
 
-                return result;
             } else { //프로젝트 조회 실패
 
                 result.put("프로젝트 조회 실패", projectCode);

@@ -16,4 +16,5 @@ public class CreateBulkResultDTO {
     private List<String> success;
     private List<String> fail;
     private List<String> searchFail;
+    private List<String> allready;
 }

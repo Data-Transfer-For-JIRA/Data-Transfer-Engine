@@ -24,8 +24,8 @@ public class ProjectConfig {
     @Value("${project.create.url}")
     public String url;
 
-    @Value("${issueTypeSchemeId.default}")
-    public  String issuetypeId;
+//    @Value("${issueTypeSchemeId.default}")
+//    public  String issuetypeId;
 
     @Value("${issueTypeScreenScheme.project}")
     public  String projectIssueType;
