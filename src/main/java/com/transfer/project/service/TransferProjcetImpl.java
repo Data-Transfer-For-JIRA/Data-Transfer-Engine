@@ -141,8 +141,8 @@ public class TransferProjcetImpl implements TransferProjcet{
                 String flag = table_info.get().getProjectFlag();
                 String projectName = table_info.get().getProjectName();
                 String projectKey = NamingJiraKey();
-
-                if ("0".equals(flag)) {
+                boolean migrateFlag = table_info.get().getMigrateFlag();
+                if (!migrateFlag) {
                     // 프로젝트 정보 Setting
                     ProjectCreateDTO projectInfo = RequiredData(flag,projectName, projectKey);
                     // 프로젝트 생성
