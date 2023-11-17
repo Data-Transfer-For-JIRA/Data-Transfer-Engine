@@ -1,6 +1,5 @@
 package com.transfer.project.controller;
 
-import com.transfer.project.model.dao.TB_JML_JpaRepository;
 import com.transfer.project.model.dto.CreateBulkResultDTO;
 import com.transfer.project.model.dto.ProjcetCodeDTO;
 import com.transfer.project.model.dto.ProjectCreateDTO;
@@ -14,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
-import springfox.documentation.spring.web.json.Json;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
