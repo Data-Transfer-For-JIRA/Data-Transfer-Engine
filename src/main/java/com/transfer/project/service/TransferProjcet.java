@@ -1,6 +1,5 @@
 package com.transfer.project.service;
 
-import com.transfer.project.model.dao.TB_JML_JpaRepository;
 import com.transfer.project.model.dto.ProjectCreateDTO;
 import com.transfer.project.model.dto.ProjectInfoData;
 import com.transfer.project.model.entity.TB_JML_Entity;
