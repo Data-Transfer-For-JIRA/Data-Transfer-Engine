@@ -1,8 +1,9 @@
 package com.transfer.issue.service;
 
+import com.transfer.issue.model.dto.CreateIssueDTO;
+
 public interface TransferIssue {
 
-    public String transferIssueData(String jiraKey, String projectCode) throws Exception;
+    public String transferIssueData(CreateIssueDTO createIssueDTO) throws Exception;
 
-    public String transferFirstIssue(String jiraKey, String projectCode) throws Exception;
 }

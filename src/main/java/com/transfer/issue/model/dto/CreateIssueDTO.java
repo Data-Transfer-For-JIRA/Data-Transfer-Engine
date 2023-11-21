@@ -1,5 +1,14 @@
 package com.transfer.issue.model.dto;
 
-public class CreateIssueDTO {
+import lombok.*;
 
+@Getter
+@Setter
+@Builder
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
+public class CreateIssueDTO {
+    String jiraKey;
+    String projectCode;
 }
