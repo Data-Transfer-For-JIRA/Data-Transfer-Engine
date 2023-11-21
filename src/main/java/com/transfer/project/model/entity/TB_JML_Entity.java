@@ -36,6 +36,9 @@ public class TB_JML_Entity {
     @Column(name = "WP_NAME")
     private String wssProjectName;
 
+    @Column(name = "FLAG")
+    private String flag;
+
 
     @PrePersist
     public void prePersist() {

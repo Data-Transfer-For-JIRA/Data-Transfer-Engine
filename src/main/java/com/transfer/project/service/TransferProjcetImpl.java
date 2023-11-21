@@ -150,7 +150,7 @@ public class TransferProjcetImpl implements TransferProjcet{
                     // 프로젝트에 이슈타입 연결
                     SetIssueType(Response.getSelf(),flag);
                     // 생성 결과 DB 저장
-                    SaveSuccessData(Response.getKey(),projectCode,projectName,projectInfo.getName());
+                    SaveSuccessData(Response.getKey(),projectCode,projectName,projectInfo.getName(),flag);
                     // 이관 flag 변경
                     CheckMigrateFlag(projectCode);
 
@@ -223,7 +223,7 @@ public class TransferProjcetImpl implements TransferProjcet{
         }
     }
     @Transactional
-    public void SaveSuccessData(String key, String projectCode ,String projectName ,String jiraProjectName) throws Exception{
+    public void SaveSuccessData(String key, String projectCode ,String projectName ,String jiraProjectName, String flag) throws Exception{
 
         logger.info("JIRA 프로젝트 생성 결과 저장");
         TB_JML_Entity save_success_data  = new TB_JML_Entity();
@@ -231,6 +231,7 @@ public class TransferProjcetImpl implements TransferProjcet{
         save_success_data.setProjectCode(projectCode);
         save_success_data.setWssProjectName(projectName);
         save_success_data.setJiraProjectName(jiraProjectName);
+        save_success_data.setFlag(flag);
         TB_JML_JpaRepository.save(save_success_data);
     }
     @Transactional
