@@ -15,6 +15,9 @@ import java.util.Date;
 @Table(name = "PJ_PG_SUB",schema="dbo")
 public class PJ_PG_SUB_Entity {
 
+    @Column(name = "PJT_ID")
+    private String projectId;
+
     @Column(name = "SUB_CD")
     private String projectCode;
 

@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 
 @RestController
 @RequestMapping("/transfer/issue")
@@ -26,7 +28,7 @@ public class TransferIssueController {
             value = {"/"},
             method = {RequestMethod.POST}
     )
-    public String TransferIssueData(@RequestBody CreateIssueDTO createIssueDTO) throws Exception {
+    public Map<String ,String> TransferIssueData(@RequestBody CreateIssueDTO createIssueDTO) throws Exception {
         logger.info("이슈 생성");
         return transferIssue.transferIssueData(createIssueDTO);
     }

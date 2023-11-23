@@ -9,6 +9,5 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateIssueDTO {
-    String jiraKey;
     String projectCode;
 }

@@ -13,4 +13,7 @@ public interface TB_JML_JpaRepository extends JpaRepository<TB_JML_Entity,String
 
     Page<TB_JML_Entity> findAllByOrderByMigratedDateDesc(Pageable pageable);
 
+
+    TB_JML_Entity findByProjectCode(String projectCode);
+
 }
