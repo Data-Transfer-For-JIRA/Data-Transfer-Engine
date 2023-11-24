@@ -2,7 +2,7 @@ package com.transfer.issuetype.service;
 
 import com.account.dto.AdminInfoDTO;
 import com.account.service.Account;
-import com.transfer.issuetype.model.dto.IssueTypeScreenSchemeDTO;
+import com.transfer.issuetype.model.dto.IssueTypeSchemeDTO;
 import com.utils.ProjectConfig;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
@@ -26,19 +26,19 @@ public class TransferIssueTypeImpl implements TransferIssueType{
 
 
     @Override
-    public void setIssueType(IssueTypeScreenSchemeDTO issueTypeScreenSchemeDTO ,String flag) throws Exception{
+    public void setIssueType(IssueTypeSchemeDTO issueTypeSchemeDTO , String flag) throws Exception{
 
         AdminInfoDTO info = account.getAdminInfo(1);
 
         if(flag.equals("P")){
-            issueTypeScreenSchemeDTO.setIssueTypeScreenSchemeId(projectConfig.projectIssueType);
+            issueTypeSchemeDTO.setIssueTypeSchemeId(projectConfig.projectIssueType);
         }else{
-            issueTypeScreenSchemeDTO.setIssueTypeScreenSchemeId(projectConfig.maintenanceIssueType);
+            issueTypeSchemeDTO.setIssueTypeSchemeId(projectConfig.maintenanceIssueType);
         }
 
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-        String endpoint = "/rest/api/3/issuetypescreenscheme/project";
-        WebClientUtils.put(webClient, endpoint, issueTypeScreenSchemeDTO,void.class).block();
+        String endpoint = "/rest/api/2/issuetypescheme/project";
+        WebClientUtils.put(webClient, endpoint, issueTypeSchemeDTO,void.class).block();
 
     }
 

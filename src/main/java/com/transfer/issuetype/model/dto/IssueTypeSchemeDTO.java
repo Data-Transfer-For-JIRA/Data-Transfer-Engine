@@ -10,7 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class IssueTypeScreenSchemeDTO {
-    String issueTypeScreenSchemeId;
+public class IssueTypeSchemeDTO {
+    String issueTypeSchemeId;
     Integer projectId;
 }

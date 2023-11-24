@@ -2,7 +2,7 @@ package com.transfer.project.service;
 
 import com.account.dto.AdminInfoDTO;
 import com.account.service.Account;
-import com.transfer.issuetype.model.dto.IssueTypeScreenSchemeDTO;
+import com.transfer.issuetype.model.dto.IssueTypeSchemeDTO;
 import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.dao.TB_JML_JpaRepository;
 import com.transfer.project.model.dto.ProjectInfoData;
@@ -247,19 +247,23 @@ public class TransferProjcetImpl implements TransferProjcet{
 
         AdminInfoDTO info = account.getAdminInfo(1);
 
-        IssueTypeScreenSchemeDTO issueTypeScreenSchemeDTO = new IssueTypeScreenSchemeDTO();
+        IssueTypeSchemeDTO issueTypeSchemeDTO = new IssueTypeSchemeDTO();
         if(flag.equals("P")){
-            issueTypeScreenSchemeDTO.setIssueTypeScreenSchemeId(projectConfig.projectIssueType);
+            issueTypeSchemeDTO.setIssueTypeSchemeId(projectConfig.projectIssueType);
         }else{
-            issueTypeScreenSchemeDTO.setIssueTypeScreenSchemeId(projectConfig.maintenanceIssueType);
+            issueTypeSchemeDTO.setIssueTypeSchemeId(projectConfig.maintenanceIssueType);
         }
 
-        issueTypeScreenSchemeDTO.setProjectId(projectId);
+        issueTypeSchemeDTO.setProjectId(projectId);
 
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-        String endpoint = "/rest/api/3/issuetypescreenscheme/project";
-        WebClientUtils.put(webClient, endpoint, issueTypeScreenSchemeDTO,void.class).block();
+        String endpoint = "/rest/api/2/issuetypescheme/project";
+        WebClientUtils.put(webClient, endpoint, issueTypeSchemeDTO,void.class).block();
 
+    }
+
+    public void setIssueTypeScreen() throws Exception{
+        // 이슈타입에 이슈타입 스크린을 연결해야함
     }
 
 }

@@ -1,6 +1,6 @@
 package com.transfer.issuetype.controller;
 
-import com.transfer.issuetype.model.dto.IssueTypeScreenSchemeDTO;
+import com.transfer.issuetype.model.dto.IssueTypeSchemeDTO;
 import com.transfer.issuetype.service.TransferIssueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,9 +28,9 @@ public class TransferIssueTypeController {
             value = {"/set"},
             method = {RequestMethod.PUT}
     )
-    public void SetIssueType(@RequestBody IssueTypeScreenSchemeDTO issueTypeScreenSchemeDTO,@RequestParam String flag) throws Exception {
+    public void SetIssueType(@RequestBody IssueTypeSchemeDTO issueTypeSchemeDTO, @RequestParam String flag) throws Exception {
 
-        transferIssueType.setIssueType(issueTypeScreenSchemeDTO,flag);
+        transferIssueType.setIssueType(issueTypeSchemeDTO,flag);
 
     }
 
