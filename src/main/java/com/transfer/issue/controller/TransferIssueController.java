@@ -25,11 +25,11 @@ public class TransferIssueController {
      * */
     @ResponseBody
     @RequestMapping(
-            value = {"/"},
+            value = {""},
             method = {RequestMethod.POST}
     )
     public Map<String ,String> TransferIssueData(@RequestBody CreateIssueDTO createIssueDTO) throws Exception {
-        logger.info("이슈 생성");
+        logger.info("이슈 생성 컨트롤러 진입");
         return transferIssue.transferIssueData(createIssueDTO);
     }
 

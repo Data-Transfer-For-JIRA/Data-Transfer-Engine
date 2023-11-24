@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface PJ_PG_SUB_JpaRepository extends JpaRepository<PJ_PG_SUB_Entity,String> {
 
-    List<PJ_PG_SUB_Entity> findAllByProjectCodeOrderByCreationDateDesc(String porjectCode);
+    List<PJ_PG_SUB_Entity> findAllByProjectCodeOrderByCreationDateAsc(String porjectCode);
 }

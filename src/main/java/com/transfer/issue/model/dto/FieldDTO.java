@@ -30,31 +30,61 @@ public class FieldDTO {
 
     @Getter
     @Setter
-    private class Project{
+    @Builder
+    @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class Project{
         String id;
     }
     @Getter
     @Setter
-    private class Assignee{
+    @Builder
+    @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class Assignee{
         String accountId;
     }
     @Getter
     @Setter
-    private class Status{
+    @Builder
+    @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class Status{
         String id;
     }
     @Getter
     @Setter
-    private class IssueType{
+    @Builder
+    @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class IssueType{
         String id;
     }
     @Getter
     @Setter
-    private class Description{
+    @Builder
+    @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class Description{
         private List<ContentDTO> content;
         @Getter
         @Setter
-        public class ContentDTO {
+        @Builder
+        @ToString
+        @NoArgsConstructor
+        @AllArgsConstructor
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        public static class ContentDTO {
             private String text;
         }
 

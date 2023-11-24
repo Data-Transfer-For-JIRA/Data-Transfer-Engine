@@ -23,8 +23,9 @@ public class PJ_PG_SUB_Entity {
 
     @Temporal(TemporalType.DATE)
     @Column(name = "SUB_DT")
-    private String creationDate;
+    private Date creationDate;
 
+    @Id
     @Column(name = "SUB_PS")
     private String writer;
 
