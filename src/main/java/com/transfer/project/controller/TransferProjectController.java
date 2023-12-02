@@ -198,5 +198,16 @@ public class TransferProjectController {
 
         return createBulkResultDTO;
     }
+    /*
+    *  해당 지라키가 지라 서버에 존재하는지 확인하는 컨트롤러
+    * */
+    @ResponseBody
+    @RequestMapping(
+            value = {"/check/jirakey"},
+            method = {RequestMethod.GET}
+    )
+    public Boolean  checkJiraKey(@RequestParam String jiraKey) throws Exception {
+        return  transferProjcet.checkValidationJiraKey(jiraKey);
+    }
 
 }

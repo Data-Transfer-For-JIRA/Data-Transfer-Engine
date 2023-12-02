@@ -2,6 +2,7 @@ package com.transfer.project.service;
 
 import com.account.dto.AdminInfoDTO;
 import com.account.service.Account;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.transfer.issuetype.model.dto.IssueTypeSchemeDTO;
 import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.dao.TB_JML_JpaRepository;
@@ -201,27 +202,46 @@ public class TransferProjcetImpl implements TransferProjcet{
         String jiraProjectName;
 
         if (flag.equals("P")) { //프로젝트
-            jiraProjectName = "전자문서_프로젝트_WSS_(" + projectName + ")";
+            jiraProjectName = "ED-P_WSS_" + projectName + ")";
             projectInfo.setName(jiraProjectName);
 
         } else { // 유지보수
-            jiraProjectName = "전자문서_유지보수_WSS_(" + projectName + ")";
+            jiraProjectName = "ED-M_WSS_(" + projectName + ")";
             projectInfo.setName(jiraProjectName);
         }
         return projectInfo;
     }
     @Transactional
-    public String NamingJiraKey() throws Exception{
-
+    public String NamingJiraKey() throws Exception {
+        String jiraKey;
         long count = TB_JML_JpaRepository.count();
-        if (count == 0) {
+        if (count == 0) { // 최초
             return "TWSS1";
-        }else{
-            String recent_key =TB_JML_JpaRepository.findTopByOrderByMigratedDateDesc().getKey();
-            int num = Integer.parseInt(recent_key.substring(4));
-            return "TWSS" + (num + 1);
+        } else {
+            String recentKey = TB_JML_JpaRepository.findTopByOrderByMigratedDateDesc().getKey();
+            int num = Integer.parseInt(recentKey.substring(4));
+            while (true) {
+                num++;
+                jiraKey = "TWSS" + num;
+                if (checkValidationJiraKey(jiraKey)) {
+                    return jiraKey;
+                }
+            }
         }
     }
+
+    public Boolean checkValidationJiraKey(String key) throws Exception{
+        try {
+            AdminInfoDTO info = account.getAdminInfo(1);
+            WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
+            String endpoint = "/rest/api/3/project/"+key;
+            WebClientUtils.get(webClient,endpoint, JsonNode.class).block();
+            return false; // 있는 프로젝트
+        }catch (Exception e){
+            return true; // 없는 프로젝트
+        }
+    }
+
     @Transactional
     public void SaveSuccessData(String key, String projectCode ,String projectName ,String jiraProjectName, String flag) throws Exception{
 
