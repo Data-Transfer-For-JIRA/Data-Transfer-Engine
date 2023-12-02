@@ -211,7 +211,10 @@ public class TransferProjcetImpl implements TransferProjcet{
         }
         return projectInfo;
     }
-    @Transactional
+    /*
+     * 리펙토링 필요 2023 12 02
+     * - 중복 제거 하였지만 효율서이 떨어짐
+     * */
     public String NamingJiraKey() throws Exception {
         String jiraKey;
         long count = TB_JML_JpaRepository.count();
@@ -242,7 +245,6 @@ public class TransferProjcetImpl implements TransferProjcet{
         }
     }
 
-    @Transactional
     public void SaveSuccessData(String key, String projectCode ,String projectName ,String jiraProjectName, String flag) throws Exception{
 
         logger.info("JIRA 프로젝트 생성 결과 저장");
@@ -254,7 +256,6 @@ public class TransferProjcetImpl implements TransferProjcet{
         save_success_data.setFlag(flag);
         TB_JML_JpaRepository.save(save_success_data);
     }
-    @Transactional
     public void CheckMigrateFlag(String projectCode){
         logger.info("이관 여부 체크");
         TB_PJT_BASE_Entity entity =  TB_PJT_BASE_JpaRepository.findById(projectCode).orElseThrow(() -> new NoSuchElementException("프로젝트 코드 조회에 실패하였습니다.: " + projectCode));
