@@ -4,6 +4,7 @@ import com.account.dto.AdminInfoDTO;
 import com.account.service.Account;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.transfer.issuetype.model.dto.IssueTypeSchemeDTO;
+import com.transfer.issuetype.model.dto.IssueTypeScreenScheme;
 import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.dao.TB_JML_JpaRepository;
 import com.transfer.project.model.dto.ProjectInfoData;
@@ -126,7 +127,10 @@ public class TransferProjcetImpl implements TransferProjcet{
 
         return searchResult;
     }
-
+    /*
+     *  리펙토링 필요 2023 12 02
+     * - 현재 다수의 프로젝트 생성을 초기에 고려하지 않고 구성하여 효율적이지 않음(비동기 처리 필요)
+     * */
     @Override
     @Transactional
     public Map<String, String> CreateProjectFromDB(int personalId,String projectCode) throws Exception {
@@ -152,7 +156,7 @@ public class TransferProjcetImpl implements TransferProjcet{
                     SetIssueType(Response.getSelf(),flag);
                     // 생성 결과 DB 저장
                     SaveSuccessData(Response.getKey(),projectCode,projectName,projectInfo.getName(),flag);
-                    // 이관 flag 변경
+                    // 디비 이관 flag 변경
                     CheckMigrateFlag(projectCode);
 
                     result.put("이관 성공",projectCode );
@@ -190,7 +194,7 @@ public class TransferProjcetImpl implements TransferProjcet{
     }
 
     public ProjectCreateDTO RequiredData(String flag ,String projectName, String projectKey) throws Exception{
-
+        logger.info("JIRA 프로젝트 생성시 필요 데이터 조합");
         ProjectCreateDTO projectInfo = new ProjectCreateDTO(); // 프로젝트 생성 필수 정보
 
         projectInfo.setAssigneeType(projectConfig.assigneType);
@@ -216,6 +220,7 @@ public class TransferProjcetImpl implements TransferProjcet{
      * - 중복 제거 하였지만 효율서이 떨어짐
      * */
     public String NamingJiraKey() throws Exception {
+        logger.info("JIRA 프로젝트 키 생성");
         String jiraKey;
         long count = TB_JML_JpaRepository.count();
         if (count == 0) { // 최초
@@ -232,8 +237,11 @@ public class TransferProjcetImpl implements TransferProjcet{
             }
         }
     }
-
+    /*
+    *  리펙토링 필요 2023 12 02
+    * */
     public Boolean checkValidationJiraKey(String key) throws Exception{
+        logger.info("JIRA 프로젝트 키 유효성 체크 ");
         try {
             AdminInfoDTO info = account.getAdminInfo(1);
             WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
@@ -270,9 +278,9 @@ public class TransferProjcetImpl implements TransferProjcet{
 
         IssueTypeSchemeDTO issueTypeSchemeDTO = new IssueTypeSchemeDTO();
         if(flag.equals("P")){
-            issueTypeSchemeDTO.setIssueTypeSchemeId(projectConfig.projectIssueType);
+            issueTypeSchemeDTO.setIssueTypeSchemeId(projectConfig.projectIssueTypeScheme);
         }else{
-            issueTypeSchemeDTO.setIssueTypeSchemeId(projectConfig.maintenanceIssueType);
+            issueTypeSchemeDTO.setIssueTypeSchemeId(projectConfig.maintenanceIssueTypeScheme);
         }
 
         issueTypeSchemeDTO.setProjectId(projectId);
@@ -281,10 +289,29 @@ public class TransferProjcetImpl implements TransferProjcet{
         String endpoint = "/rest/api/2/issuetypescheme/project";
         WebClientUtils.put(webClient, endpoint, issueTypeSchemeDTO,void.class).block();
 
+
+        setIssueTypeScreen(flag, String.valueOf(projectId));
+
     }
 
-    public void setIssueTypeScreen() throws Exception{
-        // 이슈타입에 이슈타입 스크린을 연결해야함
+    public void setIssueTypeScreen( String flag ,String projectId) throws Exception{
+        logger.info("이슈 타입 스크린 프로젝트 연결");
+        IssueTypeScreenScheme issueTypeScreenScheme = new IssueTypeScreenScheme();
+
+
+        AdminInfoDTO info = account.getAdminInfo(1);
+        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
+        String endpoint;
+        if(flag.equals("P")){
+            issueTypeScreenScheme.setIssueTypeScreenSchemeId(projectConfig.projectIssueTypeScreenScheme);
+            endpoint = "/rest/api/2/issuetypescreenscheme/project";
+        }else{
+            issueTypeScreenScheme.setIssueTypeScreenSchemeId(projectConfig.maintenanceIssueTypeScreenScheme);
+            endpoint = "/rest/api/2/issuetypescreenscheme/project";
+        }
+        issueTypeScreenScheme.setProjectId(projectId);
+
+        WebClientUtils.put(webClient, endpoint, issueTypeScreenScheme,void.class).block();
     }
 
 }

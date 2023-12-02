@@ -23,4 +23,6 @@ public interface TransferProjcet {
 
     public Map<String, String> CreateProjectFromDB(int personalId,String projectCode) throws Exception;
 
+    public Boolean checkValidationJiraKey(String key) throws Exception;
+
 }

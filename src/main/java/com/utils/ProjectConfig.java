@@ -28,10 +28,22 @@ public class ProjectConfig {
 //    public  String issuetypeId;
 
     @Value("${issueTypeSchemeId.project}")
-    public  String projectIssueType;
+    public  String projectIssueTypeScheme;
 
     @Value("${issueTypeSchemeId.maintenance}")
-    public  String maintenanceIssueType;
+    public  String maintenanceIssueTypeScheme;
+
+    @Value("${issueTypeScreenScheme.project}")
+    public  String projectIssueTypeScreenScheme;
+
+    @Value("${issueTypeScreenScheme.maintenance}")
+    public  String maintenanceIssueTypeScreenScheme;
+
+    @Value("${issueType.project}")
+    public String projectIssueType;
+
+    @Value("${issueType.maintenance}")
+    public String maintenanceIssueType;
 
 
 }

@@ -31,9 +31,9 @@ public class TransferIssueTypeImpl implements TransferIssueType{
         AdminInfoDTO info = account.getAdminInfo(1);
 
         if(flag.equals("P")){
-            issueTypeSchemeDTO.setIssueTypeSchemeId(projectConfig.projectIssueType);
+            issueTypeSchemeDTO.setIssueTypeSchemeId(projectConfig.projectIssueTypeScheme);
         }else{
-            issueTypeSchemeDTO.setIssueTypeSchemeId(projectConfig.maintenanceIssueType);
+            issueTypeSchemeDTO.setIssueTypeSchemeId(projectConfig.maintenanceIssueTypeScheme);
         }
 
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
