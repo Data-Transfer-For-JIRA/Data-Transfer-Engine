@@ -10,10 +10,13 @@ import com.transfer.issue.model.entity.PJ_PG_SUB_Entity;
 import com.transfer.project.model.entity.TB_JML_Entity;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Whitelist;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Date;
@@ -37,7 +40,7 @@ public class TransferIssueImpl implements TransferIssue {
 
     @Autowired
     private com.account.dao.TB_JIRA_USER_JpaRepository TB_JIRA_USER_JpaRepository;
-
+    @Transactional
     @Override
     public Map<String ,String> transferIssueData(CreateIssueDTO createIssueDTO) throws Exception {
         logger.info("이슈 생성 시작");
@@ -58,8 +61,9 @@ public class TransferIssueImpl implements TransferIssue {
             logger.info("이슈생성을 시작합니다.");
             // 이슈 조회
             List<PJ_PG_SUB_Entity> issueList= PJ_PG_SUB_JpaRepository.findAllByProjectCodeOrderByCreationDateAsc(projectCode);
+
             // 조회 대상 지라 유저 아이디
-            String jiraUserId = TB_JIRA_USER_JpaRepository.findByDisplayName(issueList.get(0).getWriter()).getAccountId();
+            String jiraUserId = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(issueList.get(0).getWriter()).getAccountId();
             
             if(createFirstIssue(issueList,jiraProjectKey, jiraUserId)){
                 logger.info("최초 이슈 생성 성공");
@@ -83,6 +87,7 @@ public class TransferIssueImpl implements TransferIssue {
 
         String 이슈내용 = first.getIssueContent();
         Date 생성날짜   = first.getCreationDate();
+        String plainText = Jsoup.clean(이슈내용, Whitelist.none());
 
         FieldDTO fieldDTO            = new FieldDTO();
         FieldDTO.Project   project   = new FieldDTO.Project();

@@ -42,6 +42,12 @@ dependencies {
 
 	//swagger
 	implementation group: 'io.springfox', name: 'springfox-boot-starter', version: '3.0.0'
+
+	//jsoup
+	implementation 'org.jsoup:jsoup:1.14.2'
+
+
+
 }
 
 tasks.named('test') {

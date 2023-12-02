@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TB_JIRA_USER_JpaRepository extends JpaRepository<TB_JIRA_USER_Entity,Integer> {
     TB_JIRA_USER_Entity findByDisplayName(String displayName);
+
+    TB_JIRA_USER_Entity findByDisplayNameContaining(String user);
 }
