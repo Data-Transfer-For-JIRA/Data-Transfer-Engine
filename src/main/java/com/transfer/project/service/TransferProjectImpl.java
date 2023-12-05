@@ -30,7 +30,7 @@ import java.util.*;
 
 @AllArgsConstructor
 @Service("transferProjcet")
-public class TransferProjcetImpl implements TransferProjcet{
+public class TransferProjectImpl implements TransferProject {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     
@@ -206,11 +206,11 @@ public class TransferProjcetImpl implements TransferProjcet{
         String jiraProjectName;
 
         if (flag.equals("P")) { //프로젝트
-            jiraProjectName = "ED-P_WSS_" + projectName + ")";
+            jiraProjectName = "ED-P_WSS_" + projectName;
             projectInfo.setName(jiraProjectName);
 
         } else { // 유지보수
-            jiraProjectName = "ED-M_WSS_(" + projectName + ")";
+            jiraProjectName = "ED-M_WSS_" + projectName;
             projectInfo.setName(jiraProjectName);
         }
         return projectInfo;

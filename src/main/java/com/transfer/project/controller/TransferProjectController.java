@@ -6,7 +6,7 @@ import com.transfer.project.model.dto.ProjectCreateDTO;
 import com.transfer.project.model.dto.ProjectInfoData;
 import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
-import com.transfer.project.service.TransferProjcet;
+import com.transfer.project.service.TransferProject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +29,7 @@ import java.util.Map;
 public class TransferProjectController {
 
     @Autowired
-    private TransferProjcet transferProjcet;
+    private TransferProject transferProject;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -44,7 +44,7 @@ public class TransferProjectController {
     public ProjectInfoData CreateProjectData(@RequestBody ProjectCreateDTO projectCreateDTO,
                                                     ModelMap model, HttpServletRequest request) throws Exception {
 
-        return transferProjcet.createProject(projectCreateDTO);
+        return transferProject.createProject(projectCreateDTO);
     }
     /*
      * DB에서 프로젝트 정보 가져오는 컨트롤러
@@ -58,7 +58,7 @@ public class TransferProjectController {
 
         logger.info("디비 목록 조회");
 
-        return transferProjcet.getDataBaseProjectData(pageIndex,pageSize);
+        return transferProject.getDataBaseProjectData(pageIndex,pageSize);
     }
 
     /*
@@ -73,7 +73,7 @@ public class TransferProjectController {
 
         logger.info("디비 목록 조회");
 
-        return transferProjcet.getDataBeforeProjectData(pageIndex,pageSize);
+        return transferProject.getDataBeforeProjectData(pageIndex,pageSize);
     }
     /*
      * DB에서 이관 전 프로젝트 정보 프로젝트 이름으로 가져오는 컨트롤러
@@ -90,7 +90,7 @@ public class TransferProjectController {
             transferProjcet.getDataBeforeProjectData(pageIndex,pageSize);
         }*/
 
-        return transferProjcet.getDataBeforeSeachProjectData(searchKeyWord,pageIndex,pageSize);
+        return transferProject.getDataBeforeSeachProjectData(searchKeyWord,pageIndex,pageSize);
     }
 
 
@@ -106,7 +106,7 @@ public class TransferProjectController {
 
         logger.info("디비 목록 조회");
 
-        return transferProjcet.getDataAfterProjectData(pageIndex,pageSize);
+        return transferProject.getDataAfterProjectData(pageIndex,pageSize);
     }
 
     /*
@@ -121,7 +121,7 @@ public class TransferProjectController {
 
         logger.info("이관후 목록에서 검색");
 
-        return transferProjcet.getDataAfterSeachProjectData(searchKeyWord,pageIndex,pageSize);
+        return transferProject.getDataAfterSeachProjectData(searchKeyWord,pageIndex,pageSize);
     }
 
     @ResponseBody
@@ -142,7 +142,7 @@ public class TransferProjectController {
 
         logger.info("프로젝트 생성");
 
-        return transferProjcet.CreateProjectFromDB(personalId,projectCode);
+        return transferProject.CreateProjectFromDB(personalId,projectCode);
     }
 
     @ResponseBody
@@ -164,7 +164,7 @@ public class TransferProjectController {
 
         for(int i=0;i<projectCodeDTO.getProjectCode().size();i++){
             String projectCode = projectCodeDTO.getProjectCode().get(i);
-            result = transferProjcet.CreateProjectFromDB(personalId, projectCode);
+            result = transferProject.CreateProjectFromDB(personalId, projectCode);
 
             // 이관 실패인 경우
             if (result.containsKey("이관 실패") && result.get("이관 실패").equals(projectCode)) {
@@ -207,7 +207,7 @@ public class TransferProjectController {
             method = {RequestMethod.GET}
     )
     public Boolean  checkJiraKey(@RequestParam String jiraKey) throws Exception {
-        return  transferProjcet.checkValidationJiraKey(jiraKey);
+        return  transferProject.checkValidationJiraKey(jiraKey);
     }
 
 }

@@ -6,10 +6,9 @@ import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 import org.springframework.data.domain.Page;
 
-import java.util.List;
 import java.util.Map;
 
-public interface TransferProjcet {
+public interface TransferProject {
 
     public ProjectInfoData createProject(ProjectCreateDTO projectCreateDTO) throws Exception;
 
