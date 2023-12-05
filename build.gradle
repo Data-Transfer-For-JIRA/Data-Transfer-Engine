@@ -46,7 +46,8 @@ dependencies {
 	//jsoup
 	implementation 'org.jsoup:jsoup:1.14.2'
 
-
+	//logback
+	implementation 'ch.qos.logback:logback-classic:1.2.6'
 
 }
 
