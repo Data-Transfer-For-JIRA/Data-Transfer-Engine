@@ -91,12 +91,13 @@ public class TransferIssueImpl implements TransferIssue {
 
         FieldDTO fieldDTO            = new FieldDTO();
         FieldDTO.Project   project   = new FieldDTO.Project();
-        FieldDTO.Assignee  assignee  = new FieldDTO.Assignee();
+        FieldDTO.User  assignee  = new FieldDTO.User();
         FieldDTO.Status    status    = new FieldDTO.Status();
         FieldDTO.IssueType issueType = new FieldDTO.IssueType();
 
-        project.setId(jiraProjectKey);
+        project.setKey(jiraProjectKey);
         assignee.setAccountId(jiraUserId);
+
 //        status.setId();
 //        issueType.setId();
 
