@@ -158,7 +158,7 @@ public class TransferProjectController {
         List<String> success = new ArrayList<>();
         List<String> fail = new ArrayList<>();
         List<String> search_fail = new ArrayList<>();
-        List<String> allready = new ArrayList<>();
+        List<String> already = new ArrayList<>();
 
         Map<String, String> result = new HashMap<>();
 
@@ -183,7 +183,7 @@ public class TransferProjectController {
 
             // 이미 이관한 프로젝트인 경우
             if (result.containsKey("이미 이관한 프로젝트") && result.get("이미 이관한 프로젝트").equals(projectCode)) {
-                allready.add(projectCode);
+                already.add(projectCode);
             }
 
 
@@ -194,7 +194,7 @@ public class TransferProjectController {
         createBulkResultDTO.setFail(fail);
         createBulkResultDTO.setSearchFail(search_fail);
         createBulkResultDTO.setSuccess(success);
-        createBulkResultDTO.setAllready(allready);
+        createBulkResultDTO.setAllready(already);
 
         return createBulkResultDTO;
     }
