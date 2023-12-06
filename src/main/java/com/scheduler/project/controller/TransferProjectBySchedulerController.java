@@ -22,9 +22,9 @@ public class TransferProjectBySchedulerController {
             value = {""},
             method = {RequestMethod.POST}
     )
-    public void TransferProjectByScheduler() throws Exception {
+    public void TransferProjectByScheduler(@RequestBody int project_count) throws Exception {
         logger.info("프로젝트 스케줄러를 통한 생성 컨트롤러 진입");
-        transferProjectByScheduler.createProject();
+        transferProjectByScheduler.createProject(project_count);
 
     }
 

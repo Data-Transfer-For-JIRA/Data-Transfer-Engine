@@ -31,13 +31,12 @@ public class TransferProjectBySchedulerImpl implements TransferProjectBySchedule
 
     @Autowired
     private Account account;
-    public void createProject() throws Exception{
+    public void createProject(int project_count) throws Exception{
         String scheduler_result = null;
-        // 프로젝트 10개 조회
-        Pageable pageable = PageRequest.of(0, 5);
+        // 프로젝트 n개 조회
+        Pageable pageable = PageRequest.of(0, project_count);
         Page<TB_PJT_BASE_Entity> page = TB_PJT_BASE_JpaRepository.findAllByMigrateFlagFalseOrderByCreatedDateDesc(pageable);
         // 조회 대상 프로젝트 생성 및 결과 리턴
-
         for(TB_PJT_BASE_Entity project : page){
             String projectCode = project.getProjectCode();
             Map<String, String> create_result = transferProject.CreateProjectFromDB(1, projectCode);
@@ -63,10 +62,8 @@ public class TransferProjectBySchedulerImpl implements TransferProjectBySchedule
             }
 
             Date currentTime = new Date();
-
+            // 스케줄러 결과 저장
             SaveLog.projectSchedulerResult(scheduler_result,currentTime);
-
         }
-
     }
 }
