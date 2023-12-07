@@ -8,6 +8,6 @@ import lombok.*;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateIssueDTO {
-    String projectCode;
+public class CreateIssueDTO<T> {
+    private T fields;
 }
