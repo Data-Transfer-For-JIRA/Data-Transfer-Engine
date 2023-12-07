@@ -7,13 +7,19 @@ project:
     projectTypeKey: business
     url: https://markany.atlassian.net
 
+template:
+  project: 10369 #전자문서사업부_프로젝트_템플릿
+  maintenance: 10370 #전자문서사업부_유지보수_템플릿
+
 issueType: #이슈타입
   project: 10441  # 전자문서 - 프로젝트 기본정보
   maintenance: 10442 # "전자문서 - 유지보수 기본정보"
 
 issueTypeSchemeId: #이슈타입 스킴
-  project: 10644 # 전자문서 - 프로젝트 기본정보
-  maintenance: 11051 #전자문서 - 유지보수 기본정보
+#  project: 10644 # 전자문서 - 프로젝트 기본정보
+#  maintenance: 11051 #전자문서 - 유지보수 기본정보
+  project: 10675  #IHRY
+  maintenance: 10677 #QSHR
 
 issueTypeScreenScheme:
   project: 10339 # "전자문서_이슈유형화면구성표_프로젝트_ePageSafer"

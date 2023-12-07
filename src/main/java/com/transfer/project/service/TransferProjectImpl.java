@@ -7,12 +7,12 @@ import com.transfer.issuetype.model.dto.IssueTypeSchemeDTO;
 import com.transfer.issuetype.model.dto.IssueTypeScreenScheme;
 import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.dao.TB_JML_JpaRepository;
-import com.transfer.project.model.dto.ProjectInfoData;
+import com.transfer.project.model.dto.CreateProjectResponseDTO;
 
 import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 
-import com.transfer.project.model.dto.ProjectCreateDTO;
+import com.transfer.project.model.dto.CreateProjectDTO;
 import com.utils.ProjectConfig;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
@@ -49,21 +49,21 @@ public class TransferProjectImpl implements TransferProject {
 
 
     @Override
-    public ProjectInfoData createProject(ProjectCreateDTO projectCreateDTO) throws Exception{
+    public CreateProjectResponseDTO createProject(CreateProjectDTO createProjectDTO) throws Exception{
 
         try {
         AdminInfoDTO info = account.getAdminInfo(1); //회원 가입 고려시 변경
 
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
 
-        projectCreateDTO.setAssigneeType(projectConfig.assigneType);
-        projectCreateDTO.setCategoryId(projectConfig.categoryId);
-        projectCreateDTO.setLeadAccountId(projectConfig.leadAccountId);
-        projectCreateDTO.setProjectTypeKey(projectConfig.projectTypeKey);
+        createProjectDTO.setAssigneeType(projectConfig.assigneType);
+        createProjectDTO.setCategoryId(projectConfig.categoryId);
+        createProjectDTO.setLeadAccountId(projectConfig.leadAccountId);
+        createProjectDTO.setProjectTypeKey(projectConfig.projectTypeKey);
 
 
         String endpoint = "/rest/api/3/project";
-        ProjectInfoData Response = WebClientUtils.post(webClient, endpoint, projectCreateDTO, ProjectInfoData.class).block();
+        CreateProjectResponseDTO Response = WebClientUtils.post(webClient, endpoint, createProjectDTO, CreateProjectResponseDTO.class).block();
 
             return Response;
         } catch (Exception e) {
@@ -127,14 +127,11 @@ public class TransferProjectImpl implements TransferProject {
 
         return searchResult;
     }
-    /*
-     *  리펙토링 필요 2023 12 02
-     * - 현재 다수의 프로젝트 생성을 초기에 고려하지 않고 구성하여 효율적이지 않음(비동기 처리 필요)
-     * */
+
+
     @Override
     @Transactional
-    public Map<String, String> CreateProjectFromDB(int personalId,String projectCode) throws Exception {
-
+    public Map<String, String> CreateProjectFromDB(int personalId,String projectCode) throws Exception{
         logger.info("프로젝트 생성 시작");
 
         Map<String, String> result = new HashMap<>();
@@ -149,13 +146,14 @@ public class TransferProjectImpl implements TransferProject {
                 boolean migrateFlag = table_info.get().getMigrateFlag();
                 if (!migrateFlag) {
                     // 프로젝트 정보 Setting
-                    ProjectCreateDTO projectInfo = RequiredData(flag,projectName, projectKey);
+                    CreateProjectDTO projectInfo = RequiredData(flag,projectName, projectKey);
                     // 프로젝트 생성
-                    ProjectInfoData Response = createJiraProject(personalId, projectInfo);
+                    CreateProjectResponseDTO Response = createJiraProject(personalId, projectInfo);
                     // 프로젝트에 이슈타입 연결
-                    SetIssueType(Response.getSelf(),flag);
+                    // SetIssueType(Response.getSelf(),flag); // 프로젝트 기본 생성 방법
                     // 생성 결과 DB 저장
-                    SaveSuccessData(Response.getKey(),projectCode,projectName,projectInfo.getName(),flag);
+                    //SaveSuccessData(Response.getKey(),projectCode,projectName,projectInfo.getName(),flag); // 프로젝트 기본 생성 방법
+                    SaveSuccessData(Response.getProjectKey() ,projectCode,projectName,projectInfo.getName(),flag); // 템플릿을 통한 생성 방법
                     // 디비 이관 flag 변경
                     CheckMigrateFlag(projectCode);
 
@@ -179,42 +177,55 @@ public class TransferProjectImpl implements TransferProject {
         }
 
         return result;
-
     }
 
-    public ProjectInfoData createJiraProject(int personalId ,ProjectCreateDTO projectCreateDTO) throws Exception{
+    public CreateProjectResponseDTO createJiraProject(int personalId , CreateProjectDTO createProjectDTO) throws Exception{
         logger.info("JIRA 프로젝트 생성 시작");
         AdminInfoDTO info = account.getAdminInfo(personalId);
 
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-        String endpoint = "/rest/api/3/project";
-        ProjectInfoData Response = WebClientUtils.post(webClient, endpoint, projectCreateDTO, ProjectInfoData.class).block();
+        // 프로젝트 기본 생성 방법
+        // String endpoint = "/rest/api/3/project";
+
+        // 템플릿을 통한 생성 방법
+        String endpoint = "/rest/simplified/latest/project/shared";
+
+        CreateProjectResponseDTO Response = WebClientUtils.post(webClient, endpoint, createProjectDTO, CreateProjectResponseDTO.class).block();
         return Response;
 
     }
-
-    public ProjectCreateDTO RequiredData(String flag ,String projectName, String projectKey) throws Exception{
+    // 프로젝트 기본 생성 방법
+    public CreateProjectDTO RequiredData(String flag , String projectName, String projectKey) throws Exception{
         logger.info("JIRA 프로젝트 생성시 필요 데이터 조합");
-        ProjectCreateDTO projectInfo = new ProjectCreateDTO(); // 프로젝트 생성 필수 정보
+        CreateProjectDTO projectInfo = new CreateProjectDTO(); // 프로젝트 생성 필수 정보
 
+        /*
+        // 프로젝트 기본 생성 방법
         projectInfo.setAssigneeType(projectConfig.assigneType);
         projectInfo.setCategoryId(projectConfig.categoryId);
         projectInfo.setKey(projectKey);
         projectInfo.setLeadAccountId(projectConfig.leadAccountId);
-        projectInfo.setProjectTypeKey(projectConfig.projectTypeKey);
+        projectInfo.setProjectTypeKey(projectConfig.projectTypeKey);*/
+
+        // 템플릿을 통한 생성 방법
+        projectInfo.setKey(projectKey);
 
         String jiraProjectName;
 
         if (flag.equals("P")) { //프로젝트
             jiraProjectName = "ED-P_WSS_" + projectName;
             projectInfo.setName(jiraProjectName);
+            projectInfo.setExistingProjectId(projectConfig.projectTemplate);
 
         } else { // 유지보수
             jiraProjectName = "ED-M_WSS_" + projectName;
             projectInfo.setName(jiraProjectName);
+            projectInfo.setExistingProjectId(projectConfig.maintenanceTemplate);
         }
         return projectInfo;
     }
+
+
     /*
      * 리펙토링 필요 2023 12 02
      * - 중복 제거 하였지만 효율서이 떨어짐

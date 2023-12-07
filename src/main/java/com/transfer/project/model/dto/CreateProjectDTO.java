@@ -10,7 +10,9 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ProjectCreateDTO {
+public class CreateProjectDTO {
+
+    //=================================== 프로젝트 생성(직접생성) =========================================//
 
     private String assigneeType;
     // 설정값: UNASSIGNED
@@ -36,5 +38,11 @@ public class ProjectCreateDTO {
     private String url ;
     // 설정 값: https://markany.atlassian.net
     // 설명 : 생성 경로
+
+
+    //=================================== 프로젝트 생성(프로젝트 템플릿 설정 공유) =========================================//
+
+    private String existingProjectId; // 연결 대상 템플릿
+
 
 }

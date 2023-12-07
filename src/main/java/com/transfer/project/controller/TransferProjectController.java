@@ -2,8 +2,8 @@ package com.transfer.project.controller;
 
 import com.transfer.project.model.dto.CreateBulkResultDTO;
 import com.transfer.project.model.dto.ProjcetCodeDTO;
-import com.transfer.project.model.dto.ProjectCreateDTO;
-import com.transfer.project.model.dto.ProjectInfoData;
+import com.transfer.project.model.dto.CreateProjectDTO;
+import com.transfer.project.model.dto.CreateProjectResponseDTO;
 import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 import com.transfer.project.service.TransferProject;
@@ -41,10 +41,10 @@ public class TransferProjectController {
             value = {"/create/test"},
             method = {RequestMethod.POST}
     )
-    public ProjectInfoData CreateProjectData(@RequestBody ProjectCreateDTO projectCreateDTO,
-                                                    ModelMap model, HttpServletRequest request) throws Exception {
+    public CreateProjectResponseDTO CreateProjectData(@RequestBody CreateProjectDTO createProjectDTO,
+                                                      ModelMap model, HttpServletRequest request) throws Exception {
 
-        return transferProject.createProject(projectCreateDTO);
+        return transferProject.createProject(createProjectDTO);
     }
     /*
      * DB에서 프로젝트 정보 가져오는 컨트롤러
