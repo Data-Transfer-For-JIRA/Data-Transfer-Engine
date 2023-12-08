@@ -39,7 +39,7 @@ public class CustomFieldDTO extends FieldDTO {
     private Field customfield_10272;
 
     @JsonProperty("team")
-    private Field customfield_10001;
+    private String customfield_10001;
 
     @JsonProperty("part")
     private Field customfield_10279;

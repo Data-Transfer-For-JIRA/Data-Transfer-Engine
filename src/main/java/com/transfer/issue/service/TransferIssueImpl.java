@@ -46,7 +46,7 @@ public class TransferIssueImpl implements TransferIssue {
         logger.info("이슈 생성 시작");
         Map<String, String> result = new HashMap<>();
 
-        String projectCode = createIssueDTO.getProjectCode();
+        String projectCode = null; // = createIssueDTO.getProjectCode();
 
         // 생성할 프로젝트 조회
         TB_JML_Entity project = checkProjectCreated(projectCode);
@@ -92,8 +92,8 @@ public class TransferIssueImpl implements TransferIssue {
         FieldDTO fieldDTO            = new FieldDTO();
         FieldDTO.Project   project   = new FieldDTO.Project();
         FieldDTO.User  assignee  = new FieldDTO.User();
-        FieldDTO.Status    status    = new FieldDTO.Status();
-        FieldDTO.IssueType issueType = new FieldDTO.IssueType();
+        //FieldDTO.Status    status    = new FieldDTO.Status();
+        //FieldDTO.IssueType issueType = new FieldDTO.IssueType();
 
         project.setKey(jiraProjectKey);
         assignee.setAccountId(jiraUserId);
