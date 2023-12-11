@@ -49,29 +49,29 @@ public class TransferIssueImpl implements TransferIssue {
         String projectCode = null; // = createIssueDTO.getProjectCode();
 
         // 생성할 프로젝트 조회
-        TB_JML_Entity project = checkProjectCreated(projectCode);
-        // 지라 프로젝트 키
-        String jiraProjectKey  = project.getKey();
-        
-        if(project == null){
-            logger.info("생성된 프로젝트가 아닙니다.");
-            result.put("해당 프로젝트는 지라에없습니다.",projectCode);
-        }else{
-            // WSS 데이터 조회
-            logger.info("이슈생성을 시작합니다.");
-            // 이슈 조회
-            List<PJ_PG_SUB_Entity> issueList= PJ_PG_SUB_JpaRepository.findAllByProjectCodeOrderByCreationDateAsc(projectCode);
-
-            // 조회 대상 지라 유저 아이디
-            String jiraUserId = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(issueList.get(0).getWriter()).getAccountId();
-            
-            if(createFirstIssue(issueList,jiraProjectKey, jiraUserId)){
-                logger.info("최초 이슈 생성 성공");
-                createBulkIssue(issueList,jiraProjectKey ,jiraUserId);
-            }else{
-                result.put("이슈 생성 실패",projectCode);
-            }
-        }
+//        TB_JML_Entity project = checkProjectCreated(projectCode);
+//        // 지라 프로젝트 키
+//        String jiraProjectKey  = project.getKey();
+//
+//        if(project == null){
+//            logger.info("생성된 프로젝트가 아닙니다.");
+//            result.put("해당 프로젝트는 지라에없습니다.",projectCode);
+//        }else{
+//            // WSS 데이터 조회
+//            logger.info("이슈생성을 시작합니다.");
+//            // 이슈 조회
+//            List<PJ_PG_SUB_Entity> issueList= PJ_PG_SUB_JpaRepository.findAllByProjectCodeOrderByCreationDateAsc(projectCode);
+//
+//            // 조회 대상 지라 유저 아이디
+//            String jiraUserId = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(issueList.get(0).getWriter()).getAccountId();
+//
+//            if(createFirstIssue(issueList,jiraProjectKey, jiraUserId)){
+//                logger.info("최초 이슈 생성 성공");
+//                createBulkIssue(issueList,jiraProjectKey ,jiraUserId);
+//            }else{
+//                result.put("이슈 생성 실패",projectCode);
+//            }
+//        }
         return result;
     }
     public TB_JML_Entity checkProjectCreated(String projectCode){
