@@ -40,26 +40,40 @@ public class TB_PJT_BASE_Entity {
     //============================================== 왼쪽 데이터 ============================
     // 고객사
     @Column(name = "BS_CLIENT")
-    private String 고객사;
+    private String client;
 
     // 계약사
     @Column(name = "BS_CONTRACTOR")
-    private String 계약사;
+    private String contractor;
     
-    // 영업 담당자
+    // 영업 대표
     @Column(name = "BS_BUSINESS")
-    private String 영업담당자;
+    private String salesManager;
+
+    // 담당 엔지니어
+    @Column(name = "BS_MASTAFF")
+    private String assignedEngineer;
+
 
     // 계약 여부
     @Column(name = "BS_CONYN")
-    private Boolean 계약여부;
+    private Boolean contract;
 
     // 점검 방식
     @Column(name = "BS_CHKTYPE")
-    private String 점검방식;
+    private String inspectionType;
 
+    // 계약 기간 시작
+    @Column(name = "BS_REALSTARTDATE")
+    private Date contractStartDate;
+
+    // 계약 기간 종료
+    @Column(name = "BS_REALENDDATE")
+    private Date contractEndDate;
+
+    // 프로젝트단계
     @Column(name = "BS_STEP")
-    private int 프로젝트단계;
+    private int projectPhase;
     /*
     * 0: 사전프로젝트
     * 1: 확정프로젝트
@@ -72,30 +86,32 @@ public class TB_PJT_BASE_Entity {
     * 93:프로젝트 종료(M 계약)
     * 94:프로젝트 종료(M 미계약)
     * */
-
+    
+    /*======================연락처========================*/
     // 연락처 => WSS에 데이터가 정형화되어 들어가있지 않음
     // 고객사 담당자 이름
     @Column(name = "BS_SITESTAFF")
-    private String 담당자이름;
+    private String clientName;
 
     // 고객사 담당자 연락처
     @Column(name = "BS_SITEPHONE")
-    private String 담당자연락처;
+    private String clientPhoneNumber;
 
     // 고객사 담당자 이메일
     @Column(name = "BS_SITEMAIL")
-    private String 담당자이메일;
-
+    private String clientEmail;
+    /*=================================================*/
+    
     // 관련 프로젝트
     @Column(name = "BS_PARENTS_PJTCD")
-    private String BS_PARENTS_PJTCD;
+    private String linkedProjectCode;
     /*
     *  관련 프로젝트 필드에는 해당 프로젝트의 유지보수 코드가 연결되어있음
     * */
 
     // 제품
     @Column(name = "BS_PRODUCTTYPE")
-    private int 제품;
+    private int productType;
     /*
     *  제품 타입
     *  zero 12
@@ -103,26 +119,44 @@ public class TB_PJT_BASE_Entity {
     *  activx 10
     * */
 
+    // 연동 방법
     @Column(name = "BS_LINK")
-    private String 연동;
+    private String connectionType;
     /*
      * 연동
      * HTML, OZ,입력 데이터
      * */
+    // WebDRM인 경우  BS_PRODUCTTYPE는 exe 이면서 연동은 WebDRM이다
 
-    // 바코드
+    // 바코드 BS_BARCODETYPE
+    @Column(name = "BS_BARCODETYPE")
+    private int barcodeType;
+    /*
+    *  기본 : 0 , 3단 : 1
+    * */
 
-    // 지원 범위
+    // 지원 범위 BS_PRINTER
+    @Column(name = "BS_PRINTER")
+    private String printer;
+    /*
+    *  모두 지원/공유 지원
+    *  모두 지원/공유 불가
+    *  등록 지원/공유 지원
+    *  등록 지원/공유 불가
+    * */
 
-    // 지원 OS
+    // 지원 OS BS_OS
+    @Column(name = "BS_OS")
+    private String supportType;
+    /*
+    *  Windows
+    *  Multi OS
+    * */
 
-    // 찌원 BS
 
-    // URL
-
-    // 데이터 파일
-
-    // 모듈 버전
+    // 모듈 버전 BS_CABVER
+    @Column(name = "BS_CABVER")
+    private String clientType;
 
 
 }
