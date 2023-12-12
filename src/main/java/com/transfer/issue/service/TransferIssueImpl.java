@@ -4,6 +4,7 @@ package com.transfer.issue.service;
 import com.account.dto.AdminInfoDTO;
 import com.account.service.Account;
 import com.transfer.issue.model.dao.PJ_PG_SUB_JpaRepository;
+import com.transfer.issue.model.dto.CreateBulkIssueDTO;
 import com.transfer.issue.model.dto.CreateIssueDTO;
 import com.transfer.issue.model.dto.FieldDTO;
 import com.transfer.issue.model.entity.PJ_PG_SUB_Entity;
@@ -49,29 +50,29 @@ public class TransferIssueImpl implements TransferIssue {
         String projectCode = null; // = createIssueDTO.getProjectCode();
 
         // 생성할 프로젝트 조회
-//        TB_JML_Entity project = checkProjectCreated(projectCode);
-//        // 지라 프로젝트 키
-//        String jiraProjectKey  = project.getKey();
-//
-//        if(project == null){
-//            logger.info("생성된 프로젝트가 아닙니다.");
-//            result.put("해당 프로젝트는 지라에없습니다.",projectCode);
-//        }else{
-//            // WSS 데이터 조회
-//            logger.info("이슈생성을 시작합니다.");
-//            // 이슈 조회
-//            List<PJ_PG_SUB_Entity> issueList= PJ_PG_SUB_JpaRepository.findAllByProjectCodeOrderByCreationDateAsc(projectCode);
-//
-//            // 조회 대상 지라 유저 아이디
-//            String jiraUserId = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(issueList.get(0).getWriter()).getAccountId();
-//
-//            if(createFirstIssue(issueList,jiraProjectKey, jiraUserId)){
-//                logger.info("최초 이슈 생성 성공");
-//                createBulkIssue(issueList,jiraProjectKey ,jiraUserId);
-//            }else{
-//                result.put("이슈 생성 실패",projectCode);
-//            }
-//        }
+        TB_JML_Entity project = checkProjectCreated(projectCode);
+        // 지라 프로젝트 키
+        String jiraProjectKey  = project.getKey();
+
+        if(project == null){
+            logger.info("생성된 프로젝트가 아닙니다.");
+            result.put("해당 프로젝트는 지라에없습니다.",projectCode);
+        }else{
+            // WSS 데이터 조회
+            logger.info("이슈생성을 시작합니다.");
+            // 이슈 조회
+            List<PJ_PG_SUB_Entity> issueList= PJ_PG_SUB_JpaRepository.findAllByProjectCodeOrderByCreationDateAsc(projectCode);
+
+            // 조회 대상 지라 유저 아이디
+            String jiraUserId = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(issueList.get(0).getWriter()).getAccountId();
+
+            if(createFirstIssue(issueList,jiraProjectKey, jiraUserId)){
+                logger.info("최초 이슈 생성 성공");
+                createBulkIssue(issueList,jiraProjectKey ,jiraUserId);
+            }else{
+                result.put("이슈 생성 실패",projectCode);
+            }
+        }
         return result;
     }
     public TB_JML_Entity checkProjectCreated(String projectCode){
@@ -87,19 +88,13 @@ public class TransferIssueImpl implements TransferIssue {
 
         String 이슈내용 = first.getIssueContent();
         Date 생성날짜   = first.getCreationDate();
-        String plainText = Jsoup.clean(이슈내용, Whitelist.none());
 
-        FieldDTO fieldDTO            = new FieldDTO();
-        FieldDTO.Project   project   = new FieldDTO.Project();
-        FieldDTO.User  assignee  = new FieldDTO.User();
-        //FieldDTO.Status    status    = new FieldDTO.Status();
-        //FieldDTO.IssueType issueType = new FieldDTO.IssueType();
 
-        project.setKey(jiraProjectKey);
-        assignee.setAccountId(jiraUserId);
+        String replaced_string = 이슈내용.replace("<br>", "\n").replace("&nbsp;", "    ");
 
-//        status.setId();
-//        issueType.setId();
+         String plainText = Jsoup.clean(이슈내용, Whitelist.none());
+
+
 
         AdminInfoDTO info = account.getAdminInfo(1);
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
@@ -108,11 +103,14 @@ public class TransferIssueImpl implements TransferIssue {
     }
 
     public String createBulkIssue(List<PJ_PG_SUB_Entity> issueList , String jiraProjectKey, String jiraUserId){
+
         logger.info("나머지 이슈 생성");
+        CreateBulkIssueDTO bulkIssueDTO = new CreateBulkIssueDTO();
+
 
         AdminInfoDTO info = account.getAdminInfo(1);
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-        String endpoint ="";
+        String endpoint ="/rest/api/3/issue/bulk";
         WebClientUtils.post(webClient,endpoint,issueList,String.class);
         return "1";
     }
