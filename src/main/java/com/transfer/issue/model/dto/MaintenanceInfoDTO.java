@@ -20,20 +20,8 @@ public class MaintenanceInfoDTO extends CustomFieldDTO {
     @JsonProperty("maintenance_code")
     private String customfield_10421;
 
-    @JsonProperty("duedate")
-    private String duedate;
-
-    @JsonProperty("job_title")
-    private String customfield_10138;
-
     @JsonProperty("contract_status")
     private Field customfield_10274;
-
-    @JsonProperty("start_date")
-    private String customfield_10134;
-
-    @JsonProperty("verification_url")
-    private String customfield_10183;
 
     @JsonProperty("maintenance_start_date")
     private String customfield_10412;
@@ -49,5 +37,11 @@ public class MaintenanceInfoDTO extends CustomFieldDTO {
 
     @JsonProperty("inspection_method_etc")
     private String customfield_10418;
+
+    @JsonProperty("verification_url")
+    private String customfield_10183;
+
+    @JsonProperty("duedate")
+    private String duedate;
 
 }
