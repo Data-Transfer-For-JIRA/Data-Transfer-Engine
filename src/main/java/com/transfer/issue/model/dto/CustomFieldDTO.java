@@ -57,7 +57,7 @@ public class CustomFieldDTO extends FieldDTO {
     private String customfield_10409;
 
     @JsonProperty("multi_os_support")
-    private Field customfield_10415;
+    private List<Field> customfield_10415;
 
     @JsonProperty("printer_support_range")
     private Field customfield_10247;

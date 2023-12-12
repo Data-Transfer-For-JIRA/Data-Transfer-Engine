@@ -34,7 +34,7 @@ public class FieldDTO {
     private User assignee;
 
     @JsonProperty("labels")
-    private List<String> label;
+    private List<String> labels;
 
     @Getter
     @Setter
