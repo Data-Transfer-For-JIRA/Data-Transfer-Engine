@@ -24,6 +24,9 @@ public class TB_JML_Entity {
     @Column(name = "JP_KEY")
     private String key;
 
+    @Column(name = "JP_ID")
+    private Integer id;
+
     @Column(name = "JP_NAME")
     private String jiraProjectName;
 
