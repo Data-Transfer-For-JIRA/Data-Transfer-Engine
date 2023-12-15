@@ -6,6 +6,6 @@ import java.util.Map;
 
 public interface TransferIssue {
 
-    Map<String ,String> transferIssueData(CreateIssueDTO createIssueDTO) throws Exception;
+    Map<String ,String> transferIssueData(String projectCode) throws Exception;
 
 }

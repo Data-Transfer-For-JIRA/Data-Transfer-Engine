@@ -28,9 +28,9 @@ public class TransferIssueController {
             value = {""},
             method = {RequestMethod.POST}
     )
-    public Map<String ,String> TransferIssueData(@RequestBody CreateIssueDTO createIssueDTO) throws Exception {
+    public Map<String ,String> TransferIssueData(@RequestBody String projectCode ) throws Exception {
         logger.info("이슈 생성 컨트롤러 진입");
-        return transferIssue.transferIssueData(createIssueDTO);
+        return transferIssue.transferIssueData(projectCode);
     }
 
 }

@@ -10,6 +10,7 @@ import com.transfer.issue.model.dto.FieldDTO;
 import com.transfer.issue.model.entity.PJ_PG_SUB_Entity;
 import com.transfer.project.model.entity.TB_JML_Entity;
 import com.utils.WebClientUtils;
+import io.swagger.models.auth.In;
 import lombok.AllArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
@@ -20,10 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @AllArgsConstructor
 @Service("transferIssue")
@@ -41,18 +39,21 @@ public class TransferIssueImpl implements TransferIssue {
 
     @Autowired
     private com.account.dao.TB_JIRA_USER_JpaRepository TB_JIRA_USER_JpaRepository;
+
     @Transactional
     @Override
-    public Map<String ,String> transferIssueData(CreateIssueDTO createIssueDTO) throws Exception {
+    public Map<String ,String> transferIssueData(String projectCode) throws Exception {
         logger.info("이슈 생성 시작");
         Map<String, String> result = new HashMap<>();
-
-        String projectCode = null; // = createIssueDTO.getProjectCode();
 
         // 생성할 프로젝트 조회
         TB_JML_Entity project = checkProjectCreated(projectCode);
         // 지라 프로젝트 키
         String jiraProjectKey  = project.getKey();
+        // 지라 프로젝트 아이디
+        Integer jiraProjectId = project.getId();
+        // 프로젝트 담당자 조회
+        String projectAssignees = project.getProjectAssignees();
 
         if(project == null){
             logger.info("생성된 프로젝트가 아닙니다.");
@@ -62,13 +63,10 @@ public class TransferIssueImpl implements TransferIssue {
             logger.info("이슈생성을 시작합니다.");
             // 이슈 조회
             List<PJ_PG_SUB_Entity> issueList= PJ_PG_SUB_JpaRepository.findAllByProjectCodeOrderByCreationDateAsc(projectCode);
-
-            // 조회 대상 지라 유저 아이디
-            String jiraUserId = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(issueList.get(0).getWriter()).getAccountId();
-
-            if(createFirstIssue(issueList,jiraProjectKey, jiraUserId)){
+            
+            if(createFirstIssue(issueList,jiraProjectKey,projectAssignees)){
                 logger.info("최초 이슈 생성 성공");
-                createBulkIssue(issueList,jiraProjectKey ,jiraUserId);
+                createBulkIssue(issueList,jiraProjectId);
             }else{
                 result.put("이슈 생성 실패",projectCode);
             }
@@ -81,18 +79,17 @@ public class TransferIssueImpl implements TransferIssue {
     }
 
 
-    public Boolean createFirstIssue(List<PJ_PG_SUB_Entity> issueList, String jiraProjectKey, String jiraUserId){
+    public Boolean createFirstIssue(List<PJ_PG_SUB_Entity> issueList, String jiraProjectKey , String projectAssignees) throws Exception {
         logger.info("최초 이슈 생성 시도");
 
-        PJ_PG_SUB_Entity first = issueList.get(0);
+        PJ_PG_SUB_Entity firstIssue = issueList.get(0); // 이슈 최초 컨텐츠
+        String issueContent = firstIssue.getIssueContent(); // 이슈 내용
+        Date creationDate   = firstIssue.getCreationDate(); // 이슈 생성일
+        List<Integer> assignees = returnProjectAssigneeId(projectAssignees); // 프로젝트 담당자 리스트
 
-        String 이슈내용 = first.getIssueContent();
-        Date 생성날짜   = first.getCreationDate();
+        String replaced_string = issueContent.replace("<br>", "\n").replace("&nbsp;", "    ");
 
-
-        String replaced_string = 이슈내용.replace("<br>", "\n").replace("&nbsp;", "    ");
-
-         String plainText = Jsoup.clean(이슈내용, Whitelist.none());
+         String plainText = Jsoup.clean(issueContent, Whitelist.none());
 
 
 
@@ -102,10 +99,48 @@ public class TransferIssueImpl implements TransferIssue {
         return true;
     }
 
-    public String createBulkIssue(List<PJ_PG_SUB_Entity> issueList , String jiraProjectKey, String jiraUserId){
+    public String createBulkIssue(List<PJ_PG_SUB_Entity> issueList , Integer jiraProjectId) throws Exception {
 
         logger.info("나머지 이슈 생성");
+        List<PJ_PG_SUB_Entity> nomalIssueList = issueList.subList(1, issueList.size());
+
         CreateBulkIssueDTO bulkIssueDTO = new CreateBulkIssueDTO();
+
+        List<FieldDTO> issueUpdates = new ArrayList<>();
+
+        for(PJ_PG_SUB_Entity issueData : nomalIssueList){
+
+            Integer wssAssignee = returnIssueAssigneeId(issueData.getWriter());
+            String wssContent  = issueData.getIssueContent();
+            Date wssWriteDate  = issueData.getCreationDate();
+
+
+
+            FieldDTO fieldDTO = new FieldDTO();
+            // 담당자
+            fieldDTO.getAssignee().setAccountId(String.valueOf(wssAssignee));
+            // 프로젝트 아이디
+            fieldDTO.getProject().setId(jiraProjectId);
+            // wss 이슈 제목
+            String summary = "["+wssWriteDate+"] WSS 작성이슈";
+            fieldDTO.setSummary(summary);
+            // wss 이슈
+            fieldDTO.getDescription().setType("doc");
+            fieldDTO.getDescription().setVersion(1);
+
+            FieldDTO.Content content = new FieldDTO.Content();
+            content.setType("paragraph");
+            FieldDTO.ContentItem contentItem = new FieldDTO.ContentItem();
+            contentItem.setText(wssContent);
+            contentItem.setType("text");
+            content.setContent((List<FieldDTO.ContentItem>) contentItem);
+            fieldDTO.getDescription().setContent((List<FieldDTO.Content>) content);
+
+
+            issueUpdates.add(fieldDTO);
+
+        }
+        bulkIssueDTO.setIssueUpdates(issueUpdates);
 
 
         AdminInfoDTO info = account.getAdminInfo(1);
@@ -114,5 +149,45 @@ public class TransferIssueImpl implements TransferIssue {
         WebClientUtils.post(webClient,endpoint,issueList,String.class);
         return "1";
     }
+
+    public List<Integer> returnProjectAssigneeId(String userNames)throws Exception{
+        logger.info("프로젝트 담당자 이름 아이디 변환");
+
+        if(userNames != null && !userNames.trim().isEmpty()){
+            String[] namesArray = userNames.trim().split("\\s*,\\s*");
+
+            List<String> namesArrayList = Arrays.asList(namesArray);
+
+            List<Integer> userIdList = new ArrayList<>();
+
+            for (String name : namesArrayList) {
+
+                Integer userId = Integer.valueOf(TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(name).getAccountId());
+
+                userIdList.add(userId);
+            }
+            // 앞에 2개의 데이터만 추출하여 반환
+            return userIdList.subList(0, Math.min(userIdList.size(), 2));
+        }else {
+            // 담당자 미지정된 프로젝트 (전자문서사업부 아이디)
+            return null;
+        }
+    }
+
+    public Integer returnIssueAssigneeId(String userName) throws Exception{
+        logger.info("이슈 생성자 아이디 변환 및 조회");
+
+        if( userName != null && userName.isEmpty()){
+
+            Integer userId = Integer.valueOf(TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(userName).getAccountId());
+
+            return userId;
+        }else {
+            return null;
+        }
+
+    }
+
+
 
 }
