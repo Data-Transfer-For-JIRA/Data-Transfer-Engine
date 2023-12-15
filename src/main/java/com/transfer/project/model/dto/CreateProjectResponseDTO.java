@@ -16,7 +16,7 @@ public class CreateProjectResponseDTO {
     private String key;
 
     // 템플릿을 통한 프로젝트 생성
-    private Integer projectId;
+    private String projectId;
     private String projectKey;
     private String projectName;
 }

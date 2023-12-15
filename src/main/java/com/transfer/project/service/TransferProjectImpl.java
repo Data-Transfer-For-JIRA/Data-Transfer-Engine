@@ -56,10 +56,10 @@ public class TransferProjectImpl implements TransferProject {
 
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
 
-        createProjectDTO.setAssigneeType(projectConfig.assigneType);
-        createProjectDTO.setCategoryId(projectConfig.categoryId);
-        createProjectDTO.setLeadAccountId(projectConfig.leadAccountId);
-        createProjectDTO.setProjectTypeKey(projectConfig.projectTypeKey);
+//        createProjectDTO.setAssigneeType(projectConfig.assigneType);
+//        createProjectDTO.setCategoryId(projectConfig.categoryId);
+//        createProjectDTO.setLeadAccountId(projectConfig.leadAccountId);
+//        createProjectDTO.setProjectTypeKey(projectConfig.projectTypeKey);
 
 
         String endpoint = "/rest/api/3/project";
@@ -144,6 +144,7 @@ public class TransferProjectImpl implements TransferProject {
                 String projectName = table_info.get().getProjectName();
                 String projectKey = NamingJiraKey();
                 boolean migrateFlag = table_info.get().getMigrateFlag();
+                String assignees = table_info.get().getAssignedEngineer();
                 if (!migrateFlag) {
                     // 프로젝트 정보 Setting
                     CreateProjectDTO projectInfo = RequiredData(flag,projectName, projectKey);
@@ -153,7 +154,7 @@ public class TransferProjectImpl implements TransferProject {
                     // SetIssueType(Response.getSelf(),flag); // 프로젝트 기본 생성 방법
                     // 생성 결과 DB 저장
                     //SaveSuccessData(Response.getKey(),projectCode,projectName,projectInfo.getName(),flag); // 프로젝트 기본 생성 방법
-                    SaveSuccessData(Response.getProjectKey() ,projectCode,projectName,projectInfo.getName(),flag); // 템플릿을 통한 생성 방법
+                    SaveSuccessData(Response.getProjectKey() , Integer.valueOf(Response.getProjectId()),projectCode,projectName,projectInfo.getName(),flag,assignees); // 템플릿을 통한 생성 방법
                     // 디비 이관 flag 변경
                     CheckMigrateFlag(projectCode);
 
@@ -235,13 +236,13 @@ public class TransferProjectImpl implements TransferProject {
         String jiraKey;
         long count = TB_JML_JpaRepository.count();
         if (count == 0) { // 최초
-            return "TWSS1";
+            return "TED1";
         } else {
             String recentKey = TB_JML_JpaRepository.findTopByOrderByMigratedDateDesc().getKey();
             int num = Integer.parseInt(recentKey.substring(4));
             while (true) {
                 num++;
-                jiraKey = "TWSS" + num;
+                jiraKey = "TED" + num;
                 if (checkValidationJiraKey(jiraKey)) {
                     return jiraKey;
                 }
@@ -264,15 +265,17 @@ public class TransferProjectImpl implements TransferProject {
         }
     }
 
-    public void SaveSuccessData(String key, String projectCode ,String projectName ,String jiraProjectName, String flag) throws Exception{
+    public void SaveSuccessData(String key,Integer id ,String projectCode ,String projectName ,String jiraProjectName, String flag ,String projectAssignees) throws Exception{
 
         logger.info("JIRA 프로젝트 생성 결과 저장");
         TB_JML_Entity save_success_data  = new TB_JML_Entity();
         save_success_data.setKey(key);
+        save_success_data.setId(id);
         save_success_data.setProjectCode(projectCode);
         save_success_data.setWssProjectName(projectName);
         save_success_data.setJiraProjectName(jiraProjectName);
         save_success_data.setFlag(flag);
+        save_success_data.setProjectAssignees(projectAssignees);
         TB_JML_JpaRepository.save(save_success_data);
     }
     public void CheckMigrateFlag(String projectCode){

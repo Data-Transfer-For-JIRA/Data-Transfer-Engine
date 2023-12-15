@@ -42,6 +42,8 @@ public class TB_JML_Entity {
     @Column(name = "FLAG")
     private String flag;
 
+    @Column(name = "WP_ASSIGNEES")
+    private String projectAssignees;
 
     @PrePersist
     public void prePersist() {
