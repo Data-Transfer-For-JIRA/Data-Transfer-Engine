@@ -85,7 +85,10 @@ public class TransferIssueImpl implements TransferIssue {
         PJ_PG_SUB_Entity firstIssue = issueList.get(0); // 이슈 최초 컨텐츠
         String issueContent = firstIssue.getIssueContent(); // 이슈 내용
         Date creationDate   = firstIssue.getCreationDate(); // 이슈 생성일
-        List<Integer> assignees = returnProjectAssigneeId(projectAssignees); // 프로젝트 담당자 리스트
+        List<String> assignees = returnProjectAssigneeId(projectAssignees); // 프로젝트 담당자 리스트
+        for (String assignee : assignees) {
+            System.out.println("[::TransferIssueImpl::] assignee -> " + assignee);
+        }
 
         String replaced_string = issueContent.replace("<br>", "\n").replace("&nbsp;", "    ");
 
@@ -110,7 +113,7 @@ public class TransferIssueImpl implements TransferIssue {
 
         for(PJ_PG_SUB_Entity issueData : nomalIssueList){
 
-            Integer wssAssignee = returnIssueAssigneeId(issueData.getWriter());
+            String wssAssignee = returnIssueAssigneeId(issueData.getWriter());
             String wssContent  = issueData.getIssueContent();
             Date wssWriteDate  = issueData.getCreationDate();
 
@@ -150,7 +153,7 @@ public class TransferIssueImpl implements TransferIssue {
         return "1";
     }
 
-    public List<Integer> returnProjectAssigneeId(String userNames)throws Exception{
+    public List<String> returnProjectAssigneeId(String userNames)throws Exception{
         logger.info("프로젝트 담당자 이름 아이디 변환");
 
         if(userNames != null && !userNames.trim().isEmpty()){
@@ -158,11 +161,11 @@ public class TransferIssueImpl implements TransferIssue {
 
             List<String> namesArrayList = Arrays.asList(namesArray);
 
-            List<Integer> userIdList = new ArrayList<>();
+            List<String> userIdList = new ArrayList<>();
 
             for (String name : namesArrayList) {
 
-                Integer userId = Integer.valueOf(TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(name).getAccountId());
+                String userId = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(name).getAccountId();
 
                 userIdList.add(userId);
             }
@@ -174,12 +177,12 @@ public class TransferIssueImpl implements TransferIssue {
         }
     }
 
-    public Integer returnIssueAssigneeId(String userName) throws Exception{
+    public String returnIssueAssigneeId(String userName) throws Exception{
         logger.info("이슈 생성자 아이디 변환 및 조회");
 
         if( userName != null && userName.isEmpty()){
 
-            Integer userId = Integer.valueOf(TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(userName).getAccountId());
+            String userId = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(userName).getAccountId();
 
             return userId;
         }else {
