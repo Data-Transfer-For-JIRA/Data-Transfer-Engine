@@ -42,7 +42,7 @@ public class TransferIssueImpl implements TransferIssue {
 
     @Transactional
     @Override
-    public Map<String ,String> transferIssueData(String projectCode) throws Exception {
+    public Map<String ,String> transferIssueData(TransferIssueDTO transferIssueDTO) throws Exception {
         logger.info("이슈 생성 시작");
         Map<String, String> result = new HashMap<>();
 

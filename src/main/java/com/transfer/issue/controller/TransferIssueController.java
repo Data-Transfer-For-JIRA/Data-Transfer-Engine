@@ -1,6 +1,7 @@
 package com.transfer.issue.controller;
 
 import com.transfer.issue.model.dto.CreateIssueDTO;
+import com.transfer.issue.model.dto.TransferIssueDTO;
 import com.transfer.issue.service.TransferIssue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,9 +29,9 @@ public class TransferIssueController {
             value = {""},
             method = {RequestMethod.POST}
     )
-    public Map<String ,String> TransferIssueData(@RequestBody String projectCode ) throws Exception {
+    public Map<String ,String> TransferIssueData(@RequestBody TransferIssueDTO transferIssueDTO ) throws Exception {
         logger.info("이슈 생성 컨트롤러 진입");
-        return transferIssue.transferIssueData(projectCode);
+        return transferIssue.transferIssueData(transferIssueDTO);
     }
 
 }
