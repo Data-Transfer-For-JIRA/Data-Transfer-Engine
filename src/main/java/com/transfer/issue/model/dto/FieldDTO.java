@@ -31,10 +31,10 @@ public class FieldDTO {
 
     private Comment comment;
 
-    @JsonProperty("engineer")
+    //@JsonProperty("engineer")
     private User assignee;
 
-    @JsonProperty("labels")
+    //@JsonProperty("labels")
     private List<String> labels;
 
     @Getter

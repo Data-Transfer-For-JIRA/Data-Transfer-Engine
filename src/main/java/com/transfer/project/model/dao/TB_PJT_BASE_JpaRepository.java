@@ -27,4 +27,8 @@ public interface TB_PJT_BASE_JpaRepository extends JpaRepository<TB_PJT_BASE_Ent
     Page<TB_PJT_BASE_Entity> findAllByMigrateFlagFalseOrderByCreatedDateDesc(Pageable pageable);
     Page<TB_PJT_BASE_Entity> findByProjectNameContainingAndMigrateFlagFalseOrderByCreatedDateDesc(String keyword,Pageable pageable);
 
+    /*
+    정보 조회
+    * */
+    TB_PJT_BASE_Entity findByProjectCode(String projectCode);
 }

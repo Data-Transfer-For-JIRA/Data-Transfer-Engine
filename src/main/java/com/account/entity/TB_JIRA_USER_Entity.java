@@ -28,4 +28,7 @@ public class TB_JIRA_USER_Entity {
 
     @Column(name = "JU_TEAM")
     private String team;
+
+    @Column(name = "JU_PART")
+    private String part;
 }

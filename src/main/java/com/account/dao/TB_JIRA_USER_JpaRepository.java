@@ -8,4 +8,6 @@ public interface TB_JIRA_USER_JpaRepository extends JpaRepository<TB_JIRA_USER_E
     TB_JIRA_USER_Entity findByDisplayName(String displayName);
 
     TB_JIRA_USER_Entity findByDisplayNameContaining(String user);
+
+    TB_JIRA_USER_Entity findByAccountId(String accountId);
 }

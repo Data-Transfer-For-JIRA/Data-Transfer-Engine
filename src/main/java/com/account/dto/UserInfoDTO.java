@@ -15,4 +15,5 @@ public class UserInfoDTO {
     private String emailAddress;
     private String displayName;
     private String teamName;
+    private String part;
 }

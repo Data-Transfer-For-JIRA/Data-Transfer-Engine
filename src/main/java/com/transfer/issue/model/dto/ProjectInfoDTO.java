@@ -15,16 +15,16 @@ import lombok.experimental.SuperBuilder;
 public class ProjectInfoDTO extends CustomFieldDTO {
 
     // 프로젝트 기본 정보 필드
-    @JsonProperty("project_name")
+    //@JsonProperty("project_name")
     private String customfield_10411;
 
-    @JsonProperty("project_code")
+    //@JsonProperty("project_code")
     private String customfield_10410;
 
-    @JsonProperty("project_assignment_date")
+    //@JsonProperty("project_assignment_date")
     private String customfield_10414;
 
-    @JsonProperty("project_progress_stage")
+    //@JsonProperty("project_progress_step")
     private Field customfield_10280;
 
 }

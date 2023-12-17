@@ -73,7 +73,7 @@ public class TB_PJT_BASE_Entity {
 
     // 프로젝트단계
     @Column(name = "BS_STEP")
-    private int projectPhase;
+    private int projectStep;
     /*
     * 0: 사전프로젝트
     * 1: 확정프로젝트
