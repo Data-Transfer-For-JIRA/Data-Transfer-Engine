@@ -6,12 +6,16 @@ import com.account.entity.TB_JIRA_USER_Entity;
 import com.account.service.Account;
 import com.transfer.issue.model.FieldInfo;
 import com.transfer.issue.model.FieldInfoCategory;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.transfer.issue.model.FieldInfo;
 import com.transfer.issue.model.dao.PJ_PG_SUB_JpaRepository;
 import com.transfer.issue.model.dto.*;
 import com.transfer.issue.model.entity.PJ_PG_SUB_Entity;
 import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
+import com.utils.ProjectConfig;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -22,7 +26,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
+import java.awt.desktop.SystemSleepEvent;
 import java.util.*;
 
 @AllArgsConstructor
@@ -62,16 +69,16 @@ public class TransferIssueImpl implements TransferIssue {
 
         if(project == null){
             logger.info("생성된 프로젝트가 아닙니다.");
-            result.put("해당 프로젝트는 지라에 없습니다.",transferIssueDTO.getProjectCode());
+            result.put("해당 프로젝트는 지라에없습니다.",transferIssueDTO.getProjectCode());
         }else{
             // WSS 데이터 조회
-            logger.info("이슈 생성 시작");
-            // 이슈 조회
+            logger.info("이슈생성을 시작합니다.");
+            // 이슈 시간 기준 오름 차순 조회
             List<PJ_PG_SUB_Entity> issueList= PJ_PG_SUB_JpaRepository.findAllByProjectCodeOrderByCreationDateAsc(transferIssueDTO.getProjectCode());
-            
+
             if(createFirstIssue(issueList,jiraProjectKey,projectAssignees)){
-                logger.info("기본 정보 이슈 생성 성공");
-                //createBulkIssue(issueList,jiraProjectId);
+                logger.info("최초 이슈 생성 성공");
+                createBulkIssue(issueList,jiraProjectId);
             }else{
                 result.put("이슈 생성 실패",transferIssueDTO.getProjectCode());
             }
@@ -79,8 +86,8 @@ public class TransferIssueImpl implements TransferIssue {
         return result;
     }
     public TB_JML_Entity checkProjectCreated(String projectCode){
-        logger.info("지라에 생성된 프로젝트 조회");
-        return TB_JML_JpaRepository.findByProjectCode(projectCode);
+        logger.info("자리에 생성된 프로젝트 조회");
+       return TB_JML_JpaRepository.findByProjectCode(projectCode);
     }
 
 
@@ -108,7 +115,7 @@ public class TransferIssueImpl implements TransferIssue {
         String defaultIssueContent = "\n[" + creationDate  + "]\n본 이슈는 WSS에서 이관한 이슈입니다.\n―――――――――――――――――――――――――――――――\n"; // 이슈 생성 시 기본 문구
         String replacedIssueContent = issueContent.replace("<br>", "\n").replace("&nbsp;", "    "); // 이슈 내용 전처리
         String basicIssueContent = defaultIssueContent + replacedIssueContent; // 이슈 내용
-        
+
         // 1. firstIssue에서 WSS 키 가져오기
         // 2. BASE 테이블에서 필요한 필드 값 가져오기
         // 3. jiraProjectKey를 프로젝트 키로 하여, 필요한 값 할당해서 이슈 생성
@@ -318,48 +325,88 @@ public class TransferIssueImpl implements TransferIssue {
 
         CreateBulkIssueDTO bulkIssueDTO = new CreateBulkIssueDTO();
 
-        List<FieldDTO> issueUpdates = new ArrayList<>();
+        List<CreateBulkIssueFieldsDTO> issueUpdates = new ArrayList<>();
 
         for(PJ_PG_SUB_Entity issueData : nomalIssueList){
 
             String wssAssignee = getOneAssigneeId(issueData.getWriter());
-            String wssContent  = issueData.getIssueContent();
-            Date wssWriteDate  = issueData.getCreationDate();
 
+            String wssContent  = issueData.getIssueContent();
+            wssContent = wssContent.replace("<br>", "\n").replace("&nbsp;", " ");
+            System.out.println("wssContent : "+wssContent);
+            Date wssWriteDate  = issueData.getCreationDate();
+            System.out.println("wssWriteDate : "+wssWriteDate);
 
 
             FieldDTO fieldDTO = new FieldDTO();
             // 담당자
-            fieldDTO.getAssignee().setAccountId(String.valueOf(wssAssignee));
+            FieldDTO.User user = FieldDTO.User.builder()
+                            .accountId(wssAssignee).build();
+            fieldDTO.setAssignee(user);
+
             // 프로젝트 아이디
-            fieldDTO.getProject().setId(jiraProjectId);
+            FieldDTO.Project project = FieldDTO.Project.builder()
+                    .id(jiraProjectId)
+                    .build();
+            fieldDTO.setProject(project);
+
+
             // wss 이슈 제목
             String summary = "["+wssWriteDate+"] WSS 작성이슈";
             fieldDTO.setSummary(summary);
             // wss 이슈
-            fieldDTO.getDescription().setType("doc");
-            fieldDTO.getDescription().setVersion(1);
 
-            FieldDTO.Content content = new FieldDTO.Content();
-            content.setType("paragraph");
-            FieldDTO.ContentItem contentItem = new FieldDTO.ContentItem();
-            contentItem.setText(wssContent);
-            contentItem.setType("text");
-            content.setContent((List<FieldDTO.ContentItem>) contentItem);
-            fieldDTO.getDescription().setContent((List<FieldDTO.Content>) content);
+            FieldDTO.ContentItem contentItem = FieldDTO.ContentItem.builder()
+                    .type("text")
+                    .text(wssContent)
+                    .build();
 
+            List<FieldDTO.ContentItem> contentItems = Collections.singletonList(contentItem);
 
-            issueUpdates.add(fieldDTO);
+            FieldDTO.Content content = FieldDTO.Content.builder()
+                    .content(contentItems)
+                    .type("paragraph")
+                    .build();
+
+            List<FieldDTO.Content> contents = Collections.singletonList(content);
+
+            FieldDTO.Description description = FieldDTO.Description.builder()
+                    .version(1)
+                    .type("doc")
+                    .content(contents)
+                    .build();
+            fieldDTO.setDescription(description);
+
+            FieldDTO.Field field =  FieldDTO.Field.builder()
+                            .id("10002")
+                            .build();
+            fieldDTO.setIssuetype(field);
+
+            CreateBulkIssueFieldsDTO fields = new CreateBulkIssueFieldsDTO();
+            fields.setFields(fieldDTO);
+
+            issueUpdates.add(fields);
 
         }
+
         bulkIssueDTO.setIssueUpdates(issueUpdates);
 
+
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL); // null 필드 제거 설정
+        String json = objectMapper.writeValueAsString(bulkIssueDTO);
+        System.out.println(json);
 
         AdminInfoDTO info = account.getAdminInfo(1);
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
         String endpoint ="/rest/api/3/issue/bulk";
-        WebClientUtils.post(webClient,endpoint,issueList,String.class);
-        return "1";
+
+        Flux<String> responseFlux = WebClientUtils.postByFlux(webClient,endpoint,bulkIssueDTO,String.class);
+        responseFlux.subscribe(response -> {
+            System.out.println(response);
+        });
+        return "0";
     }
 
     public List<String> getSeveralAssigneeId(String userNames) throws Exception {
@@ -374,7 +421,7 @@ public class TransferIssueImpl implements TransferIssue {
 
             for (String name : namesArrayList) {
 
-                String userId = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(name).getAccountId();
+                String userId = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(name).get(0).getAccountId();
 
                 userIdList.add(userId);
             }
@@ -386,15 +433,13 @@ public class TransferIssueImpl implements TransferIssue {
         }
     }
 
-    public String getOneAssigneeId(String userName) throws Exception {
-        logger.info("[::TransferIssueImpl::] getOneAssigneeId");
-
-        if( userName != null && userName.isEmpty()){
-
-            String userId = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(userName).getAccountId();
-
+    public String getOneAssigneeId(String userName) throws Exception{
+        logger.info("프로젝트 담당자 이름 아이디 변환");
+        List<TB_JIRA_USER_Entity> user = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(userName);
+        if (!user.isEmpty()) {
+            String userId = user.get(0).getAccountId();
             return userId;
-        }else {
+        } else {
             return null;
         }
 
