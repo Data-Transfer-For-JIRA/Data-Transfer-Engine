@@ -25,7 +25,7 @@ public class TB_JML_Entity {
     private String key;
 
     @Column(name = "JP_ID")
-    private Integer id;
+    private String id;
 
     @Column(name = "JP_NAME")
     private String jiraProjectName;

@@ -46,7 +46,7 @@ public class FieldDTO {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Project {
         String key;
-        Integer id;
+        String id;
     }
 
     @Getter
