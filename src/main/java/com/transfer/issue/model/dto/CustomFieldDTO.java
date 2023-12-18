@@ -18,49 +18,49 @@ import java.util.List;
 public class CustomFieldDTO extends FieldDTO {
 
     // 공통 커스텀 필드
-    //@JsonProperty("sales_manager")
-    private User customfield_10275;
+    @JsonProperty("customfield_10275")
+    private User salesManager;
 
-    //@JsonProperty("contractor")
-    private String customfield_10270;
+    @JsonProperty("customfield_10270")
+    private String contractor;
 
-    //@JsonProperty("client")
-    private String customfield_10271;
+    @JsonProperty("customfield_10271")
+    private String client;
 
-    //@JsonProperty("product_type")
-    private List<Field> customfield_10277;
+    @JsonProperty("customfield_10277")
+    private List<Field> productType;
 
-    //@JsonProperty("product_info")
-    private List<Field> customfield_10406;
+    @JsonProperty("customfield_10406")
+    private List<Field> productInfo;
 
-    //@JsonProperty("link_info")
-    private List<Field> customfield_10408;
+    @JsonProperty("customfield_10408")
+    private List<Field> linkInfo;
 
-    //@JsonProperty("barcode_type")
-    private Field customfield_10272;
+    @JsonProperty("customfield_10272")
+    private Field barcodeType;
 
-    //@JsonProperty("team")
-    private String customfield_10001;
+    @JsonProperty("customfield_10001")
+    private String team;
 
-    //@JsonProperty("part")
-    private Field customfield_10279;
+    @JsonProperty("customfield_10279")
+    private Field part;
 
-    //@JsonProperty("sub_engineer")
-    private User customfield_10269;
+    @JsonProperty("customfield_10269")
+    private User subAssignee;
 
-    //@JsonProperty("product_type_etc")
-    private String customfield_10416;
+    @JsonProperty("customfield_10416")
+    private String productTypeEtc;
 
-    //@JsonProperty("product_info_etc")
-    private String customfield_10407;
+    @JsonProperty("customfield_10407")
+    private String productInfoEtc;
 
-    //@JsonProperty("link_info_etc")
-    private String customfield_10409;
+    @JsonProperty("customfield_10409")
+    private String linkInfoEtc;
 
-    //@JsonProperty("multi_os_support")
-    private List<Field> customfield_10415;
+    @JsonProperty("customfield_10415")
+    private List<Field> multiOsSupport;
 
-    //@JsonProperty("printer_support_range")
-    private Field customfield_10247;
+    @JsonProperty("customfield_10247")
+    private Field printerSupportRange;
 
 }

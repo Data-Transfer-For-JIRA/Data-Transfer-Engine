@@ -3,7 +3,6 @@ package com.transfer.issue.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -31,10 +30,8 @@ public class FieldDTO {
 
     private Comment comment;
 
-    //@JsonProperty("engineer")
     private User assignee;
 
-    //@JsonProperty("labels")
     private List<String> labels;
 
     @Getter

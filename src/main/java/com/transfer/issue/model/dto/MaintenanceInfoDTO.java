@@ -15,34 +15,33 @@ import lombok.experimental.SuperBuilder;
 public class MaintenanceInfoDTO extends CustomFieldDTO {
 
     // 유지보수 기본 정보 필드
-    @JsonProperty("maintenance_name")
-    private String customfield_10420;
+    @JsonProperty("customfield_10420")
+    private String maintenanceName;
 
-    @JsonProperty("maintenance_code")
-    private String customfield_10421;
+    @JsonProperty("customfield_10421")
+    private String maintenanceCode;
 
-    @JsonProperty("contract_status")
-    private Field customfield_10274;
+    @JsonProperty("customfield_10274")
+    private Field contractStatus;
 
-    @JsonProperty("maintenance_start_date")
-    private String customfield_10412;
+    @JsonProperty("customfield_10412")
+    private String maintenanceStartDate;
 
-    @JsonProperty("maintenance_end_date")
-    private String customfield_10413;
+    @JsonProperty("customfield_10413")
+    private String maintenanceEndDate;
 
-    @JsonProperty("inspection_method")
-    private Field customfield_10417;
+    @JsonProperty("customfield_10417")
+    private Field inspectionMethod;
 
-    @JsonProperty("inspection_cycle")
-    private Field customfield_10419;
+    @JsonProperty("customfield_10419")
+    private Field inspectionCycle;
 
-    @JsonProperty("inspection_method_etc")
-    private String customfield_10418;
+    @JsonProperty("customfield_10418")
+    private String inspectionMethodEtc;
 
-    @JsonProperty("verification_url")
-    private String customfield_10183;
+    @JsonProperty("customfield_10183")
+    private String verificationUrl;
 
-    @JsonProperty("duedate")
     private String duedate;
 
 }
