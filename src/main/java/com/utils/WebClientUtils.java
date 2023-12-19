@@ -1,5 +1,6 @@
 package com.utils;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
@@ -84,6 +85,7 @@ public class WebClientUtils {
 
         // 리쿼스트 객체를 JSON 타입으로 형변환
         ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL); // 널들어있는 필드 제거
         String jsonRequestBody;
         try {
             jsonRequestBody = objectMapper.writeValueAsString(requestBody); // 데이터
