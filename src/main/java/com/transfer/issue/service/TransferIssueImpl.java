@@ -7,6 +7,9 @@ import com.account.service.Account;
 
 import com.transfer.issue.model.dao.PJ_PG_SUB_JpaRepository;
 import com.transfer.issue.model.dto.*;
+import com.transfer.issue.model.dto.bulk.CreateBulkIssueDTO;
+import com.transfer.issue.model.dto.bulk.CreateBulkIssueFieldsDTO;
+import com.transfer.issue.model.dto.bulk.ResponseBulkIssueDTO;
 import com.transfer.issue.model.entity.PJ_PG_SUB_Entity;
 import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.entity.TB_JML_Entity;
@@ -20,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -49,7 +51,7 @@ public class TransferIssueImpl implements TransferIssue {
     @Transactional
     @Override
     public Map<String ,String> transferIssueData(TransferIssueDTO transferIssueDTO) throws Exception {
-        logger.info("이슈 생성 시작");
+        logger.info("[::TransferIssueImpl::] transferIssueData");
         Map<String, String> result = new HashMap<>();
         String projectCode = transferIssueDTO.getProjectCode();
         // 생성할 프로젝트 조회
@@ -64,9 +66,11 @@ public class TransferIssueImpl implements TransferIssue {
 
         return result;
     }
+    /*
+     *  지라이슈 생성 로직
+     * */
     public void processTransferIssues(TB_JML_Entity project, TransferIssueDTO transferIssueDTO, Map<String, String> result) throws Exception {
-
-        logger.info("이슈생성을 시작합니다.");
+        logger.info("[::TransferIssueImpl::] processTransferIssues");
         String projectCode = transferIssueDTO.getProjectCode();
 
         // 지라 프로젝트 키 및 아이디
@@ -82,9 +86,9 @@ public class TransferIssueImpl implements TransferIssue {
         if (createFirstIssue(issueList, jiraProjectKey, projectAssignees)) {
             logger.info("최초 이슈 생성 성공");
             // 벌크 이슈 생성
-            if (createBulkIssue(issueList, jiraProjectId)) {
+            if (createWssHistoryIssue(issueList, jiraProjectId)) {
                 // 지라 이슈 상태 변경
-                //changeIssueStatus(jiraProjectId);
+                changeIssueStatus(jiraProjectId);
 
                 // 이슈 생성완료 flag 변경
             }
@@ -93,13 +97,17 @@ public class TransferIssueImpl implements TransferIssue {
         }
 
     }
-
+    /*
+     *  프로젝트가 이관되어있는지 확인
+     * */
     public TB_JML_Entity checkProjectCreated(String projectCode){
         logger.info("[::TransferIssueImpl::] checkProjectCreated");
        return TB_JML_JpaRepository.findByProjectCode(projectCode);
     }
 
-
+    /*
+     *  최초 이슈 생성
+     * */
     public Boolean createFirstIssue(List<PJ_PG_SUB_Entity> issueList, String jiraProjectKey, String projectAssignees) throws Exception {
         logger.info("[::TransferIssueImpl::] 기본 정보 이슈 생성 시작");
 
@@ -378,7 +386,48 @@ public class TransferIssueImpl implements TransferIssue {
         return true;
     }
 
-    public boolean createBulkIssue(List<PJ_PG_SUB_Entity> issueList , String jiraProjectId) throws Exception {
+    /*
+     *  프로젝트 담당자 이름으로 지라서버 아이디 디비 검색 리스트로 반환 
+     *  2명만 선택
+     * */
+    public List<String> getSeveralAssigneeId(String userNames) throws Exception {
+        logger.info("[::TransferIssueImpl::] getSeveralAssigneeId");
+
+        if (userNames != null && !userNames.trim().isEmpty()) {
+            String[] namesArray = userNames.trim().split("\\s*,\\s*");
+
+            List<String> namesArrayList = Arrays.asList(namesArray);
+
+            List<String> userIdList = new ArrayList<>();
+
+            for (String name : namesArrayList) {
+
+                String userId = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(name).get(0).getAccountId();
+
+                userIdList.add(userId);
+            }
+            // 앞에 2개의 데이터만 추출하여 반환
+            return userIdList.subList(0, Math.min(userIdList.size(), 2));
+        } else {
+            // 담당자 미지정된 프로젝트 (전자문서사업부 아이디)
+            return null;
+        }
+    }
+    /*
+     *  생성한 이슈의 상태를 변환하는 메서드
+     * */
+    public void changeIssueStatus(String jiraProjectId){
+
+    }
+
+    public boolean createWssHistoryIssue(List<PJ_PG_SUB_Entity> issueList,String jiraProjectId){
+        return true;
+    }
+
+    /*
+     *  벌크로 이슈 생성 12/19 회의 결과 미사용으로 전환
+     * */
+    /*public boolean createBulkIssue(List<PJ_PG_SUB_Entity> issueList , String jiraProjectId) throws Exception {
         logger.info("[::TransferIssueImpl::] createBulkIssue");
         List<PJ_PG_SUB_Entity> nomalIssueList = issueList.subList(1, issueList.size());
 
@@ -469,33 +518,12 @@ public class TransferIssueImpl implements TransferIssue {
         } else {
             return false;
         }
-    }
+    }*/
 
-    public List<String> getSeveralAssigneeId(String userNames) throws Exception {
-        logger.info("[::TransferIssueImpl::] getSeveralAssigneeId");
-
-        if (userNames != null && !userNames.trim().isEmpty()) {
-            String[] namesArray = userNames.trim().split("\\s*,\\s*");
-
-            List<String> namesArrayList = Arrays.asList(namesArray);
-
-            List<String> userIdList = new ArrayList<>();
-
-            for (String name : namesArrayList) {
-
-                String userId = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(name).get(0).getAccountId();
-
-                userIdList.add(userId);
-            }
-            // 앞에 2개의 데이터만 추출하여 반환
-            return userIdList.subList(0, Math.min(userIdList.size(), 2));
-        } else {
-            // 담당자 미지정된 프로젝트 (전자문서사업부 아이디)
-            return null;
-        }
-    }
-
-    public String getOneAssigneeId(String userName) throws Exception {
+    /*
+     *  이슈 담당자 이름으로 지라서버 아이디 디비 검색
+     * */
+   /* public String getOneAssigneeId(String userName) throws Exception {
         logger.info("[::TransferIssueImpl::] getOneAssigneeId");
 
         List<TB_JIRA_USER_Entity> user = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(userName);
@@ -506,7 +534,7 @@ public class TransferIssueImpl implements TransferIssue {
             return null; // 담당자가 관리 목록에 없으면 전자문서 사업부 기본아이디로 삽입
         }
 
-    }
+    }*/
 
 
 }
