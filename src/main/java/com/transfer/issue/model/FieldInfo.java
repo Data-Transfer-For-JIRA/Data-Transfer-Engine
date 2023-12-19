@@ -83,7 +83,10 @@ public enum FieldInfo {
     BIMONTHLY(FieldInfoCategory.INSPECTION_CYCLE, "격월", "10474"),
     QUARTER(FieldInfoCategory.INSPECTION_CYCLE, "분기", "10475"),
     HALF_YEAR(FieldInfoCategory.INSPECTION_CYCLE, "반기", "10476"),
-    YEAR(FieldInfoCategory.INSPECTION_CYCLE, "년", "10477");
+    YEAR(FieldInfoCategory.INSPECTION_CYCLE, "년", "10477"),
+
+    // transition
+    COMPLETED(FieldInfoCategory.ISSUE_STATUS, "완료됨", "21");
 
     private final String category;
     private final String label;

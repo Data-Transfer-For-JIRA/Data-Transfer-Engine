@@ -30,7 +30,11 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+
+import static com.transfer.issue.model.FieldInfo.ofLabel;
 
 @AllArgsConstructor
 @Service("transferIssue")
@@ -63,17 +67,18 @@ public class TransferIssueImpl implements TransferIssue {
 
         if (project != null) {
             processTransferIssues(project, transferIssueDTO, result);
+            return result;
         } else {
             logger.info("생성된 프로젝트가 아닙니다.");
             result.put(projectCode, "해당 프로젝트는 지라에 없습니다.");
+            return result;
         }
 
-        return result;
     }
     /*
      *  지라이슈 생성 로직
      * */
-    public void processTransferIssues(TB_JML_Entity project, TransferIssueDTO transferIssueDTO, Map<String, String> result) throws Exception {
+    public Map<String, String> processTransferIssues(TB_JML_Entity project, TransferIssueDTO transferIssueDTO, Map<String, String> result) throws Exception {
         logger.info("[::TransferIssueImpl::] processTransferIssues");
         String projectCode = transferIssueDTO.getProjectCode();
 
@@ -89,17 +94,18 @@ public class TransferIssueImpl implements TransferIssue {
 
         if (createFirstIssue(issueList, jiraProjectKey, projectAssignees)) {
             logger.info("최초 이슈 생성 성공");
-            // 벌크 이슈 생성
-            if (createWssHistoryIssue(issueList, jiraProjectId)) {
-                // 지라 이슈 상태 변경
-                changeIssueStatus(jiraProjectId);
-
-                // 이슈 생성완료 flag 변경
+            // 히스토리 이슈
+            ResponseIssueDTO issue  = createWssHistoryIssue(issueList, jiraProjectId);
+            if(issue != null){
+                changeIssueStatus(issue.getId());
+                result.put(projectCode, "이슈 생성 성공");
+                return result;
             }
         } else {
             result.put(projectCode, "이슈 생성 실패");
+            return result;
         }
-
+        return result;
     }
     /*
      *  프로젝트가 이관되어있는지 확인
@@ -210,7 +216,7 @@ public class TransferIssueImpl implements TransferIssue {
             if (issueTypeFieldInfo != null) {
                 projectInfoDTOBuilder.issuetype(new FieldDTO.Field(issueTypeFieldInfo.getId()));
             }
-            
+
             // 영업대표
             if (basicInfo.getSalesManager() != null) {
                 if (getSeveralAssigneeId(basicInfo.getSalesManager()) != null && getSeveralAssigneeId(basicInfo.getSalesManager()).size() >= 1) {
@@ -220,37 +226,37 @@ public class TransferIssueImpl implements TransferIssue {
                     }
                 }
             }
-            
+
             // 바코드 타입
             FieldInfo barcodeTypeInfo = FieldInfo.ofLabel(FieldInfoCategory.BARCODE_TYPE, String.valueOf(basicInfo.getBarcodeType()));
             if (barcodeTypeInfo != null) {
                 projectInfoDTOBuilder.barcodeType(new FieldDTO.Field(barcodeTypeInfo.getId()));
             }
-            
+
             // 팀, 파트
             if (assignees != null && assignees.size() >= 1) {
                 TB_JIRA_USER_Entity userEntity = TB_JIRA_USER_JpaRepository.findByAccountId(assignees.get(0));
-                
+
                 if (userEntity != null) {
                     FieldInfo teamInfo = FieldInfo.ofLabel(FieldInfoCategory.TEAM, userEntity.getTeam());
                     if (teamInfo != null) {
                         projectInfoDTOBuilder.team(teamInfo.getId());
                     }
-                    
+
                     FieldInfo partInfo = FieldInfo.ofLabel(FieldInfoCategory.PART, userEntity.getPart());
                     if (partInfo != null) {
                         projectInfoDTOBuilder.part(new FieldDTO.Field(partInfo.getId()));
                     }
                 }
             }
-            
+
             // 멀티 OS
             FieldInfo multiOsInfo = FieldInfo.ofLabel(FieldInfoCategory.OS, basicInfo.getSupportType());
             if (multiOsInfo != null) {
                 projectInfoDTOBuilder.multiOsSupport(Arrays.asList(new FieldDTO.Field(multiOsInfo.getId())));
-                
+
             }
-            
+
             // 프린터 지원 범위
             FieldInfo printerSupportRangeInfo = FieldInfo.ofLabel(FieldInfoCategory.PRINTER_SUPPORT_RANGE, basicInfo.getPrinter());
             if (printerSupportRangeInfo != null) {
@@ -363,12 +369,99 @@ public class TransferIssueImpl implements TransferIssue {
     /*
      *  생성한 이슈의 상태를 변환하는 메서드
      * */
-    public void changeIssueStatus(String jiraProjectId){
+    public void changeIssueStatus(String issueId){
+        logger.info("[::TransferIssueImpl::] changeIssueStatus");
+
+        AdminInfoDTO info = account.getAdminInfo(1);
+        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
+        String endpoint ="/rest/api/3/issue/"+issueId+"/transitions";
+
+        String transitionID = ofLabel(FieldInfoCategory.ISSUE_STATUS,"완료됨").getId();
+
+        TransitionDTO transitionDTO = new TransitionDTO();
+
+        TransitionDTO.Transition transition = TransitionDTO.Transition.builder()
+                .id(transitionID)
+                .build();
+        transitionDTO.setTransition(transition);
+
+        WebClientUtils.post(webClient,endpoint,transitionDTO,void.class);
 
     }
+    /*
+    *  WSS 이슈 히스토리로 이슈 생성하는 메서드
+    * */
+    public ResponseIssueDTO createWssHistoryIssue(List<PJ_PG_SUB_Entity> issueList, String jiraProjectId) throws Exception {
+        logger.info("[::TransferIssueImpl::] createWssHistoryIssue");
+        CreateIssueDTO<?> createIssueDTO = null;
 
-    public boolean createWssHistoryIssue(List<PJ_PG_SUB_Entity> issueList,String jiraProjectId){
-        return true;
+        LocalDate today = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String formattedToday = today.format(formatter);
+
+        FieldDTO fieldDTO = new FieldDTO();
+        // 담당자
+        /*FieldDTO.User user = FieldDTO.User.builder()
+                .accountId(wssAssignee).build();
+        fieldDTO.setAssignee(user);*/
+
+        // 프로젝트 아이디
+        FieldDTO.Project project = FieldDTO.Project.builder()
+                .id(jiraProjectId)
+                .build();
+        fieldDTO.setProject(project);
+
+
+        // wss 이슈 제목
+        String summary = "["+formattedToday+"] WSS HISTORY";
+        fieldDTO.setSummary(summary);
+
+
+        // wss 작성이슈 내용
+        String wssContents = "";
+        for (PJ_PG_SUB_Entity issue : issueList){
+
+            Date  date = issue.getCreationDate();
+            String title = "작성일 :" + date +" 작성자 :"+issue.getWriter();
+            String content = issue.getIssueContent().replace("<br>", "\n").replace("&nbsp;", " ");;
+            String divider = "===========================================================================";
+            String contentItem = title+"\n"+content+"\n\n"+divider+"\n\n";
+
+            wssContents += contentItem;
+        }
+
+        FieldDTO.ContentItem contentItem = FieldDTO.ContentItem.builder()
+                .type("text")
+                .text(wssContents)
+                .build();
+        List<FieldDTO.ContentItem> contentItems = Collections.singletonList(contentItem);
+
+        FieldDTO.Content content = FieldDTO.Content.builder()
+                .content(contentItems)
+                .type("paragraph")
+                .build();
+        List<FieldDTO.Content> contents = Collections.singletonList(content);
+
+        FieldDTO.Description description = FieldDTO.Description.builder()
+                .version(1)
+                .type("doc")
+                .content(contents)
+                .build();
+        fieldDTO.setDescription(description);
+
+        FieldDTO.Field field =  FieldDTO.Field.builder()
+                .id("10002")
+                .build();
+        fieldDTO.setIssuetype(field);
+
+        createIssueDTO = new CreateIssueDTO<>(fieldDTO);
+
+        AdminInfoDTO info = account.getAdminInfo(1);
+        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
+        String endpoint ="/rest/api/3/issue";
+
+        Flux<ResponseIssueDTO> response = WebClientUtils.postByFlux(webClient, endpoint, createIssueDTO, ResponseIssueDTO.class);
+        return response.blockFirst();
     }
 
     /*
@@ -472,6 +565,8 @@ public class TransferIssueImpl implements TransferIssue {
      * */
    public String getOneAssigneeId(String userName) throws Exception {
        logger.info("[::TransferIssueImpl::] getOneAssigneeId");
+
+
 
        List<TB_JIRA_USER_Entity> user = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(userName);
        if (!user.isEmpty()) {

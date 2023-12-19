@@ -15,6 +15,7 @@ public class FieldInfoCategory {
     public static final String CONTRACT_STATUS = "계약여부";
     public static final String INSPECTION_METHOD = "점검방법";
     public static final String INSPECTION_CYCLE = "점검주기";
+    public static final String ISSUE_STATUS = "이슈상태";
 
     private FieldInfoCategory() {} // 인스턴스 생성 방지
 

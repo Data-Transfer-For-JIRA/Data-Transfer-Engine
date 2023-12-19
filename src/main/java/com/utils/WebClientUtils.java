@@ -92,7 +92,6 @@ public class WebClientUtils {
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to convert request body to JSON", e);
         }
-
         DataBufferFactory bufferFactory = new DefaultDataBufferFactory();
         Flux<DataBuffer> dataBufferFlux = getBufferFlux(jsonRequestBody, bufferFactory, 1024); // 1kb 단위로 데이터 읽어 데이터 버퍼 스트림 생성
 
@@ -112,5 +111,6 @@ public class WebClientUtils {
         return DataBufferUtils.readInputStream(() -> bis, bufferFactory, bufferSize);
         //InputStream에서 데이터를 읽어서 bufferSize 크기의 DataBuffer로 나눈 후, 이들을 Flux<DataBuffer>로 반환
     }
+
 
 }
