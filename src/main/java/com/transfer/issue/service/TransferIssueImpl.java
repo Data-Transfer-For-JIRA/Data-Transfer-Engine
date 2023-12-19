@@ -5,6 +5,8 @@ import com.account.dto.AdminInfoDTO;
 import com.account.entity.TB_JIRA_USER_Entity;
 import com.account.service.Account;
 
+import com.transfer.issue.model.FieldInfo;
+import com.transfer.issue.model.FieldInfoCategory;
 import com.transfer.issue.model.dao.PJ_PG_SUB_JpaRepository;
 import com.transfer.issue.model.dto.*;
 import com.transfer.issue.model.dto.bulk.CreateBulkIssueDTO;
@@ -20,9 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -142,7 +146,7 @@ public class TransferIssueImpl implements TransferIssue {
         // 설명 설정
         String defaultIssueContent = "["
                 + Optional.ofNullable(wssIssue.getCreationDate()).orElse(String.valueOf(new Date()))  // 생성 날짜가 null인 경우 오늘 날짜를 사용
-                + "]\n본 이슈는 WSS에서 이관한 이슈입니다.\n―――――――――――――――――――――――――――――――";
+                + "]\n본 이슈는 WSS에서 이관한 이슈입니다.\n―――――――――――――――――――――――――――――――\n";
         String replacedIssueContent = Optional.ofNullable(wssIssue.getIssueContent())
                 .orElse("")  // 이력 내용이 null인 경우 빈 문자열("")을 사용
                 .replace("<br>", "\n")
@@ -153,212 +157,155 @@ public class TransferIssueImpl implements TransferIssue {
         String wssProjectCode = wssIssue.getProjectCode();
         System.out.println("[::TransferIssueImpl::] wssProjectCode -> " + wssProjectCode);
 
-        ProjectInfoDTO projectInfoDTO = new ProjectInfoDTO();
-        ProjectInfoDTO projectInfo = projectInfoDTO;
-        MaintenanceInfoDTO maintenanceInfoDTO = new MaintenanceInfoDTO();
+        // 프로젝트, 유지보수 공통
+        FieldDTO.Project project = new FieldDTO.Project(jiraProjectKey, null);
 
-        Optional<TB_PJT_BASE_Entity> basicInfoOpt = Optional.ofNullable(TB_PJT_BASE_JpaRepository.findByProjectCode(wssProjectCode));
-        basicInfoOpt.ifPresent(basicInfo -> {
-            System.out.println("[::TransferIssueImpl::] basicInfo project code -> " + basicInfo.getProjectCode());
+        FieldDTO.ContentItem contentItem = FieldDTO.ContentItem.builder()
+                .type("text")
+                .text(basicIssueContent)
+                .build();
 
-            Optional.ofNullable(basicInfo.getProjectFlag()).ifPresent(flag -> {
+        FieldDTO.Content content = FieldDTO.Content.builder()
+                .content(Arrays.asList(contentItem))
+                .type("paragraph")
+                .build();
 
-                if ("P".equals(flag)) { // 프로젝트
+        FieldDTO.Description description = FieldDTO.Description.builder()
+                .version(1)
+                .type("doc")
+                .content(Arrays.asList(content))
+                .build();
 
-                    Optional.ofNullable(basicInfo.getProjectName()).ifPresent(projectInfo::setProjectName);
-                    Optional.ofNullable(basicInfo.getProjectCode()).ifPresent(projectInfo::setProjectCode);
-                    Optional.ofNullable(basicInfo.getContractor()).ifPresent(projectInfo::setContractor);
-                    Optional.ofNullable(basicInfo.getClient()).ifPresent(projectInfo::setClient);
-
-
-
-                } else if ("M".equals(flag)) {
-
-                } else { // 유지보수
-                    System.out.println("[::TransferIssueImpl::] 존재하지 않는 프로젝트 타입");
-                }
-            });
-
-//            Optional.ofNullable(basicInfo.getProjectName()).ifPresent(name -> wssIssue.setProjectName(name));
-//            Optional.ofNullable(basicInfo.getSalesManager()).ifPresent(salesManager -> wssIssue.setSalesManger(salesManager));
-//            Optional.ofNullable(basicInfo.getContractor()).ifPresent(contractor -> wssIssue.setContractor(contractor));
-//            Optional.ofNullable(basicInfo.getClient()).ifPresent(client -> wssIssue.setClient(client));
-//            Optional.ofNullable(basicInfo.getProductType()).ifPresent(productType -> wssIssue.setProductType(String.valueOf(productType)));
-//            Optional.ofNullable(basicInfo.getConnectionType()).ifPresent(connectionType -> wssIssue.setConnectionType(connectionType));
-//            Optional.ofNullable(basicInfo.getBarcodeType()).ifPresent(barcodeType -> wssIssue.setBarcodeType(String.valueOf(barcodeType)));
-//            Optional.ofNullable(basicInfo.getSupportType()).ifPresent(supportType -> wssIssue.setSupportType(supportType));
-//            Optional.ofNullable(basicInfo.getPrinter()).ifPresent(printer -> wssIssue.setPrinter(printer));
-//            Optional.ofNullable(basicInfo.getProjectStep()).ifPresent(projectStep -> wssIssue.setProjectStep(String.valueOf(projectStep)));
-        });
+        TB_PJT_BASE_Entity basicInfo = TB_PJT_BASE_JpaRepository.findByProjectCode(wssProjectCode);
 
         // 이슈 생성
-//        CreateIssueDTO<?> createIssueDTO = null;
-//        ProjectInfoDTO projectInfoDTO = null;
-//        MaintenanceInfoDTO maintenanceInfoDTO = null;
+        CreateIssueDTO<?> createIssueDTO = null;
+        ProjectInfoDTO projectInfoDTO = null;
+        MaintenanceInfoDTO maintenanceInfoDTO = null;
 
         String projectBasicInfo = "프로젝트 기본 정보";
         String maintenanceBasicInfo = "유지보수 기본 정보";
-/*
+
         // 프로젝트인지 유지보수인지 판별
-        if (wssIssue.getProjectFlag().equals("P")) {
+        if (basicInfo.getProjectFlag().equals("P")) {
 
-            FieldDTO.Project project = new FieldDTO.Project(jiraProjectKey, null);
-
-            FieldDTO.ContentItem contentItem = FieldDTO.ContentItem.builder()
-                    .type("text")
-                    .text(basicIssueContent)
-                    .build();
-
-            FieldDTO.Content content = FieldDTO.Content.builder()
-                    .content(Arrays.asList(contentItem))
-                    .type("paragraph")
-                    .build();
-
-            FieldDTO.Description description = FieldDTO.Description.builder()
-                    .version(1)
-                    .type("doc")
-                    .content(Arrays.asList(content))
-                    .build();
-
-            FieldDTO.User salesManager = null;
-            String salesManagerId = getOneAssigneeId(getSeveralAssigneeId(basicInfo.getSalesManager()).get(0));
-            if (salesManagerId != null) {
-                salesManager = new FieldDTO.User(salesManagerId);
-            }
-
-            FieldDTO.Field barcodeType = null;
-            String barcodeId = FieldInfo.ofLabel(FieldInfoCategory.BARCODE_TYPE, String.valueOf(basicInfo.getBarcodeType())).getId();
-            if (barcodeId != null) {
-                barcodeType = new FieldDTO.Field(barcodeId);
-            }
-
-            String team = null;
-            FieldDTO.Field part = null;
-            TB_JIRA_USER_Entity userEntity = TB_JIRA_USER_JpaRepository.findByAccountId(assignees.get(0));
-            String teamId = FieldInfo.ofLabel(FieldInfoCategory.TEAM, userEntity.getTeam()).getId();
-            String partId = FieldInfo.ofLabel(FieldInfoCategory.PART, userEntity.getPart()).getId();
-            System.out.println("[::TransferIssueImpl::] userEntity name -> " + userEntity.getDisplayName());
-            System.out.println("[::TransferIssueImpl::] userEntity team -> " + userEntity.getTeam());
-            System.out.println("[::TransferIssueImpl::] userEntity part -> " + userEntity.getPart());
-
-
-            if (teamId != null) {
-                team = teamId;
-            }
-
-            if (partId != null) {
-                part = new FieldDTO.Field(partId);
-            }
-
-            FieldDTO.Field multiOS = null;
-            FieldInfo multiOSFieldInfo = FieldInfo.ofLabel(FieldInfoCategory.OS, basicInfo.getSupportType());
-            if (multiOSFieldInfo != null) {
-                String multiOSId = multiOSFieldInfo.getId();
-                if (multiOSId != null) {
-                    multiOS = new FieldDTO.Field(multiOSId);
-                }
-            }
-
-            FieldDTO.Field printerSupportRange = null;
-            FieldInfo printerSupportRangeFieldInfo = FieldInfo.ofLabel(FieldInfoCategory.PRINTER_SUPPORT_RANGE, basicInfo.getPrinter());
-            if (printerSupportRangeFieldInfo != null) {
-                String printerSupportRangeId = printerSupportRangeFieldInfo.getId();
-                if (printerSupportRangeId != null) {
-                    printerSupportRange = new FieldDTO.Field(printerSupportRangeId);
-                }
-            }
-
-            FieldDTO.Field projectProgressStep = null;
-            String projectProgressStepId = FieldInfo.getIdByCategoryAndLabel(
-                    FieldInfoCategory.PROJECT_PROGRESS_STEP,
-                    String.valueOf(basicInfo.getProjectStep()));
-            if (projectProgressStepId != null) {
-                projectProgressStep = new FieldDTO.Field(projectProgressStepId);
-            }
-
-            projectInfoDTO = ProjectInfoDTO.builder()
-                    .project(project) // 프로젝트
-                    .issuetype(new FieldDTO.Field(FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, projectBasicInfo).getId())) // 이슈타입
-                    .summary(projectBasicInfo) // 제목
-                    .description(description) // 설명
-                    .assignee(assignee) // 담당자
-                    .customfield_10275(salesManager) // 영업대표
-                    //.customfield_10270(basicInfo.getContractor()) // 계약사
-                    //.customfield_10271(basicInfo.getClient()) // 고객사
-                    //.customfield_10277() // 제품 유형
-                    //.customfield_10406() // 제품 정보
-                    //.customfield_10408() // 연동 정보
-                    .customfield_10272(barcodeType) // 바코드 타입
-                    .customfield_10001(team) // 팀
-                    .customfield_10279(part) // 파트
-                    .customfield_10269(sub_assignee) // 부 담당자
-                    // 제품 유형, 제품 정보, 연동 정보 기타
-                    .customfield_10415(Arrays.asList(multiOS)) // 멀티 OS
-                    .customfield_10247(printerSupportRange) // 프린터 지원 범위
-                    .customfield_10411(basicInfo.getProjectName()) // 프로젝트명
-                    .customfield_10410(basicInfo.getProjectCode()) // 프로젝트 코드
-                    .customfield_10414(String.valueOf(creationDate)) // 프로젝트 배정일
-                    //.customfield_10280(projectProgressStep) // 프로젝트 단계
-                    .build();
-
-
+            // 필수 데이터
             ProjectInfoDTO.ProjectInfoDTOBuilder projectInfoDTOBuilder = ProjectInfoDTO.builder()
                     .project(project) // 프로젝트
                     .summary(projectBasicInfo) // 제목
                     .description(description); // 설명
 
+            // 담당자
+            if (assignee != null) {
+                projectInfoDTOBuilder.assignee(assignee);
+            }
+
+            // 부 담당자
+            if (subAssignee != null) {
+                projectInfoDTOBuilder.subAssignee(subAssignee);
+            }
+
+            // 이슈타입
             FieldInfo issueTypeFieldInfo = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, projectBasicInfo);
             if (issueTypeFieldInfo != null) {
-                projectInfoDTOBuilder.issuetype(new FieldDTO.Field(issueTypeFieldInfo.getId())); // 이슈타입
+                projectInfoDTOBuilder.issuetype(new FieldDTO.Field(issueTypeFieldInfo.getId()));
+            }
+            
+            // 영업대표
+            if (basicInfo.getSalesManager() != null) {
+                if (getSeveralAssigneeId(basicInfo.getSalesManager()) != null && getSeveralAssigneeId(basicInfo.getSalesManager()).size() >= 1) {
+                    String salesManagerId = getOneAssigneeId(getSeveralAssigneeId(basicInfo.getSalesManager()).get(0));
+                    if (salesManagerId != null) {
+                        projectInfoDTO.setSalesManager(new FieldDTO.User(salesManagerId));
+                    }
+                }
+            }
+            
+            // 바코드 타입
+            FieldInfo barcodeTypeInfo = FieldInfo.ofLabel(FieldInfoCategory.BARCODE_TYPE, String.valueOf(basicInfo.getBarcodeType()));
+            if (barcodeTypeInfo != null) {
+                projectInfoDTOBuilder.barcodeType(new FieldDTO.Field(barcodeTypeInfo.getId()));
+            }
+            
+            // 팀, 파트
+            if (assignees != null && assignees.size() >= 1) {
+                TB_JIRA_USER_Entity userEntity = TB_JIRA_USER_JpaRepository.findByAccountId(assignees.get(0));
+                
+                if (userEntity != null) {
+                    FieldInfo teamInfo = FieldInfo.ofLabel(FieldInfoCategory.TEAM, userEntity.getTeam());
+                    if (teamInfo != null) {
+                        projectInfoDTOBuilder.team(teamInfo.getId());
+                    }
+                    
+                    FieldInfo partInfo = FieldInfo.ofLabel(FieldInfoCategory.PART, userEntity.getPart());
+                    if (partInfo != null) {
+                        projectInfoDTOBuilder.part(new FieldDTO.Field(partInfo.getId()));
+                    }
+                }
+            }
+            
+            // 멀티 OS
+            FieldInfo multiOsInfo = FieldInfo.ofLabel(FieldInfoCategory.OS, basicInfo.getSupportType());
+            if (multiOsInfo != null) {
+                projectInfoDTOBuilder.multiOsSupport(Arrays.asList(new FieldDTO.Field(multiOsInfo.getId())));
+                
+            }
+            
+            // 프린터 지원 범위
+            FieldInfo printerSupportRangeInfo = FieldInfo.ofLabel(FieldInfoCategory.PRINTER_SUPPORT_RANGE, basicInfo.getPrinter());
+            if (printerSupportRangeInfo != null) {
+                projectInfoDTOBuilder.printerSupportRange(new FieldDTO.Field(printerSupportRangeInfo.getId()));
             }
 
-            if (assignee != null) {
-                projectInfoDTOBuilder.assignee(assignee); // 담당자
+            // 프로젝트 진행 단계
+            String projectProgressStepId = FieldInfo.getIdByCategoryAndLabel(
+                    FieldInfoCategory.PROJECT_PROGRESS_STEP,
+                    String.valueOf(basicInfo.getProjectStep()));
+            if (projectProgressStepId != null) {
+                projectInfoDTOBuilder.projectProgressStep(new FieldDTO.Field(projectProgressStepId));
             }
 
-            if (salesManager != null) {
-                projectInfoDTOBuilder.salesManager(salesManager); // 영업대표
-            }
+//            projectInfoDTO = ProjectInfoDTO.builder()
+//                    .project(project) // 프로젝트
+//                    .issuetype(new FieldDTO.Field(FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, projectBasicInfo).getId())) // 이슈타입
+//                    .summary(projectBasicInfo) // 제목
+//                    .description(description) // 설명
+//                    .assignee(assignee) // 담당자
+//                    .customfield_10275(salesManager) // 영업대표
+//                    //.customfield_10270(basicInfo.getContractor()) // 계약사
+//                    //.customfield_10271(basicInfo.getClient()) // 고객사
+//                    //.customfield_10277() // 제품 유형
+//                    //.customfield_10406() // 제품 정보
+//                    //.customfield_10408() // 연동 정보
+//                    .customfield_10272(barcodeType) // 바코드 타입
+//                    .customfield_10001(team) // 팀
+//                    .customfield_10279(part) // 파트
+//                    .customfield_10269(sub_assignee) // 부 담당자
+//                    // 제품 유형, 제품 정보, 연동 정보 기타
+//                    .customfield_10415(Arrays.asList(multiOS)) // 멀티 OS
+//                    .customfield_10247(printerSupportRange) // 프린터 지원 범위
+//                    .customfield_10411(basicInfo.getProjectName()) // 프로젝트명
+//                    .customfield_10410(basicInfo.getProjectCode()) // 프로젝트 코드
+//                    .customfield_10414(String.valueOf(creationDate)) // 프로젝트 배정일
+//                    //.customfield_10280(projectProgressStep) // 프로젝트 단계
+//                    .build();
 
-            if (barcodeType != null) {
-                projectInfoDTOBuilder.barcodeType(barcodeType); // 바코드 타입
-            }
-
-            if (team != null) {
-                projectInfoDTOBuilder.team(team); // 팀
-            }
-
-            if (part != null) {
-                projectInfoDTOBuilder.part(part); // 파트
-            }
-
-            if (subAssignee != null) {
-                projectInfoDTOBuilder.subAssignee(subAssignee); // 부 담당자
-            }
-
-            if (multiOS != null) {
-                projectInfoDTOBuilder.multiOsSupport(Arrays.asList(multiOS)); // 멀티 OS
-            }
-
-            if (printerSupportRange != null) {
-                projectInfoDTOBuilder.printerSupportRange(printerSupportRange); // 프린터 지원 범위
-            }
-
+            // 프로젝트명
             if (basicInfo.getProjectName() != null) {
-                projectInfoDTOBuilder.projectName(basicInfo.getProjectName()); // 프로젝트명
+                projectInfoDTOBuilder.projectName(basicInfo.getProjectName());
             }
 
+            // 프로젝트 코드
             if (basicInfo.getProjectCode() != null) {
-                projectInfoDTOBuilder.projectCode(basicInfo.getProjectCode()); // 프로젝트 코드
+                projectInfoDTOBuilder.projectCode(basicInfo.getProjectCode());
             }
 
-            if (creationDate != null) {
-                projectInfoDTOBuilder.projectAssignmentDate(String.valueOf(creationDate)); // 프로젝트 배정일
+            // 프로젝트 배정일
+            if (wssIssue.getCreationDate() != null) {
+                projectInfoDTOBuilder.projectAssignmentDate(wssIssue.getCreationDate());
             }
 
             projectInfoDTO = projectInfoDTOBuilder.build();
-
-
             createIssueDTO = new CreateIssueDTO<>(projectInfoDTO);
         } else {
             maintenanceInfoDTO = new MaintenanceInfoDTO();
@@ -382,7 +329,7 @@ public class TransferIssueImpl implements TransferIssue {
                 System.out.println(status + " : " + body);
             }
         }
-*/
+
         return true;
     }
 
@@ -523,18 +470,15 @@ public class TransferIssueImpl implements TransferIssue {
     /*
      *  이슈 담당자 이름으로 지라서버 아이디 디비 검색
      * */
-   /* public String getOneAssigneeId(String userName) throws Exception {
-        logger.info("[::TransferIssueImpl::] getOneAssigneeId");
+   public String getOneAssigneeId(String userName) throws Exception {
+       logger.info("[::TransferIssueImpl::] getOneAssigneeId");
 
-        List<TB_JIRA_USER_Entity> user = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(userName);
-        if (!user.isEmpty()) {
-            String userId = user.get(0).getAccountId();
-            return userId;
-        } else {
-            return null; // 담당자가 관리 목록에 없으면 전자문서 사업부 기본아이디로 삽입
-        }
-
-    }*/
-
-
+       List<TB_JIRA_USER_Entity> user = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(userName);
+       if (!user.isEmpty()) {
+           String userId = user.get(0).getAccountId();
+           return userId;
+       } else {
+           return null; // 담당자가 관리 목록에 없으면 전자문서 사업부 기본아이디로 삽입
+       }
+   }
 }
