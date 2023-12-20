@@ -31,4 +31,6 @@ public interface TB_PJT_BASE_JpaRepository extends JpaRepository<TB_PJT_BASE_Ent
     정보 조회
     * */
     TB_PJT_BASE_Entity findByProjectCode(String projectCode);
+
+    Boolean findIssueMigrateFlagByProjectCode(String projectCode);
 }

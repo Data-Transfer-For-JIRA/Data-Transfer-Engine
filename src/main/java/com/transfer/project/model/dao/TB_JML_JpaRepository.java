@@ -4,6 +4,11 @@ import com.transfer.project.model.entity.TB_JML_Entity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 public interface TB_JML_JpaRepository extends JpaRepository<TB_JML_Entity,String> {
 
@@ -15,5 +20,9 @@ public interface TB_JML_JpaRepository extends JpaRepository<TB_JML_Entity,String
 
 
     TB_JML_Entity findByProjectCode(String projectCode);
+
+    @Query("SELECT t FROM TB_JML_Entity t WHERE t.migratedDate >= :startDate AND t.migratedDate < :endDate")
+    List<String> findProjectCodeByMigratedDateBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+
 
 }

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface PJ_PG_SUB_JpaRepository extends JpaRepository<PJ_PG_SUB_Entity,String> {
+public interface PJ_PG_SUB_JpaRepository extends JpaRepository<PJ_PG_SUB_Entity, PJ_PG_SUB_Entity.ProjectId> {
 
-    List<PJ_PG_SUB_Entity> findAllByProjectCodeOrderByCreationDateAsc(String porjectCode);
+    List<PJ_PG_SUB_Entity> findAllByProjectCodeOrderByCreationDateAsc(String projectCode);
 }
