@@ -5,6 +5,9 @@ import com.account.dto.AdminInfoDTO;
 import com.account.entity.TB_JIRA_USER_Entity;
 import com.account.service.Account;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.transfer.issue.model.FieldInfo;
 import com.transfer.issue.model.FieldInfoCategory;
 import com.transfer.issue.model.dao.PJ_PG_SUB_JpaRepository;
@@ -97,7 +100,8 @@ public class TransferIssueImpl implements TransferIssue {
             // 히스토리 이슈
             ResponseIssueDTO issue  = createWssHistoryIssue(issueList, jiraProjectId);
             if(issue != null){
-                changeIssueStatus(issue.getId());
+                System.out.println("상태변경 대상 키"+issue.getKey());
+                changeIssueStatus(issue.getKey());
                 result.put(projectCode, "이슈 생성 성공");
                 return result;
             }
@@ -369,23 +373,24 @@ public class TransferIssueImpl implements TransferIssue {
     /*
      *  생성한 이슈의 상태를 변환하는 메서드
      * */
-    public void changeIssueStatus(String issueId){
+    public void changeIssueStatus(String issueKey) throws Exception {
         logger.info("[::TransferIssueImpl::] changeIssueStatus");
 
         AdminInfoDTO info = account.getAdminInfo(1);
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-        String endpoint ="/rest/api/3/issue/"+issueId+"/transitions";
-
+        String endpoint ="/rest/api/3/issue/"+issueKey+"/transitions";
         String transitionID = ofLabel(FieldInfoCategory.ISSUE_STATUS,"완료됨").getId();
-
         TransitionDTO transitionDTO = new TransitionDTO();
-
         TransitionDTO.Transition transition = TransitionDTO.Transition.builder()
                 .id(transitionID)
                 .build();
         transitionDTO.setTransition(transition);
 
-        WebClientUtils.post(webClient,endpoint,transitionDTO,void.class);
+        try{
+            WebClientUtils.post(webClient,endpoint,transitionDTO,void.class).block();
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
 
     }
     /*
