@@ -102,6 +102,7 @@ public class TransferIssueImpl implements TransferIssue {
             if(issue != null){
                 System.out.println("상태변경 대상 키"+issue.getKey());
                 changeIssueStatus(issue.getKey());
+                CheckIssueMigrateFlag(projectCode);
                 result.put(projectCode, "이슈 생성 성공");
                 return result;
             }
@@ -388,6 +389,13 @@ public class TransferIssueImpl implements TransferIssue {
 
         try{
             WebClientUtils.post(webClient,endpoint,transitionDTO,void.class).block();
+            /*
+            * WebClient는 Spring WebFlux의 일부로, 리액티브 프로그래밍 모델을 따릅니다. 이 모델에서는 데이터 스트림이 "핫" 또는 "콜드" 두 가지로 분류됩니다.
+            * "핫" 스트림은 구독자가 없어도 데이터를 방출하지만, "콜드" 스트림은 구독자가 있을 때만 데이터를 방출하며, WebClient가 반환하는 Mono와 Flux는 "콜드" 스트림에 속합니다.
+            * 따라서 .block()을 호출하지 않고 Mono나 Flux 객체를 생성만 하고 구독하지 않으면, 실제로 HTTP 요청이 실행되지 않습니다.
+            * .block() 메서드는 구독을 실행하고, 데이터가 방출될 때까지 대기하기 때문에, 이 메서드를 호출하지 않으면 HTTP 요청이 전송되지 않습니다.
+            * */
+
         }catch (Exception e){
             System.out.println(e.getMessage());
         }
@@ -467,6 +475,14 @@ public class TransferIssueImpl implements TransferIssue {
 
         Flux<ResponseIssueDTO> response = WebClientUtils.postByFlux(webClient, endpoint, createIssueDTO, ResponseIssueDTO.class);
         return response.blockFirst();
+    }
+
+    public boolean CheckIssueMigrateFlag(String projectCode) throws Exception{
+
+        logger.info("[::TransferIssueImpl::] CheckMigrateFlag");
+        TB_PJT_BASE_Entity entity =  TB_PJT_BASE_JpaRepository.findById(projectCode).orElseThrow(() -> new NoSuchElementException("프로젝트 코드 조회에 실패하였습니다.: " + projectCode));
+        entity.setIssueMigrateFlag(true);
+        return true;
     }
 
     /*

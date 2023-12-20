@@ -35,7 +35,11 @@ public class TB_PJT_BASE_Entity {
 
     @Column(name = "MJ_FLAG")
     private Boolean migrateFlag;
-    //이관 여부 플레그
+    //프로젝트 이관 여부 플레그
+
+    @Column(name = "MI_FLAG")
+    private Boolean issueMigrateFlag;
+    //이슈 이관 여부 플레그
 
     //============================================== 왼쪽 데이터 ============================
     // 고객사
