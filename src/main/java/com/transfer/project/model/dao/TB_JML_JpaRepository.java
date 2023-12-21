@@ -22,7 +22,7 @@ public interface TB_JML_JpaRepository extends JpaRepository<TB_JML_Entity,String
     TB_JML_Entity findByProjectCode(String projectCode);
 
     @Query("SELECT t FROM TB_JML_Entity t WHERE t.migratedDate >= :startDate AND t.migratedDate < :endDate")
-    List<String> findProjectCodeByMigratedDateBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    List<TB_JML_Entity> findProjectCodeByMigratedDateBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
 
 }

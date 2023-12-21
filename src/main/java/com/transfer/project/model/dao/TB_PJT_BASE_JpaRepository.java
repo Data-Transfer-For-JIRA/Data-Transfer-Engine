@@ -4,6 +4,8 @@ import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -32,5 +34,12 @@ public interface TB_PJT_BASE_JpaRepository extends JpaRepository<TB_PJT_BASE_Ent
     * */
     TB_PJT_BASE_Entity findByProjectCode(String projectCode);
 
-    Boolean findIssueMigrateFlagByProjectCode(String projectCode);
+    @Query("SELECT t.issueMigrateFlag FROM TB_PJT_BASE_Entity t WHERE t.projectCode = :projectCode")
+    Boolean findIssueMigrateFlagByProjectCode(@Param("projectCode") String projectCode);
+    /*  JPQL @Query 사용 이유: 특정 필드만 조회하기 위해 사용하였음
+    * 1. Spring Data JPA의 메소드 이름으로 표현하기 어려운 복잡한 쿼리를 작성해야 할 때
+      2. 특정 엔티티의 일부 필드만을 조회해야 할 때
+      3. JPQL이나 native SQL을 사용하여 성능을 최적화하고자 할 때
+    * */
+    
 }

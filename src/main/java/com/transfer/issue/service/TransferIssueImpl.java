@@ -427,10 +427,14 @@ public class TransferIssueImpl implements TransferIssue {
             List<String> userIdList = new ArrayList<>();
 
             for (String name : namesArrayList) {
+                List<TB_JIRA_USER_Entity> users = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(name);
 
-                String userId = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(name).get(0).getAccountId();
-
-                userIdList.add(userId);
+                if (!users.isEmpty()) { //조회 대상정보가 디비에 없을 때
+                    String userId = users.get(0).getAccountId();
+                    userIdList.add(userId);
+                }else{
+                    return null;
+                }
             }
             // 앞에 2개의 데이터만 추출하여 반환
             return userIdList.subList(0, Math.min(userIdList.size(), 2));
