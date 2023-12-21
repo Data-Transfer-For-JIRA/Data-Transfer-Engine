@@ -1,3 +1,5 @@
+server:
+  port: 8888
 
 project:
   create:
@@ -16,8 +18,8 @@ issueType: #이슈타입
   maintenance: 10442 # "전자문서 - 유지보수 기본정보"
 
 issueTypeSchemeId: #이슈타입 스킴
-#  project: 10644 # 전자문서 - 프로젝트 기본정보
-#  maintenance: 11051 #전자문서 - 유지보수 기본정보
+  #  project: 10644 # 전자문서 - 프로젝트 기본정보
+  #  maintenance: 11051 #전자문서 - 유지보수 기본정보
   project: 10675  #IHRY
   maintenance: 10677 #QSHR
 
