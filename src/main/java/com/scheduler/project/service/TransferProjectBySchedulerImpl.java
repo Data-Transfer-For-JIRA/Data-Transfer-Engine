@@ -1,7 +1,10 @@
 package com.scheduler.project.service;
 
+import com.account.dao.TB_JIRA_USER_JpaRepository;
 import com.account.service.Account;
+import com.transfer.project.model.dao.TB_JML_JpaRepository;
 import com.transfer.project.model.dto.CreateBulkResultDTO;
+import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 import com.transfer.project.service.TransferProject;
 import com.utils.SaveLog;
@@ -25,6 +28,9 @@ public class TransferProjectBySchedulerImpl implements TransferProjectBySchedule
 
     @Autowired
     private com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository TB_PJT_BASE_JpaRepository;
+
+    @Autowired
+    private TB_JML_JpaRepository TB_JML_JpaRepository;
 
     @Autowired
     private TransferProject transferProject;
@@ -53,7 +59,14 @@ public class TransferProjectBySchedulerImpl implements TransferProjectBySchedule
 
             // 이관 성공인 경우
             if (create_result.containsKey("이관 성공") && create_result.get("이관 성공").equals(projectCode)) {
-                scheduler_result = "["+projectCode+"] 해당 프로젝트 생성에 성공하였습니다.";
+
+                String key = TB_JML_JpaRepository.findByProjectCode(projectCode).getKey();
+                String name = TB_JML_JpaRepository.findByProjectCode(projectCode).getJiraProjectName();
+                scheduler_result = "["+projectCode+"] 해당 프로젝트 생성에 성공하였습니다."+ System.lineSeparator()
+                        +"[INFO]"+ System.lineSeparator()
+                        +"생성된 지라 프로젝트 키: "+key+""+System.lineSeparator()
+                        +"생성된 지라 프로젝트 이름: "+name+"";
+
             }
 
             // 이미 이관한 프로젝트인 경우
@@ -63,7 +76,7 @@ public class TransferProjectBySchedulerImpl implements TransferProjectBySchedule
 
             Date currentTime = new Date();
             // 스케줄러 결과 저장
-            SaveLog.projectSchedulerResult(scheduler_result,currentTime);
+            SaveLog.SchedulerResult("PROJECT",scheduler_result,currentTime);
         }
     }
 }
