@@ -63,4 +63,7 @@ public class CustomFieldDTO extends FieldDTO {
     @JsonProperty("customfield_10247")
     private Field printerSupportRange;
 
+    @JsonProperty("customfield_10442")
+    private Description etc;
+
 }
