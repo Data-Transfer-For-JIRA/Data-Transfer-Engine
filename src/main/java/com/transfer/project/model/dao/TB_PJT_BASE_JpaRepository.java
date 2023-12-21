@@ -41,5 +41,7 @@ public interface TB_PJT_BASE_JpaRepository extends JpaRepository<TB_PJT_BASE_Ent
       2. 특정 엔티티의 일부 필드만을 조회해야 할 때
       3. JPQL이나 native SQL을 사용하여 성능을 최적화하고자 할 때
     * */
+
+    List<TB_PJT_BASE_Entity> findByRelatedProject(String projectCode);
     
 }

@@ -50,7 +50,6 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
         for(TB_JML_Entity todayMigratedProject : todayMigratedProjectCodeList){
             String projectCodeFromJML = todayMigratedProject.getProjectCode();
             boolean isMigrate = TB_PJT_BASE_JpaRepository.findIssueMigrateFlagByProjectCode(projectCodeFromJML);
-            System.out.println("@@@@@@@@@@@@@@@@"+isMigrate);
             if(!isMigrate ){ // 이관 플래그가 0이면
                 String projectCode = todayMigratedProject.getProjectCode();
                 TransferIssueDTO transferIssueDTO = new TransferIssueDTO();

@@ -16,6 +16,7 @@ import com.transfer.issue.model.dto.bulk.CreateBulkIssueDTO;
 import com.transfer.issue.model.dto.bulk.CreateBulkIssueFieldsDTO;
 import com.transfer.issue.model.dto.bulk.ResponseBulkIssueDTO;
 import com.transfer.issue.model.entity.PJ_PG_SUB_Entity;
+import com.transfer.project.model.dao.TB_JML_JpaRepository;
 import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
@@ -36,6 +37,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.transfer.issue.model.FieldInfo.ofLabel;
 
@@ -393,6 +395,8 @@ public class TransferIssueImpl implements TransferIssue {
         ResponseIssueDTO responseIssueDTO = null;
         try {
             responseIssueDTO = WebClientUtils.post(webClient, endpoint, createIssueDTO, ResponseIssueDTO.class).block();
+
+
         } catch (Exception e) {
             if (e instanceof WebClientResponseException) {
                 WebClientResponseException wcException = (WebClientResponseException) e;
@@ -404,6 +408,7 @@ public class TransferIssueImpl implements TransferIssue {
         }
 
         if(responseIssueDTO.getKey() != null){
+            RelatedProject(wssProjectCode,responseIssueDTO.getKey());
             changeIssueStatus(responseIssueDTO.getKey());
             return true;
         }else{
@@ -523,9 +528,9 @@ public class TransferIssueImpl implements TransferIssue {
         for (PJ_PG_SUB_Entity issue : issueList){
 
             Date  date = issue.getCreationDate();
-            String title = "작성일 :" + date +" 작성자 :"+issue.getWriter();
+            String title = "작성일: " + date +"     작성자: "+issue.getWriter();
             String content = issue.getIssueContent().replace("<br>", "\n").replace("&nbsp;", " ");;
-            String divider = "===========================================================================";
+            String divider = "====================================================================";
             String contentItem = title+"\n"+content+"\n\n"+divider+"\n\n";
 
             wssContents += contentItem;
@@ -571,6 +576,69 @@ public class TransferIssueImpl implements TransferIssue {
         TB_PJT_BASE_Entity entity =  TB_PJT_BASE_JpaRepository.findById(projectCode).orElseThrow(() -> new NoSuchElementException("프로젝트 코드 조회에 실패하였습니다.: " + projectCode));
         entity.setIssueMigrateFlag(true);
         return true;
+    }
+
+    public void RelatedProject(String projectCode, String issueIdOrKey) throws JsonProcessingException {
+        // 프로젝트 조회해서 relatedProject 가 projectCode인 프로젝트 리스트 구하기
+        List<TB_PJT_BASE_Entity> relatedProjectList = TB_PJT_BASE_JpaRepository.findByRelatedProject(projectCode);
+
+        if (relatedProjectList == null || relatedProjectList.isEmpty()) {
+            System.out.println("해당 프로젝트는 연관된 프로젝트가 없습니다.");
+            return;
+        }
+
+        List<String> relatedLinkList = relatedProjectList.stream()
+                .map(relatedProject -> {
+                    String relatedProjectCode = relatedProject.getProjectCode();
+                    TB_JML_Entity migratedProject = TB_JML_JpaRepository.findByProjectCode(relatedProjectCode);
+                    if (migratedProject == null) {
+                        return "[연관된 프로젝트(지라 프로젝트 이관 전)]" + relatedProjectCode;
+                    } else {
+                        return migratedProject.getKey() != null ?
+                                "\n[연관된 프로젝트(지라 프로젝트 이관 완료)]\nhttps://markany.atlassian.net/jira/core/projects/" + migratedProject.getKey() + "/board\n" : "\n[연관된 프로젝트(지라 프로젝트 이관 전)]" + relatedProjectCode +"\n";
+                    }
+                })
+                .collect(Collectors.toList());
+
+        String result = "";
+        for (String content : relatedLinkList){
+            result += content;
+        }
+        System.out.println(result);
+
+        AddCommentDTO addCommentDTO = new AddCommentDTO();
+
+        AddCommentDTO.TextContent textContent = AddCommentDTO.TextContent.builder()
+                .text(result)
+                .type("text")
+                .build();
+
+        List<AddCommentDTO.TextContent> textContentList = new ArrayList<>();
+        textContentList.add(textContent);
+
+        AddCommentDTO.Content content = AddCommentDTO.Content.builder()
+                .type("paragraph")
+                .content(textContentList)
+                .build();
+
+        List<AddCommentDTO.Content> contentList = new ArrayList<>();
+        contentList.add(content);
+
+        AddCommentDTO.Body body = AddCommentDTO.Body.builder()
+                .version(Integer.parseInt("1"))
+                .type("doc")
+                .content(contentList)
+                .build();
+
+        addCommentDTO.setBody(body);
+        ObjectMapper objectMapper = new ObjectMapper();
+        String json = objectMapper.writeValueAsString(addCommentDTO);
+        System.out.println(json);
+
+        String endpoint = "/rest/api/3/issue/"+issueIdOrKey+"/comment";
+        AdminInfoDTO info = account.getAdminInfo(1);
+        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
+        WebClientUtils.post(webClient,endpoint,addCommentDTO,String.class).block();
     }
 
     /*

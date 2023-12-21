@@ -108,7 +108,7 @@ public class TB_PJT_BASE_Entity {
     
     // 관련 프로젝트
     @Column(name = "BS_PARENTS_PJTCD")
-    private String linkedProjectCode;
+    private String relatedProject;
     /*
     *  관련 프로젝트 필드에는 해당 프로젝트의 유지보수 코드가 연결되어있음
     * */
