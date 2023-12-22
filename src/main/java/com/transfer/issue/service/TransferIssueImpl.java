@@ -449,70 +449,95 @@ public class TransferIssueImpl implements TransferIssue {
     }
 
     public void RelatedProject(String projectCode, String issueIdOrKey) throws JsonProcessingException {
+
+
+        if (projectCode == null || projectCode.isEmpty() || issueIdOrKey == null || issueIdOrKey.isEmpty()) {
+            throw new IllegalArgumentException("프로젝트 코드 또는 이슈 ID/키가 유효하지 않습니다.");
+        }
+
         // 프로젝트 조회해서 relatedProject 가 projectCode인 프로젝트 리스트 구하기
         List<TB_PJT_BASE_Entity> relatedProjectList = TB_PJT_BASE_JpaRepository.findByRelatedProject(projectCode);
 
-        if (relatedProjectList == null || relatedProjectList.isEmpty()) {
-            System.out.println("해당 프로젝트는 연관된 프로젝트가 없습니다.");
-            return;
-        }
         // 이관 여부에 따라 프로젝트를 그룹화하고, 각 그룹의 프로젝트 정보를 리스트로 모아서 반환
-        Map<Boolean, List<String>> groupedProjects = relatedProjectList.stream()
+        Map<Boolean, List<AbstractMap.SimpleEntry<String, String>>> groupedProjects = relatedProjectList.stream()
                 .map(relatedProject -> {
                     String relatedProjectCode = relatedProject.getProjectCode(); // 해당 프로젝트에 연결된 프로젝트 코드
+                    String relatedProjectName = relatedProject.getProjectName();
                     TB_JML_Entity migratedProject = TB_JML_JpaRepository.findByProjectCode(relatedProjectCode); // 연결된 프로젝트 코드로 이관여부 확인
                     if (migratedProject == null) { // 이관이 안되어있으면?
-                        return new AbstractMap.SimpleEntry<>(false, relatedProjectCode);
+                        return new AbstractMap.SimpleEntry<>(false, new AbstractMap.SimpleEntry<>(relatedProjectCode, relatedProjectName));
                     } else { // 이관이 되어있으면?
-                        return new AbstractMap.SimpleEntry<>(true, migratedProject.getKey() != null ?
-                                "https://markany.atlassian.net/jira/core/projects/" + migratedProject.getKey() + "/board" : relatedProjectCode);
+                        String title = migratedProject.getJiraProjectName();
+                        return new AbstractMap.SimpleEntry<>(true, new AbstractMap.SimpleEntry<>(migratedProject.getKey() != null ? migratedProject.getKey() : relatedProjectCode, title));
+                        // migratedProject.getKey()
                     }
                 })
                 .collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
         //  스트림의 Entry 객체들을 이관 여부를 기준으로 그룹화하고, 각 그룹의 프로젝트 정보를 List로 수집하는 Collector를 생성 ,이관 여부를 키로, 그룹의 프로젝트 정보 리스트를 값으로 가지는 Map
+        AdminInfoDTO info = account.getAdminInfo(1);
+        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
 
 
         String result = "";
         if (groupedProjects.containsKey(false)) {
-            result += "[연관된 프로젝트 - 지라 프로젝트 이관 전]\nWSS 프로젝트 코드\n    - " + String.join("\n    - ", groupedProjects.get(false)) + "\n";
+            result += "[연관된 프로젝트 - 지라 프로젝트 이관 전]\nWSS 프로젝트 코드\n    - " +
+                    String.join("\n    - ", groupedProjects.get(false).stream()
+                            .map(entry -> entry.getKey() + ": " + entry.getValue())
+                            .collect(Collectors.toList())) + "\n";
+
+            AddCommentDTO addCommentDTO = new AddCommentDTO();
+
+            AddCommentDTO.TextContent textContent = AddCommentDTO.TextContent.builder()
+                    .text(result)
+                    .type("text")
+                    .build();
+
+            List<AddCommentDTO.TextContent> textContentList = new ArrayList<>();
+            textContentList.add(textContent);
+
+            AddCommentDTO.Content content = AddCommentDTO.Content.builder()
+                    .type("paragraph")
+                    .content(textContentList)
+                    .build();
+
+            List<AddCommentDTO.Content> contentList = new ArrayList<>();
+            contentList.add(content);
+
+            AddCommentDTO.Body body = AddCommentDTO.Body.builder()
+                    .version(Integer.parseInt("1"))
+                    .type("doc")
+                    .content(contentList)
+                    .build();
+
+            addCommentDTO.setBody(body);
+            String endpoint = "/rest/api/3/issue/"+issueIdOrKey+"/comment";
+            WebClientUtils.post(webClient,endpoint,addCommentDTO,String.class).block();
         }
         if (groupedProjects.containsKey(true)) { // 이관이 완료된 프로젝트 정보 리스트를 연결한 문자열 반환
-            result += "[연관된 프로젝트 - 지라 프로젝트 이관 완료]\n지라 프로젝트 링크\n    - " + String.join("\n    - ", groupedProjects.get(true)) + "\n"; 
+            List<AbstractMap.SimpleEntry<String, String>> migratedProjectInfo = groupedProjects.get(true);
+            for(AbstractMap.SimpleEntry<String, String> migratedProject : migratedProjectInfo) {
+                String key = migratedProject.getKey();
+                String title = migratedProject.getValue();
+                String url = "https://markany.atlassian.net/jira/core/projects/" + key + "/board";
+
+                WebLinkDTO.Icon icon = WebLinkDTO.Icon.builder()
+                        .url16x16("https://markany.atlassian.net/favicon.ico")
+                        .build();
+                WebLinkDTO.Object object = WebLinkDTO.Object.builder()
+                        .icon(icon)
+                        .title(title)
+                        .url(url)
+                        .build();
+
+                WebLinkDTO webLinkDTO = new WebLinkDTO();
+                webLinkDTO.setObject(object);
+
+                String endpoint = "/rest/api/3/issue/"+issueIdOrKey+"/remotelink";
+                WebClientUtils.post(webClient,endpoint,webLinkDTO,String.class).block();
+            }
+
         }
 
-        AddCommentDTO addCommentDTO = new AddCommentDTO();
-
-        AddCommentDTO.TextContent textContent = AddCommentDTO.TextContent.builder()
-                .text(result)
-                .type("text")
-                .build();
-
-        List<AddCommentDTO.TextContent> textContentList = new ArrayList<>();
-        textContentList.add(textContent);
-
-        AddCommentDTO.Content content = AddCommentDTO.Content.builder()
-                .type("paragraph")
-                .content(textContentList)
-                .build();
-
-        List<AddCommentDTO.Content> contentList = new ArrayList<>();
-        contentList.add(content);
-
-        AddCommentDTO.Body body = AddCommentDTO.Body.builder()
-                .version(Integer.parseInt("1"))
-                .type("doc")
-                .content(contentList)
-                .build();
-
-        addCommentDTO.setBody(body);
-        ObjectMapper objectMapper = new ObjectMapper();
-        String json = objectMapper.writeValueAsString(addCommentDTO);
-        System.out.println(json);
-
-        String endpoint = "/rest/api/3/issue/"+issueIdOrKey+"/comment";
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-        WebClientUtils.post(webClient,endpoint,addCommentDTO,String.class).block();
     }
 
     // 프로젝트와 유지보수 공통 필드 설정
