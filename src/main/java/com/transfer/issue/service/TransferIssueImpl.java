@@ -83,8 +83,9 @@ public class TransferIssueImpl implements TransferIssue {
 
         List<PJ_PG_SUB_Entity> issueList = PJ_PG_SUB_JpaRepository.findAllByProjectCodeOrderByCreationDateDesc(projectCode);
 
-        if(issueList.isEmpty()){
+        if(issueList.isEmpty() || issueList == null){
             createBaseInfoIssue(issueList, project);
+            CheckIssueMigrateFlag(projectCode);
             result.put(projectCode, "이슈 생성 성공");
         }else{
             if(createBaseInfoIssue(issueList, project)){
