@@ -456,25 +456,29 @@ public class TransferIssueImpl implements TransferIssue {
             System.out.println("해당 프로젝트는 연관된 프로젝트가 없습니다.");
             return;
         }
-
-        List<String> relatedLinkList = relatedProjectList.stream()
+        // 이관 여부에 따라 프로젝트를 그룹화하고, 각 그룹의 프로젝트 정보를 리스트로 모아서 반환
+        Map<Boolean, List<String>> groupedProjects = relatedProjectList.stream()
                 .map(relatedProject -> {
-                    String relatedProjectCode = relatedProject.getProjectCode();
-                    TB_JML_Entity migratedProject = TB_JML_JpaRepository.findByProjectCode(relatedProjectCode);
-                    if (migratedProject == null) {
-                        return "[연관된 프로젝트(지라 프로젝트 이관 전)]" + relatedProjectCode;
-                    } else {
-                        return migratedProject.getKey() != null ?
-                                "\n[연관된 프로젝트(지라 프로젝트 이관 완료)]\nhttps://markany.atlassian.net/jira/core/projects/" + migratedProject.getKey() + "/board\n" : "\n[연관된 프로젝트(지라 프로젝트 이관 전)]" + relatedProjectCode +"\n";
+                    String relatedProjectCode = relatedProject.getProjectCode(); // 해당 프로젝트에 연결된 프로젝트 코드
+                    TB_JML_Entity migratedProject = TB_JML_JpaRepository.findByProjectCode(relatedProjectCode); // 연결된 프로젝트 코드로 이관여부 확인
+                    if (migratedProject == null) { // 이관이 안되어있으면?
+                        return new AbstractMap.SimpleEntry<>(false, relatedProjectCode);
+                    } else { // 이관이 되어있으면?
+                        return new AbstractMap.SimpleEntry<>(true, migratedProject.getKey() != null ?
+                                "https://markany.atlassian.net/jira/core/projects/" + migratedProject.getKey() + "/board" : relatedProjectCode);
                     }
                 })
-                .collect(Collectors.toList());
+                .collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
+        //  스트림의 Entry 객체들을 이관 여부를 기준으로 그룹화하고, 각 그룹의 프로젝트 정보를 List로 수집하는 Collector를 생성 ,이관 여부를 키로, 그룹의 프로젝트 정보 리스트를 값으로 가지는 Map
+
 
         String result = "";
-        for (String content : relatedLinkList){
-            result += content;
+        if (groupedProjects.containsKey(false)) {
+            result += "[연관된 프로젝트 - 지라 프로젝트 이관 전]\nWSS 프로젝트 코드\n    - " + String.join("\n    - ", groupedProjects.get(false)) + "\n";
         }
-        System.out.println(result);
+        if (groupedProjects.containsKey(true)) { // 이관이 완료된 프로젝트 정보 리스트를 연결한 문자열 반환
+            result += "[연관된 프로젝트 - 지라 프로젝트 이관 완료]\n지라 프로젝트 링크\n    - " + String.join("\n    - ", groupedProjects.get(true)) + "\n"; 
+        }
 
         AddCommentDTO addCommentDTO = new AddCommentDTO();
 
