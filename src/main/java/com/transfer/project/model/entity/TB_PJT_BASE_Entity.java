@@ -162,5 +162,7 @@ public class TB_PJT_BASE_Entity {
     @Column(name = "BS_CABVER")
     private String clientType;
 
-
+    // URL
+    @Column(name = "BS_URL")
+    private String url;
 }

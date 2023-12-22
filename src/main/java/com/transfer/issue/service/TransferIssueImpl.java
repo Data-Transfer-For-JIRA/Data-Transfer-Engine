@@ -132,7 +132,7 @@ public class TransferIssueImpl implements TransferIssue {
         String creationDate = null; // 프로젝트 배정일
 
         if (!issueList.isEmpty()) {
-            creationDate = String.valueOf(issueList.get(0).getCreationDate());
+            creationDate = String.valueOf(issueList.get(issueList.size()-1).getCreationDate());
         }
 
         // 설명 설정
@@ -188,6 +188,7 @@ public class TransferIssueImpl implements TransferIssue {
 
             ProjectInfoDTO projectInfoDTO = projectBuilder.build();
             createIssueDTO = new CreateIssueDTO<>(projectInfoDTO);
+
         } else {
 
             MaintenanceInfoDTO.MaintenanceInfoDTOBuilder<?, ?> maintenanceBuilder = MaintenanceInfoDTO.builder();
@@ -271,37 +272,43 @@ public class TransferIssueImpl implements TransferIssue {
     public List<String> getSeveralAssigneeId(String userNames) throws Exception {
         logger.info("[::TransferIssueImpl::] getSeveralAssigneeId");
 
+        List<String> userIdList = new ArrayList<>();
+        String epageDivAccountId = TB_JIRA_USER_JpaRepository.findByDisplayName("epage div").getAccountId();
+
         if (userNames != null && !userNames.trim().isEmpty()) {
 
             if (validateAssigneeFormat(userNames)) {
 
                 String[] namesArray = userNames.trim().split("\\s*,\\s*");
-
                 List<String> namesArrayList = Arrays.asList(namesArray);
-                namesArrayList.subList(0, Math.min(namesArrayList.size(), 2));
+                List<String> limitedNamesList = namesArrayList.subList(0, Math.min(namesArrayList.size(), 2));
 
-                List<String> userIdList = new ArrayList<>();
-                for (String name : namesArrayList) {
+                for (String name : limitedNamesList) {
 
                     Optional<TB_JIRA_USER_Entity> userEntity = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(name)
                             .stream()
                             .findFirst();
 
-                    userEntity.ifPresent(entity -> {
+                    userEntity.ifPresentOrElse(entity -> {
                         // userEntity가 존재하는 경우
-                        String userId = userEntity.get().getAccountId();
+                        String userId = entity.getAccountId();
                         if (userId != null) {
                             userIdList.add(userId);
                         }
+                    }, () -> {
+                        // userEntity가 존재하지 않는 경우 (퇴사자 등)
+                        userIdList.add(epageDivAccountId);
                     });
                 }
                 return userIdList;
             }
+            // 유효한 형식이 아닌 경우
+            userIdList.add(epageDivAccountId);
         } else {
-            // 담당자 미지정된 프로젝트 (전자문서사업부 아이디)
-            return null;
+            // 담당자 미지정
+            userIdList.add(epageDivAccountId);
         }
-        return null;
+        return userIdList;
     }
 
     /*
@@ -540,14 +547,16 @@ public class TransferIssueImpl implements TransferIssue {
 
     }
 
-    // 프로젝트와 유지보수 공통 필드 설정
+    /*
+     *  프로젝트와 유지보수 공통 필드 설정
+     * */
     public <B extends CustomFieldDTO.CustomFieldDTOBuilder<?, ?>> B setCommonFields(B customBuilder, TB_PJT_BASE_Entity baseInfo, String jiraProjectKey, String baseDescription, String assignees) throws Exception {
 
         // 프로젝트
         customBuilder.project(new FieldDTO.Project(jiraProjectKey, null));
 
         // 설명
-        customBuilder.description(setDescription(baseDescription));
+        customBuilder.description(setDescription(Collections.singletonList(baseDescription)));
 
         // 담당자 및 부 담당자
         List<String> assigneeList = getSeveralAssigneeId(assignees); // 담당자 리스트
@@ -571,12 +580,6 @@ public class TransferIssueImpl implements TransferIssue {
             }
         }
 
-        // 바코드 타입
-        FieldInfo barcodeTypeInfo = FieldInfo.ofLabel(FieldInfoCategory.BARCODE_TYPE, String.valueOf(baseInfo.getBarcodeType()));
-        if (barcodeTypeInfo != null) {
-            customBuilder.barcodeType(new FieldDTO.Field(barcodeTypeInfo.getId()));
-        }
-
         // 계약사
         if (baseInfo.getContractor() != null && !baseInfo.getContractor().isEmpty()) {
             customBuilder.contractor(baseInfo.getContractor());
@@ -585,6 +588,12 @@ public class TransferIssueImpl implements TransferIssue {
         // 고객사
         if (baseInfo.getClient() != null && !baseInfo.getClient().isEmpty()) {
             customBuilder.contractor(baseInfo.getContractor());
+        }
+
+        // 바코드 타입
+        FieldInfo barcodeTypeInfo = FieldInfo.ofLabel(FieldInfoCategory.BARCODE_TYPE, String.valueOf(baseInfo.getBarcodeType()));
+        if (barcodeTypeInfo != null) {
+            customBuilder.barcodeType(new FieldDTO.Field(barcodeTypeInfo.getId()));
         }
 
         // 팀, 파트
@@ -617,63 +626,39 @@ public class TransferIssueImpl implements TransferIssue {
             customBuilder.printerSupportRange(new FieldDTO.Field(printerSupportRangeInfo.getId()));
         }
 
-        // 기타 - 제품 유형, 연동 정보, 담당자 연락처, 점검 방법
-        String etc = "";
-        if (baseInfo.getProductType() != 0) {
-            etc += "- 제품 유형: ";
-            if (baseInfo.getProductType() == 10) {
-                etc += "ActiveX\n";
-            } else if (baseInfo.getProductType() == 11) {
-                etc += "Non-ActiveX\n";
-            } else if (baseInfo.getProductType() == 12) {
-                etc += "ZeroClient\n";
-            }
-        }
-        if (baseInfo.getConnectionType() != null && !baseInfo.getConnectionType().isEmpty()) {
-            etc += "- 연동 정보: " + baseInfo.getConnectionType() + "\n";
-        }
-
-        boolean hasClientInfo = false;  // 고객사 담당자 정보가 있는지 확인하기 위한 플래그
-        if (baseInfo.getClientName() != null && !baseInfo.getClientName().isEmpty() && !baseInfo.getClientName().equals("이름")) {
-            if (!hasClientInfo) {
-                etc += "- 고객사 담당자 정보: \n";
-                hasClientInfo = true;
-            }
-            etc += "  고객사 담당자: " + baseInfo.getClientName() + "\n";
-        }
-        if (baseInfo.getClientPhoneNumber() != null && !baseInfo.getClientPhoneNumber().isEmpty() && !baseInfo.getClientPhoneNumber().equals("연락처")) {
-            if (!hasClientInfo) {
-                etc += "- 고객사 담당자 정보: \n";
-                hasClientInfo = true;
-            }
-            etc += "  담당자 연락처: " + baseInfo.getClientPhoneNumber() + "\n";
-        }
-        if (baseInfo.getClientEmail() != null && !baseInfo.getClientEmail().isEmpty() && !baseInfo.getClientEmail().equals("메일")) {
-            if (!hasClientInfo) {
-                etc += "- 고객사 담당자 정보: \n";
-                hasClientInfo = true;
-            }
-            etc += "  담당자 이메일: " + baseInfo.getClientEmail() + "\n";
-        }
-
-        if (baseInfo.getInspectionType() != null && !baseInfo.getInspectionType().isEmpty()) {
-            etc += "- 점검 방법: " + baseInfo.getInspectionType() + "\n";
-        }
-
-        customBuilder.etc(setDescription(etc));
+        // 기타 - 담당자, 제품 유형, 연동 정보, 담당자 연락처, 점검 방법, url, cabver
+        List<String> etcItems = formatEtcField(baseInfo, assignees);
+        customBuilder.etc(setDescription(etcItems));
 
         return customBuilder;
     }
 
-    public FieldDTO.Description setDescription(String text) {
-        FieldDTO.ContentItem contentItem = FieldDTO.ContentItem.builder()
-                .type("text")
-                .text(text)
-                .build();
+    /*
+     *  설명 포맷으로 데이터 변환
+     * */
+    public FieldDTO.Description setDescription(List<String> textItems) {
+
+        List<FieldDTO.ContentItem> contentItems = new ArrayList<>();
+
+        for (int i = 0; i < textItems.size(); i++) {
+            FieldDTO.ContentItem textItem = FieldDTO.ContentItem.builder()
+                    .type("text")
+                    .text(textItems.get(i))
+                    .build();
+            contentItems.add(textItem);
+
+            // hardBreak 추가
+            if (textItems.size() > 1 && i < textItems.size() - 1) {
+                FieldDTO.ContentItem breakItem = FieldDTO.ContentItem.builder()
+                        .type("hardBreak")
+                        .build();
+                contentItems.add(breakItem);
+            }
+        }
 
         FieldDTO.Content content = FieldDTO.Content.builder()
-                .content(Arrays.asList(contentItem))
                 .type("paragraph")
+                .content(contentItems)
                 .build();
 
         FieldDTO.Description description = FieldDTO.Description.builder()
@@ -683,6 +668,97 @@ public class TransferIssueImpl implements TransferIssue {
                 .build();
 
         return description;
+    }
+
+    /*
+     *  기타 필드 설정
+     * */
+    public List<String> formatEtcField(TB_PJT_BASE_Entity baseInfo, String assignees) {
+
+        List<String> etcItems = new ArrayList<>();
+
+        if (assignees != null && !assignees.isEmpty()) {
+            etcItems.add("- 담당자: " + assignees);
+        }
+
+        String projectStepDescription = getProjectStepDescription(baseInfo.getProjectStep());
+        if (projectStepDescription != null) {
+            etcItems.add("- 프로젝트 단계: " + projectStepDescription);
+        }
+
+        String productTypeDescription = getProductTypeDescription(baseInfo.getProductType());
+        if (productTypeDescription != null) {
+            etcItems.add("- 제품 유형: " + productTypeDescription);
+        }
+
+        appendIfNotEmpty(etcItems, "- 연동 정보: ", baseInfo.getConnectionType());
+        appendIfNotEmpty(etcItems, "- 버전: ", baseInfo.getClientType());
+        appendIfNotEmpty(etcItems, "- URL: ", baseInfo.getUrl());
+
+        boolean hasClientInfo = false;
+        // 고객사 담당자 정보가 있을 경우 타이틀을 먼저 추가
+        if (isNotEmpty(baseInfo.getClientName(), "이름") ||
+                isNotEmpty(baseInfo.getClientPhoneNumber(), "연락처") ||
+                isNotEmpty(baseInfo.getClientEmail(), "메일")) {
+            etcItems.add("- 고객사 담당자 정보: ");
+            hasClientInfo = true;
+        }
+
+        // 고객사 담당자 정보 추가
+        hasClientInfo |= appendClientInfo(etcItems, "고객사 담당자: ", baseInfo.getClientName(), "이름");
+        hasClientInfo |= appendClientInfo(etcItems, "담당자 연락처: ", baseInfo.getClientPhoneNumber(), "연락처");
+        hasClientInfo |= appendClientInfo(etcItems, "담당자 이메일: ", baseInfo.getClientEmail(), "메일");
+
+        appendIfNotEmpty(etcItems, "- 점검 방법: ", baseInfo.getInspectionType());
+
+        if (!etcItems.isEmpty()) {
+            etcItems.add(0, "====== 해당 정보는 WSS 백업 데이터 입니다. ======");
+        }
+
+        return etcItems;
+    }
+
+    private String getProjectStepDescription(int projectStep) {
+        switch (projectStep) {
+            case 0: return "사전 프로젝트";
+            case 1: return "확정 프로젝트";
+            case 5: return "무상 유지보수";
+            case 7: return "유상 유지보수";
+            case 8: return "개발 과제";
+            case 9: return "기타";
+            case 91: return "유지보수 종료";
+            case 92: return "프로젝트 종료(M 필요없음)";
+            case 93: return "프로젝트 종료(M 계약)";
+            case 94: return "프로젝트 종료(M 미계약)";
+            default: return null; // 또는 "알 수 없는 단계";
+        }
+    }
+
+    private String getProductTypeDescription(int productType) {
+        switch (productType) {
+            case 10: return "ActiveX";
+            case 11: return "Non-ActiveX";
+            case 12: return "ZeroClient";
+            default: return null; // 또는 "알 수 없는 유형";
+        }
+    }
+
+    private boolean isNotEmpty(String value, String placeholder) {
+        return value != null && !value.isEmpty() && !value.equals(placeholder);
+    }
+
+    private boolean appendClientInfo(List<String> items, String prefix, String info, String placeholder) {
+        if (info != null && !info.isEmpty() && !info.equals(placeholder)) {
+            items.add("  " + prefix + info);
+            return true;
+        }
+        return false;
+    }
+
+    private void appendIfNotEmpty(List<String> items, String prefix, String info) {
+        if (info != null && !info.isEmpty()) {
+            items.add(prefix + info);
+        }
     }
 
     /*
