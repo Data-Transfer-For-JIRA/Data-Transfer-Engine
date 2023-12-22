@@ -81,7 +81,7 @@ public class TransferIssueImpl implements TransferIssue {
         logger.info("[::TransferIssueImpl::] processTransferIssues");
         String projectCode = transferIssueDTO.getProjectCode();
 
-        List<PJ_PG_SUB_Entity> issueList = PJ_PG_SUB_JpaRepository.findAllByProjectCodeOrderByCreationDateAsc(projectCode);
+        List<PJ_PG_SUB_Entity> issueList = PJ_PG_SUB_JpaRepository.findAllByProjectCodeOrderByCreationDateDesc(projectCode);
 
         if(issueList.isEmpty()){
             createBaseInfoIssue(issueList, project);
