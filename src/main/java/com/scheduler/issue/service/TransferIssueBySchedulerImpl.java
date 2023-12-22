@@ -48,28 +48,37 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
         List<TB_JML_Entity> todayMigratedProjectCodeList= TB_JML_JpaRepository.findProjectCodeByMigratedDateBetween(startOfDay,endOfDay);
 
         for(TB_JML_Entity todayMigratedProject : todayMigratedProjectCodeList){
+            Date currentTime = new Date();
             String projectCodeFromJML = todayMigratedProject.getProjectCode();
             boolean isMigrate = TB_PJT_BASE_JpaRepository.findIssueMigrateFlagByProjectCode(projectCodeFromJML);
             if(!isMigrate ){ // 이관 플래그가 0이면
                 String projectCode = todayMigratedProject.getProjectCode();
                 TransferIssueDTO transferIssueDTO = new TransferIssueDTO();
                 transferIssueDTO.setProjectCode(projectCode);
-                transferIssue.transferIssueData(transferIssueDTO);
+                transferIssue.transferIssueData(transferIssueDTO); // 이슈 생성 작업
 
-                TB_JML_Entity migrateIssue =TB_JML_JpaRepository.findByProjectCode(projectCode);
+                boolean isMigrateAfter = TB_PJT_BASE_JpaRepository.findIssueMigrateFlagByProjectCode(projectCodeFromJML);
 
-                String key = migrateIssue.getKey();
-                String name = migrateIssue.getJiraProjectName();
+                if(isMigrateAfter){
+                    TB_JML_Entity migrateIssue =TB_JML_JpaRepository.findByProjectCode(projectCode);
 
-                String scheduler_result = "["+projectCode+"] 해당 프로젝트 이슈 생성에 성공하였습니다."+ System.lineSeparator()
-                        +"[INFO]"+ System.lineSeparator()
-                        +"지라 프로젝트 키: "+key+""+System.lineSeparator()
-                        +"지라 프로젝트 이름: "+name+"";
+                    String key = migrateIssue.getKey();
+                    String name = migrateIssue.getJiraProjectName();
 
-                Date currentTime = new Date();
-                // 스케줄러 결과 저장
-                SaveLog.SchedulerResult("ISSUE",scheduler_result,currentTime);
+                    String scheduler_result_success = "["+projectCode+"] 해당 프로젝트 이슈 생성에 성공하였습니다."+ System.lineSeparator()
+                            +"[INFO]"+ System.lineSeparator()
+                            +"지라 프로젝트 키: "+key+""+System.lineSeparator()
+                            +"지라 프로젝트 이름: "+name+"";
+                    // 스케줄러 결과 저장
+                    SaveLog.SchedulerResult("ISSUE\\SUCCESS",scheduler_result_success,currentTime);
+                }else{
+                    String scheduler_result_fail = "["+projectCode+"] 해당 프로젝트 이슈 생성에 실패하였습니다.";
+                    SaveLog.SchedulerResult("ISSUE\\FAIL",scheduler_result_fail,currentTime);
+                }
+
+
             }
+
         }
     }
 }

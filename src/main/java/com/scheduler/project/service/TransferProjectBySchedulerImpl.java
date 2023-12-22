@@ -38,7 +38,8 @@ public class TransferProjectBySchedulerImpl implements TransferProjectBySchedule
     @Autowired
     private Account account;
     public void createProject(int project_count) throws Exception{
-        String scheduler_result = null;
+        String scheduler_resul_fail = null;
+        String scheduler_result_success = null;
         // 프로젝트 n개 조회
         Pageable pageable = PageRequest.of(0, project_count);
         Page<TB_PJT_BASE_Entity> page = TB_PJT_BASE_JpaRepository.findAllByMigrateFlagFalseOrderByCreatedDateDesc(pageable);
@@ -49,12 +50,12 @@ public class TransferProjectBySchedulerImpl implements TransferProjectBySchedule
 
             // 이관 실패인 경우
             if (create_result.containsKey("이관 실패") && create_result.get("이관 실패").equals(projectCode)) {
-                scheduler_result = "["+projectCode+"] 해당 프로젝트 생성에 실패하였습니다.";
+                scheduler_resul_fail = "["+projectCode+"] 해당 프로젝트 생성에 실패하였습니다.";
             }
 
             // 프로젝트 조회 실패인 경우
             if (create_result.containsKey("프로젝트 조회 실패") && create_result.get("프로젝트 조회 실패").equals(projectCode)) {
-                scheduler_result ="["+projectCode+"] 해당 프로젝트 조회에 실패하였습니다.";
+                scheduler_resul_fail ="["+projectCode+"] 해당 프로젝트 조회에 실패하였습니다.";
             }
 
             // 이관 성공인 경우
@@ -62,7 +63,7 @@ public class TransferProjectBySchedulerImpl implements TransferProjectBySchedule
 
                 String key = TB_JML_JpaRepository.findByProjectCode(projectCode).getKey();
                 String name = TB_JML_JpaRepository.findByProjectCode(projectCode).getJiraProjectName();
-                scheduler_result = "["+projectCode+"] 해당 프로젝트 생성에 성공하였습니다."+ System.lineSeparator()
+                scheduler_result_success = "["+projectCode+"] 해당 프로젝트 생성에 성공하였습니다."+ System.lineSeparator()
                         +"[INFO]"+ System.lineSeparator()
                         +"생성된 지라 프로젝트 키: "+key+""+System.lineSeparator()
                         +"생성된 지라 프로젝트 이름: "+name+"";
@@ -71,12 +72,15 @@ public class TransferProjectBySchedulerImpl implements TransferProjectBySchedule
 
             // 이미 이관한 프로젝트인 경우
             if (create_result.containsKey("이미 이관한 프로젝트") && create_result.get("이미 이관한 프로젝트").equals(projectCode)) {
-                scheduler_result = "["+projectCode+"] 해당 프로젝트는 이미 이관한 프로젝트 입니다.";
+                scheduler_resul_fail = "["+projectCode+"] 해당 프로젝트는 이미 이관한 프로젝트 입니다.";
             }
 
             Date currentTime = new Date();
             // 스케줄러 결과 저장
-            SaveLog.SchedulerResult("PROJECT",scheduler_result,currentTime);
+            if(scheduler_resul_fail != null){
+                SaveLog.SchedulerResult("PROJECT\\FAIL",scheduler_resul_fail,currentTime);
+            }
+            SaveLog.SchedulerResult("PROJECT\\SUCCESS",scheduler_result_success,currentTime);
         }
     }
 }
