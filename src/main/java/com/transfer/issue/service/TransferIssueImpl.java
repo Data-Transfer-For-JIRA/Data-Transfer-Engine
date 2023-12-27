@@ -79,26 +79,39 @@ public class TransferIssueImpl implements TransferIssue {
     public Map<String, String> processTransferIssues(TB_JML_Entity project, TransferIssueDTO transferIssueDTO, Map<String, String> result) throws Exception {
         logger.info("[::TransferIssueImpl::] processTransferIssues");
         String projectCode = transferIssueDTO.getProjectCode();
+        String jiraProjectKey = TB_JML_JpaRepository.findByProjectCode(transferIssueDTO.getProjectCode()).getKey();
 
         List<PJ_PG_SUB_Entity> issueList = PJ_PG_SUB_JpaRepository.findAllByProjectCodeOrderByCreationDateDesc(projectCode);
 
         if(issueList.isEmpty() || issueList == null){
             createBaseInfoIssue(issueList, project);
-            checkIssueMigrateFlag(projectCode);
-            result.put(projectCode, "이슈 생성 성공");
-        }else{
+            if (checkIssueMigrateFlag(projectCode)) {
+                result.put("jiraKey", jiraProjectKey);
+                result.put("result", "이슈 생성 성공");
+            } else {
+                result.put("jiraKey", jiraProjectKey);
+                result.put("result", "이슈 생성 실패");
+            }
+        } else {
             if(createBaseInfoIssue(issueList, project)){
                 ResponseIssueDTO issue  = createWssHistoryIssue(issueList, project);
                 if(issue != null){
                     System.out.println("상태변경 대상 키"+issue.getKey());
                     changeIssueStatus(issue.getKey());
-                    checkIssueMigrateFlag(projectCode);
-                    result.put(projectCode, "이슈 생성 성공");
-                }else{
-                    result.put(projectCode,"이슈 생성 실패");
+                    if (checkIssueMigrateFlag(projectCode)) {
+                        result.put("jiraKey", jiraProjectKey);
+                        result.put("result", "이슈 생성 성공");
+                    } else {
+                        result.put("jiraKey", jiraProjectKey);
+                        result.put("result", "이슈 생성 실패");
+                    }
+                } else {
+                    result.put("jiraKey", jiraProjectKey);
+                    result.put("result","이슈 생성 실패");
                 }
-            }else{
-                result.put(projectCode,"이슈 생성 실패");
+            } else {
+                result.put("jiraKey", jiraProjectKey);
+                result.put("result","이슈 생성 실패");
             }
         }
         return result;
