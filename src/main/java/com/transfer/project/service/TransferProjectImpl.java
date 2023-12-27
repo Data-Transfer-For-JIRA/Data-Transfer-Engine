@@ -244,13 +244,13 @@ public class TransferProjectImpl implements TransferProject {
         String jiraKey;
         long count = TB_JML_JpaRepository.count();
         if (count == 0) { // 최초
-            return "TED1";
+            return "ED1";
         } else {
             String recentKey = TB_JML_JpaRepository.findTopByOrderByMigratedDateDesc().getKey();
-            int num = Integer.parseInt(recentKey.substring(3));
+            int num = Integer.parseInt(recentKey.substring(2));
             while (true) {
                 num++;
-                jiraKey = "TED" + num;
+                jiraKey = "ED" + num;
                 if (checkValidationJiraKey(jiraKey)) {
                     return jiraKey;
                 }

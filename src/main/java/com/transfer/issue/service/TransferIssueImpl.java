@@ -6,7 +6,6 @@ import com.account.entity.TB_JIRA_USER_Entity;
 import com.account.service.Account;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.transfer.issue.model.FieldInfo;
 import com.transfer.issue.model.FieldInfoCategory;
 import com.transfer.issue.model.dao.PJ_PG_SUB_JpaRepository;
@@ -85,7 +84,7 @@ public class TransferIssueImpl implements TransferIssue {
 
         if(issueList.isEmpty() || issueList == null){
             createBaseInfoIssue(issueList, project);
-            CheckIssueMigrateFlag(projectCode);
+            checkIssueMigrateFlag(projectCode);
             result.put(projectCode, "이슈 생성 성공");
         }else{
             if(createBaseInfoIssue(issueList, project)){
@@ -93,7 +92,7 @@ public class TransferIssueImpl implements TransferIssue {
                 if(issue != null){
                     System.out.println("상태변경 대상 키"+issue.getKey());
                     changeIssueStatus(issue.getKey());
-                    CheckIssueMigrateFlag(projectCode);
+                    checkIssueMigrateFlag(projectCode);
                     result.put(projectCode, "이슈 생성 성공");
                 }else{
                     result.put(projectCode,"이슈 생성 실패");
@@ -258,7 +257,7 @@ public class TransferIssueImpl implements TransferIssue {
 
         // 이슈 생성되었는지 체크 / 이슈 상태를 완료됨으로 변경
         if (responseIssueDTO.getKey() != null) {
-            RelatedProject(wssProjectCode,responseIssueDTO.getKey());
+            relatedProject(wssProjectCode,responseIssueDTO.getKey());
             changeIssueStatus(responseIssueDTO.getKey());
             return true;
         } else {
@@ -448,15 +447,18 @@ public class TransferIssueImpl implements TransferIssue {
         return response.blockFirst();
     }
 
-    public boolean CheckIssueMigrateFlag(String projectCode) throws Exception{
+    public boolean checkIssueMigrateFlag(String projectCode) throws Exception{
 
         logger.info("[::TransferIssueImpl::] CheckMigrateFlag");
-        TB_PJT_BASE_Entity entity =  TB_PJT_BASE_JpaRepository.findById(projectCode).orElseThrow(() -> new NoSuchElementException("프로젝트 코드 조회에 실패하였습니다.: " + projectCode));
-        entity.setIssueMigrateFlag(true);
-        return true;
+        Optional<TB_PJT_BASE_Entity> entity =  TB_PJT_BASE_JpaRepository.findById(projectCode);
+        if(entity.isPresent()){
+            entity.get().setIssueMigrateFlag(true);
+            return true;
+        }
+        return false;
     }
 
-    public void RelatedProject(String projectCode, String issueIdOrKey) throws JsonProcessingException {
+    public void relatedProject(String projectCode, String issueIdOrKey) throws JsonProcessingException {
 
 
         if (projectCode == null || projectCode.isEmpty() || issueIdOrKey == null || issueIdOrKey.isEmpty()) {
@@ -761,102 +763,5 @@ public class TransferIssueImpl implements TransferIssue {
             items.add(prefix + info);
         }
     }
-
-    /*
-     *  벌크로 이슈 생성 12/19 회의 결과 미사용으로 전환
-     * */
-    /*public boolean createBulkIssue(List<PJ_PG_SUB_Entity> issueList , String jiraProjectId) throws Exception {
-        logger.info("[::TransferIssueImpl::] createBulkIssue");
-        List<PJ_PG_SUB_Entity> nomalIssueList = issueList.subList(1, issueList.size());
-
-        CreateBulkIssueDTO bulkIssueDTO = new CreateBulkIssueDTO();
-
-        List<CreateBulkIssueFieldsDTO> issueUpdates = new ArrayList<>();
-
-        for(PJ_PG_SUB_Entity issueData : nomalIssueList){
-
-            String wssAssignee = getOneAssigneeId(issueData.getWriter());
-
-            String wssContent  = issueData.getIssueContent();
-            Date wssWriteDate  = issueData.getCreationDate();
-
-            String defaultIssueContent = "\n[" + wssWriteDate  + "]\n본 이슈는 WSS에서 이관한 이슈입니다.\n―――――――――――――――――――――――――――――――\n"; // 이슈 생성 시 기본 문구
-            String replacedIssueContent = wssContent.replace("<br>", "\n").replace("&nbsp;", " "); // 이슈 내용 전처리
-            String basicIssueContent = defaultIssueContent + replacedIssueContent; // 이슈 내용
-
-            FieldDTO fieldDTO = new FieldDTO();
-            // 담당자
-            FieldDTO.User user = FieldDTO.User.builder()
-                            .accountId(wssAssignee).build();
-            fieldDTO.setAssignee(user);
-
-            // 프로젝트 아이디
-            FieldDTO.Project project = FieldDTO.Project.builder()
-                    .id(jiraProjectId)
-                    .build();
-            fieldDTO.setProject(project);
-
-
-            // wss 이슈 제목
-            String summary = "["+wssWriteDate+"] WSS 작성이슈";
-            fieldDTO.setSummary(summary);
-
-            // wss 이슈
-            FieldDTO.ContentItem contentItem = FieldDTO.ContentItem.builder()
-                    .type("text")
-                    .text(basicIssueContent)
-                    .build();
-            List<FieldDTO.ContentItem> contentItems = Collections.singletonList(contentItem);
-
-            FieldDTO.Content content = FieldDTO.Content.builder()
-                    .content(contentItems)
-                    .type("paragraph")
-                    .build();
-            List<FieldDTO.Content> contents = Collections.singletonList(content);
-
-            FieldDTO.Description description = FieldDTO.Description.builder()
-                    .version(1)
-                    .type("doc")
-                    .content(contents)
-                    .build();
-            fieldDTO.setDescription(description);
-
-            FieldDTO.Field field =  FieldDTO.Field.builder()
-                            .id("10002")
-                            .build();
-            fieldDTO.setIssuetype(field);
-
-            CreateBulkIssueFieldsDTO fields = new CreateBulkIssueFieldsDTO();
-            fields.setFields(fieldDTO);
-
-            issueUpdates.add(fields);
-
-        }
-
-        bulkIssueDTO.setIssueUpdates(issueUpdates);
-
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-        String endpoint ="/rest/api/3/issue/bulk";
-
-        Flux<ResponseBulkIssueDTO> response = WebClientUtils.postByFlux(webClient,endpoint,bulkIssueDTO,ResponseBulkIssueDTO.class);
-
-        response.subscribe(
-                resp -> System.out.println(resp),  // onNext
-                error -> System.out.println("Error: " + error.getMessage()),  // onError
-                () -> System.out.println("Completed")  // onComplete
-        );
-
-        Mono<List<ResponseBulkIssueDTO>> mono = response.collectList();
-        //Flux는 여러 개의 데이터를 스트림으로 처리하는데 사용되는 반면, Mono는 하나의 데이터를 비동기적으로 처리하는데 사용됩니다. Flux의 collectList() 메소드를 사용하면 Flux를 Mono로 변환
-        List<ResponseBulkIssueDTO> responseList = mono.block();
-        // Mono의 block() 메소드를 사용하면 비동기 작업이 완료될 때까지 현재 스레드를 대기 상태로 만듬
-        if (responseList != null && responseList.stream().allMatch(resp -> resp.getErrors() == null)) {
-            return true;
-        } else {
-            return false;
-        }
-    }*/
-
 
 }
