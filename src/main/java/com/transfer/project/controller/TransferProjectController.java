@@ -123,14 +123,16 @@ public class TransferProjectController {
 
         return transferProject.getDataAfterSeachProjectData(searchKeyWord,pageIndex,pageSize);
     }
-
+    /*
+     *  해당 지라키가 지라 서버에 존재하는지 확인하는 컨트롤러
+     * */
     @ResponseBody
     @RequestMapping(
-            value = {"/test"},
+            value = {"/all"},
             method = {RequestMethod.GET}
     )
-    public int  test(@RequestParam int test) throws Exception {
-        return  test+10 ;
+    public Page<TB_PJT_BASE_Entity>  getTransferredProjectsList(@RequestParam int pageIndex, @RequestParam int pageSize) throws Exception {
+        return  transferProject.getTransferredProjectsList(pageIndex,pageSize);
     }
 
     @ResponseBody
@@ -209,5 +211,7 @@ public class TransferProjectController {
     public Boolean  checkJiraKey(@RequestParam String jiraKey) throws Exception {
         return  transferProject.checkValidationJiraKey(jiraKey);
     }
+
+
 
 }

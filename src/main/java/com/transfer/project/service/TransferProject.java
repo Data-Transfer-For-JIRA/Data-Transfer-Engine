@@ -18,6 +18,9 @@ public interface TransferProject {
     public Page<TB_PJT_BASE_Entity> getDataBeforeSeachProjectData(String seachKeyWord,int pageIndex, int pageSize) throws Exception;
 
     public Page<TB_JML_Entity>  getDataAfterProjectData(int pageIndex, int pageSize) throws Exception;
+
+    public Page<TB_PJT_BASE_Entity>  getTransferredProjectsList(int pageIndex, int pageSize) throws Exception;
+
     public Page<TB_JML_Entity>  getDataAfterSeachProjectData(String seachKeyWord, int pageIndex, int pageSize) throws Exception;
 
     public Map<String, String> CreateProjectFromDB(int personalId,String projectCode) throws Exception;

@@ -128,6 +128,14 @@ public class TransferProjectImpl implements TransferProject {
         return searchResult;
     }
 
+    @Override
+    @Transactional
+    public Page<TB_PJT_BASE_Entity>  getTransferredProjectsList(int pageIndex, int pageSize) throws Exception{
+        Pageable pageable = PageRequest.of(pageIndex, pageSize);
+        Page<TB_PJT_BASE_Entity> searchResult = TB_PJT_BASE_JpaRepository.findAllByMigrateFlagTrueAndIssueMigrateFlagTrueOrderByCreatedDateDesc(pageable);
+        return searchResult;
+    }
+
 
     @Override
     @Transactional
