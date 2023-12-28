@@ -97,7 +97,6 @@ public class TransferIssueImpl implements TransferIssue {
                 ResponseIssueDTO issue  = createWssHistoryIssue(issueList, project);
                 if(issue != null){
                     System.out.println("상태변경 대상 키"+issue.getKey());
-                    changeIssueStatus(issue.getKey());
                     if (checkIssueMigrateFlag(projectCode)) {
                         result.put("jiraKey", jiraProjectKey);
                         result.put("result", "이슈 생성 성공");
@@ -387,77 +386,92 @@ public class TransferIssueImpl implements TransferIssue {
     * */
     public ResponseIssueDTO createWssHistoryIssue(List<PJ_PG_SUB_Entity> issueList,TB_JML_Entity migratedProject) throws Exception {
         logger.info("[::TransferIssueImpl::] createWssHistoryIssue");
-        CreateIssueDTO<?> createIssueDTO = null;
-
         String jiraProjectId = migratedProject.getId();
-
-        LocalDate today = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String formattedToday = today.format(formatter);
-
-        FieldDTO fieldDTO = new FieldDTO();
-        // 담당자
-        /*FieldDTO.User user = FieldDTO.User.builder()
-                .accountId(wssAssignee).build();
-        fieldDTO.setAssignee(user);*/
-
-        // 프로젝트 아이디
-        FieldDTO.Project project = FieldDTO.Project.builder()
-                .id(jiraProjectId)
-                .build();
-        fieldDTO.setProject(project);
-
-
-        // wss 이슈 제목
-        String summary = "["+formattedToday+"] WSS HISTORY";
-        fieldDTO.setSummary(summary);
-
-
         // wss 작성이슈 내용
+        List<String> contentsList = new ArrayList<>();  // 문자열을 저장할 리스트
         String wssContents = "";
         for (PJ_PG_SUB_Entity issue : issueList){
 
             Date  date = issue.getCreationDate();
             String title = "작성일: " + date +"     작성자: "+issue.getWriter();
-            String content = issue.getIssueContent().replace("<br>", "\n").replace("&nbsp;", " ");;
+            String content = issue.getIssueContent().replace("<br>", "\n").replace("&nbsp;", " ");
             String divider = "====================================================================";
             String contentItem = title+"\n"+content+"\n\n"+divider+"\n\n";
 
-            wssContents += contentItem;
+            if ((wssContents.length() + contentItem.length()) > 30000) {
+                contentsList.add(wssContents);  // 길이가 3만자를 넘어가면 리스트에 추가
+                wssContents = contentItem;  // wssContents를 contentItem으로 초기화
+            } else {
+                wssContents += contentItem;
+            }
+        }
+        if (!wssContents.isEmpty()) {
+            contentsList.add(wssContents);  // 마지막에 남은 wssContents를 리스트에 추가
         }
 
-        FieldDTO.ContentItem contentItem = FieldDTO.ContentItem.builder()
-                .type("text")
-                .text(wssContents)
-                .build();
-        List<FieldDTO.ContentItem> contentItems = Collections.singletonList(contentItem);
 
-        FieldDTO.Content content = FieldDTO.Content.builder()
-                .content(contentItems)
-                .type("paragraph")
-                .build();
-        List<FieldDTO.Content> contents = Collections.singletonList(content);
+        List<CreateIssueDTO> createIssueDTOList = new ArrayList<>();  // CreateIssueDTO 객체를 저장할 리스트
 
-        FieldDTO.Description description = FieldDTO.Description.builder()
-                .version(1)
-                .type("doc")
-                .content(contents)
-                .build();
-        fieldDTO.setDescription(description);
+        for (String contentText : contentsList) {
+            LocalDate today = LocalDate.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            String formattedToday = today.format(formatter);
 
-        FieldDTO.Field field =  FieldDTO.Field.builder()
-                .id("10002")
-                .build();
-        fieldDTO.setIssuetype(field);
+            FieldDTO fieldDTO = new FieldDTO();
 
-        createIssueDTO = new CreateIssueDTO<>(fieldDTO);
+            // 프로젝트 아이디
+            FieldDTO.Project project = FieldDTO.Project.builder()
+                    .id(jiraProjectId)
+                    .build();
+            fieldDTO.setProject(project);
+
+
+            // wss 이슈 제목
+            String summary = "["+formattedToday+"] WSS HISTORY";
+            fieldDTO.setSummary(summary);
+
+            FieldDTO.ContentItem contentItem = FieldDTO.ContentItem.builder()
+                    .type("text")
+                    .text(contentText)
+                    .build();
+            List<FieldDTO.ContentItem> contentItems = Collections.singletonList(contentItem);
+
+            FieldDTO.Content content = FieldDTO.Content.builder()
+                    .content(contentItems)
+                    .type("paragraph")
+                    .build();
+            List<FieldDTO.Content> contents = Collections.singletonList(content);
+
+            FieldDTO.Description description = FieldDTO.Description.builder()
+                    .version(1)
+                    .type("doc")
+                    .content(contents)
+                    .build();
+
+            fieldDTO.setDescription(description);
+
+            FieldDTO.Field field = FieldDTO.Field.builder()
+                    .id("10002")
+                    .build();
+            fieldDTO.setIssuetype(field);
+
+            CreateIssueDTO createIssueDTO = new CreateIssueDTO<>(fieldDTO);
+            createIssueDTOList.add(createIssueDTO);  // 리스트에 추가
+        }
 
         AdminInfoDTO info = account.getAdminInfo(1);
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
         String endpoint ="/rest/api/3/issue";
 
-        Flux<ResponseIssueDTO> response = WebClientUtils.postByFlux(webClient, endpoint, createIssueDTO, ResponseIssueDTO.class);
-        return response.blockFirst();
+        List<ResponseIssueDTO> responseList = new ArrayList<>();
+
+        for(CreateIssueDTO createIssueDTO : createIssueDTOList){
+            ResponseIssueDTO response = WebClientUtils.postByFlux(webClient, endpoint, createIssueDTO, ResponseIssueDTO.class).blockFirst();
+            changeIssueStatus(response.getKey());
+            responseList.add(response);
+        }
+
+        return responseList.get(0);
     }
 
     public boolean checkIssueMigrateFlag(String projectCode) throws Exception{
