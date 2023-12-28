@@ -162,7 +162,7 @@ public class TransferProjectImpl implements TransferProject {
                     // SetIssueType(Response.getSelf(),flag); // 프로젝트 기본 생성 방법
                     // 생성 결과 DB 저장
                     //SaveSuccessData(Response.getKey(),projectCode,projectName,projectInfo.getName(),flag); // 프로젝트 기본 생성 방법
-                    SaveSuccessData(Response.getProjectKey() , Response.getProjectId(),projectCode,projectName,projectInfo.getName(),flag,assignees); // 템플릿을 통한 생성 방법
+                    saveSuccessData(Response.getProjectKey() , Response.getProjectId(),projectCode,projectName,projectInfo.getName(),flag,assignees); // 템플릿을 통한 생성 방법
                     // 디비 이관 flag 변경
                     CheckMigrateFlag(projectCode);
 
@@ -273,7 +273,7 @@ public class TransferProjectImpl implements TransferProject {
         }
     }
 
-    public void SaveSuccessData(String key,String id ,String projectCode ,String projectName ,String jiraProjectName, String flag ,String projectAssignees) throws Exception{
+    public void saveSuccessData(String key, String id , String projectCode , String projectName , String jiraProjectName, String flag , String projectAssignees) throws Exception{
 
         logger.info("JIRA 프로젝트 생성 결과 저장");
         TB_JML_Entity save_success_data  = new TB_JML_Entity();
