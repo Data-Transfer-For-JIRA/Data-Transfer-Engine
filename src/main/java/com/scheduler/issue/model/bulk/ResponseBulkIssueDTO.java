@@ -1,4 +1,4 @@
-package com.transfer.issue.model.dto.bulk;
+package com.scheduler.issue.model.bulk;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;

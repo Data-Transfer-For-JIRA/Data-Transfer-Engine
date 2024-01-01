@@ -1,24 +1,32 @@
 package com.scheduler.issue.service;
 
+import com.account.dto.AdminInfoDTO;
+import com.account.entity.TB_JIRA_USER_Entity;
 import com.account.service.Account;
+import com.scheduler.issue.model.bulk.ResponseBulkIssueDTO;
+import com.transfer.issue.model.dto.FieldDTO;
 import com.transfer.issue.model.dto.TransferIssueDTO;
+import com.scheduler.issue.model.bulk.CreateBulkIssueDTO;
+import com.scheduler.issue.model.bulk.CreateBulkIssueFieldsDTO;
+import com.transfer.issue.model.entity.PJ_PG_SUB_Entity;
 import com.transfer.issue.service.TransferIssue;
-import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.entity.TB_JML_Entity;
 import com.utils.SaveLog;
+import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @AllArgsConstructor
 @Service("TransferIssueByScheduler")
@@ -34,6 +42,12 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
 
     @Autowired
     private com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository TB_PJT_BASE_JpaRepository;
+
+    @Autowired
+    private com.account.dao.TB_JIRA_USER_JpaRepository TB_JIRA_USER_JpaRepository;
+
+    @Autowired
+    private com.transfer.issue.model.dao.PJ_PG_SUB_JpaRepository PJ_PG_SUB_JpaRepository;
 
     @Autowired
     TransferIssue transferIssue;
@@ -79,6 +93,138 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
 
             }
 
+        }
+    }
+    @Override
+    @Transactional
+    public void transferIssueByDate(Date date) throws Exception{
+        logger.info("[::TransferIssueBySchedulerImpl::] transferIssueByDate");
+        // 해당 날짜에 생성된 이슈 조회
+        List<PJ_PG_SUB_Entity> createdIssueList = PJ_PG_SUB_JpaRepository.findByCreationDate(date);
+        // 벌크로 이슈 생성
+        createBulkIssue(createdIssueList);
+    }
+    @Override
+    @Transactional
+    public void periodicallyCreateIssueByScheduler() throws Exception{
+        logger.info("[::TransferIssueBySchedulerImpl::] periodicallyCreateIssueByScheduler");
+        // 오늘 날짜-1에 생성된 이슈가 있는지 조회 있으면 벌크로 생성
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DATE, -1);
+        Date yesterday = cal.getTime();
+        // 스케줄러가 돌기 전날에 생성된 이슈 조회
+        List<PJ_PG_SUB_Entity> createdIssueList = PJ_PG_SUB_JpaRepository.findByCreationDate(yesterday);
+        // 벌크로 이슈 생성
+        createBulkIssue(createdIssueList);
+    }
+    public boolean createBulkIssue(List<PJ_PG_SUB_Entity> issueList) throws Exception {
+        logger.info("[::TransferIssueBySchedulerImpl::] createBulkIssue");
+        List<PJ_PG_SUB_Entity> nomalIssueList = issueList.subList(1, issueList.size());
+
+        CreateBulkIssueDTO bulkIssueDTO = new CreateBulkIssueDTO();
+
+        List<CreateBulkIssueFieldsDTO> issueUpdates = new ArrayList<>();
+
+        for(PJ_PG_SUB_Entity issueData : nomalIssueList){
+
+            String wssAssignee = getOneAssigneeId(issueData.getWriter());
+
+            String wssContent  = issueData.getIssueContent();
+            Date wssWriteDate  = issueData.getCreationDate();
+
+            String defaultIssueContent = "\n[" + wssWriteDate  + "]\n본 이슈는 WSS에서 이관한 이슈입니다.\n―――――――――――――――――――――――――――――――\n"; // 이슈 생성 시 기본 문구
+            String replacedIssueContent = wssContent.replace("<br>", "\n").replace("&nbsp;", " "); // 이슈 내용 전처리
+            String basicIssueContent = defaultIssueContent + replacedIssueContent; // 이슈 내용
+
+            FieldDTO fieldDTO = new FieldDTO();
+            // 담당자
+            FieldDTO.User user = FieldDTO.User.builder()
+                    .accountId(wssAssignee).build();
+            fieldDTO.setAssignee(user);
+
+            // 프로젝트 아이디
+            String wssProjectCode = issueData.getProjectCode();
+            String jiraProjectId = TB_JML_JpaRepository.findByProjectCode(wssProjectCode).getKey();
+
+            FieldDTO.Project project = FieldDTO.Project.builder()
+                    .id(jiraProjectId)
+                    .build();
+            fieldDTO.setProject(project);
+
+            // wss 이슈 제목
+            String summary = "["+wssWriteDate+"] WSS 작성이슈";
+            fieldDTO.setSummary(summary);
+
+            // wss 이슈
+            FieldDTO.ContentItem contentItem = FieldDTO.ContentItem.builder()
+                    .type("text")
+                    .text(basicIssueContent)
+                    .build();
+            List<FieldDTO.ContentItem> contentItems = Collections.singletonList(contentItem);
+
+            FieldDTO.Content content = FieldDTO.Content.builder()
+                    .content(contentItems)
+                    .type("paragraph")
+                    .build();
+            List<FieldDTO.Content> contents = Collections.singletonList(content);
+
+            FieldDTO.Description description = FieldDTO.Description.builder()
+                    .version(1)
+                    .type("doc")
+                    .content(contents)
+                    .build();
+            fieldDTO.setDescription(description);
+
+            FieldDTO.Field field =  FieldDTO.Field.builder()
+                    .id("10002")
+                    .build();
+            fieldDTO.setIssuetype(field);
+
+            CreateBulkIssueFieldsDTO fields = new CreateBulkIssueFieldsDTO();
+            fields.setFields(fieldDTO);
+
+            issueUpdates.add(fields);
+
+        }
+
+        bulkIssueDTO.setIssueUpdates(issueUpdates);
+
+        AdminInfoDTO info = account.getAdminInfo(1);
+        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
+        String endpoint ="/rest/api/3/issue/bulk";
+
+        Flux<ResponseBulkIssueDTO> response = WebClientUtils.postByFlux(webClient,endpoint,bulkIssueDTO,ResponseBulkIssueDTO.class);
+
+        response.subscribe(
+                resp -> System.out.println(resp),  // onNext
+                error -> System.out.println("Error: " + error.getMessage()),  // onError
+                () -> System.out.println("Completed")  // onComplete
+        );
+
+        Mono<List<ResponseBulkIssueDTO>> mono = response.collectList();
+        //Flux는 여러 개의 데이터를 스트림으로 처리하는데 사용되는 반면, Mono는 하나의 데이터를 비동기적으로 처리하는데 사용됩니다. Flux의 collectList() 메소드를 사용하면 Flux를 Mono로 변환
+        List<ResponseBulkIssueDTO> responseList = mono.block();
+        // Mono의 block() 메소드를 사용하면 비동기 작업이 완료될 때까지 현재 스레드를 대기 상태로 만듬
+        if (responseList != null && responseList.stream().allMatch(resp -> resp.getErrors() == null)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /*
+     *  이슈 담당자 이름으로 지라서버 아이디 디비 검색
+     * */
+    public String getOneAssigneeId(String userName) throws Exception {
+        logger.info("[::TransferIssueBySchedulerImpl::] getOneAssigneeId");
+        String epageDivAccountId = TB_JIRA_USER_JpaRepository.findByDisplayName("epage div").getAccountId();
+
+        List<TB_JIRA_USER_Entity> user = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(userName);
+        if (!user.isEmpty()) {
+            String userId = user.get(0).getAccountId();
+            return userId;
+        } else {
+            return epageDivAccountId; // 담당자가 관리 목록에 없으면 전자문서 사업부 기본아이디로 삽입
         }
     }
 }
