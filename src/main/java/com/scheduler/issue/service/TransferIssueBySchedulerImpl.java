@@ -3,6 +3,8 @@ package com.scheduler.issue.service;
 import com.account.dto.AdminInfoDTO;
 import com.account.entity.TB_JIRA_USER_Entity;
 import com.account.service.Account;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.scheduler.issue.model.bulk.ResponseBulkIssueDTO;
 import com.transfer.issue.model.dto.FieldDTO;
 import com.transfer.issue.model.dto.TransferIssueDTO;
@@ -111,21 +113,26 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
         // 오늘 날짜-1에 생성된 이슈가 있는지 조회 있으면 벌크로 생성
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, -1);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
         Date yesterday = cal.getTime();
         // 스케줄러가 돌기 전날에 생성된 이슈 조회
         List<PJ_PG_SUB_Entity> createdIssueList = PJ_PG_SUB_JpaRepository.findByCreationDate(yesterday);
-        // 벌크로 이슈 생성
-        createBulkIssue(createdIssueList);
+        if(!createdIssueList.isEmpty()){
+            // 벌크로 이슈 생성
+            createBulkIssue(createdIssueList);
+        }
     }
-    public boolean createBulkIssue(List<PJ_PG_SUB_Entity> issueList) throws Exception {
+    public ResponseBulkIssueDTO createBulkIssue(List<PJ_PG_SUB_Entity> issueList) throws Exception {
         logger.info("[::TransferIssueBySchedulerImpl::] createBulkIssue");
-        List<PJ_PG_SUB_Entity> nomalIssueList = issueList.subList(1, issueList.size());
 
         CreateBulkIssueDTO bulkIssueDTO = new CreateBulkIssueDTO();
 
         List<CreateBulkIssueFieldsDTO> issueUpdates = new ArrayList<>();
 
-        for(PJ_PG_SUB_Entity issueData : nomalIssueList){
+        for(PJ_PG_SUB_Entity issueData : issueList){
 
             String wssAssignee = getOneAssigneeId(issueData.getWriter());
 
@@ -144,7 +151,7 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
 
             // 프로젝트 아이디
             String wssProjectCode = issueData.getProjectCode();
-            String jiraProjectId = TB_JML_JpaRepository.findByProjectCode(wssProjectCode).getKey();
+            String jiraProjectId = TB_JML_JpaRepository.findByProjectCode(wssProjectCode).getId();
 
             FieldDTO.Project project = FieldDTO.Project.builder()
                     .id(jiraProjectId)
@@ -193,23 +200,22 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
         String endpoint ="/rest/api/3/issue/bulk";
 
-        Flux<ResponseBulkIssueDTO> response = WebClientUtils.postByFlux(webClient,endpoint,bulkIssueDTO,ResponseBulkIssueDTO.class);
+        ResponseBulkIssueDTO response = WebClientUtils.post(webClient,endpoint,bulkIssueDTO,ResponseBulkIssueDTO.class).block();
 
-        response.subscribe(
-                resp -> System.out.println(resp),  // onNext
-                error -> System.out.println("Error: " + error.getMessage()),  // onError
-                () -> System.out.println("Completed")  // onComplete
-        );
+        // 이슈 flag 변경
+        String successMent = "";
+        if(response != null){
+            for(ResponseBulkIssueDTO.IssueDTO issueDTO : response.getIssues()){
 
-        Mono<List<ResponseBulkIssueDTO>> mono = response.collectList();
-        //Flux는 여러 개의 데이터를 스트림으로 처리하는데 사용되는 반면, Mono는 하나의 데이터를 비동기적으로 처리하는데 사용됩니다. Flux의 collectList() 메소드를 사용하면 Flux를 Mono로 변환
-        List<ResponseBulkIssueDTO> responseList = mono.block();
-        // Mono의 block() 메소드를 사용하면 비동기 작업이 완료될 때까지 현재 스레드를 대기 상태로 만듬
-        if (responseList != null && responseList.stream().allMatch(resp -> resp.getErrors() == null)) {
-            return true;
-        } else {
-            return false;
+                String issueKey = issueDTO.getKey();
+                successMent += "["+issueKey+"] 해당 이슈가 WSS에 작성되어 지라에 생성되었습니다. \n";
+
+                transferIssue.changeIssueStatus(issueKey);
+            }
         }
+        Date currentTime = new Date();
+        SaveLog.SchedulerResult("ISSUE\\WSS",successMent,currentTime);
+        return response;
     }
 
     /*

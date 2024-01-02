@@ -9,4 +9,8 @@ public interface TransferIssue {
 
     Map<String ,String> transferIssueData(TransferIssueDTO transferIssueDTO) throws Exception;
 
+    /*
+     *  생성한 이슈의 상태를 변환하는 메서드
+     * */
+    void changeIssueStatus(String issueKey) throws Exception;
 }

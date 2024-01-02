@@ -4,6 +4,7 @@ import com.scheduler.issue.service.TransferIssueByScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
@@ -49,7 +50,7 @@ public class TransferIssueBySchedulerCotroller {
             value = {"/date"},
             method = {RequestMethod.POST}
     )
-    public void transferIssueByDate(@RequestParam Date date) throws Exception {
+    public void transferIssueByDate(@RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) throws Exception {
         logger.info("특정일자 wss에 생성한 이슈를 지라로 이관하는 컨트롤러");
         transferIssueByScheduler.transferIssueByDate(date);
     }

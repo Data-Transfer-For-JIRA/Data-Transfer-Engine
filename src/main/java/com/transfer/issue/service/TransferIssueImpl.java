@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.core.publisher.Flux;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -340,6 +339,7 @@ public class TransferIssueImpl implements TransferIssue {
     /*
      *  생성한 이슈의 상태를 변환하는 메서드
      * */
+    @Override
     public void changeIssueStatus(String issueKey) throws Exception {
         logger.info("[::TransferIssueImpl::] changeIssueStatus");
 
