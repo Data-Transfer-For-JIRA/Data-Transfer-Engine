@@ -5,7 +5,9 @@ import com.account.dto.AdminInfoDTO;
 import com.account.entity.TB_JIRA_USER_Entity;
 import com.account.service.Account;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.transfer.issue.model.FieldInfo;
 import com.transfer.issue.model.FieldInfoCategory;
 import com.transfer.issue.model.dao.PJ_PG_SUB_JpaRepository;
@@ -16,6 +18,8 @@ import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -478,9 +482,12 @@ public class TransferIssueImpl implements TransferIssue {
     public boolean checkIssueMigrateFlag(String projectCode) throws Exception{
 
         logger.info("[::TransferIssueImpl::] CheckMigrateFlag");
+        logger.info("::TransferIssueImpl::] projectCode -> " + projectCode);
         Optional<TB_PJT_BASE_Entity> entity =  TB_PJT_BASE_JpaRepository.findById(projectCode);
         if(entity.isPresent()){
-            entity.get().setIssueMigrateFlag(true);
+            TB_PJT_BASE_Entity updatedEntity = entity.get();
+            updatedEntity.setMigrateFlag(true);
+            TB_PJT_BASE_JpaRepository.save(updatedEntity);
             return true;
         }
         return false;
@@ -791,5 +798,160 @@ public class TransferIssueImpl implements TransferIssue {
             items.add(prefix + info);
         }
     }
+    @Override
+    public Map<String, String> updateIssueData(TransferIssueDTO transferIssueDTO) throws Exception {
 
+        logger.info("[::TransferIssueImpl::] 프로젝트 코드 -> " + transferIssueDTO.getProjectCode());
+
+        Map<String, String> result = new HashMap<>();
+
+        TB_PJT_BASE_Entity baseInfo = TB_PJT_BASE_JpaRepository.findByProjectCode(transferIssueDTO.getProjectCode());
+
+        TB_JML_Entity jmlEntity = TB_JML_JpaRepository.findByProjectCode(transferIssueDTO.getProjectCode());
+        String jiraProjectCode = jmlEntity.getKey();
+        String assignees = jmlEntity.getProjectAssignees();
+        String jiraIssueKey = null;
+
+        List<String> assigneeList = getSeveralAssigneeId(assignees); // 담당자 리스트
+
+        for (String assignee : assigneeList) {
+            logger.info("assignee: " + assignee);
+        }
+
+        String projectTitle = "프로젝트 기본 정보";
+        String maintenanceTitle = "유지보수 기본 정보";
+
+        CreateIssueDTO<?> createIssueDTO = null;
+        if (jmlEntity.getFlag().equals("P")) {
+            ProjectInfoDTO.ProjectInfoDTOBuilder<?, ?> projectBuilder = ProjectInfoDTO.builder();
+
+            // 팀, 파트
+            if (assigneeList != null && !assigneeList.isEmpty()) {
+                TB_JIRA_USER_Entity userEntity = TB_JIRA_USER_JpaRepository.findByAccountId(assigneeList.get(0));
+
+                if (userEntity != null) {
+                    FieldInfo teamInfo = FieldInfo.ofLabel(FieldInfoCategory.TEAM, userEntity.getTeam());
+                    if (teamInfo != null) {
+                        projectBuilder.team(teamInfo.getId());
+                        logger.info("[::TransferIssueImpl::] updateIssueData 팀 아이디 -> " + teamInfo.getId());
+                    }
+
+                    FieldInfo partInfo = FieldInfo.ofLabel(FieldInfoCategory.PART, userEntity.getPart());
+                    if (partInfo != null) {
+                        projectBuilder.part(new FieldDTO.Field(partInfo.getId()));
+                        logger.info("[::TransferIssueImpl::] updateIssueData 파트 아이디 -> " + partInfo.getId());
+                    }
+                }
+            }
+
+            ProjectInfoDTO projectInfoDTO = projectBuilder.build();
+            createIssueDTO = new CreateIssueDTO<>(projectInfoDTO);
+
+            // 기본 정보 이슈 키 조회
+            String issueType = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, projectTitle).getId();
+            jiraIssueKey = getBaseIssueKey(jiraProjectCode, issueType);
+            logger.info("[::TransferIssueImpl::] updateIssueData 이슈타입 -> " + issueType);
+
+        } else {
+            MaintenanceInfoDTO.MaintenanceInfoDTOBuilder<?, ?> maintenanceBuilder = MaintenanceInfoDTO.builder();
+
+            // 팀, 파트
+            if (assigneeList != null && !assigneeList.isEmpty()) {
+                TB_JIRA_USER_Entity userEntity = TB_JIRA_USER_JpaRepository.findByAccountId(assigneeList.get(0));
+
+                if (userEntity != null) {
+                    FieldInfo teamInfo = FieldInfo.ofLabel(FieldInfoCategory.TEAM, userEntity.getTeam());
+                    if (teamInfo != null) {
+                        maintenanceBuilder.team(teamInfo.getId());
+                        logger.info("[::TransferIssueImpl::] updateIssueData 팀 아이디 -> " + teamInfo.getId());
+                    }
+
+                    FieldInfo partInfo = FieldInfo.ofLabel(FieldInfoCategory.PART, userEntity.getPart());
+                    if (partInfo != null) {
+                        maintenanceBuilder.part(new FieldDTO.Field(partInfo.getId()));
+                        logger.info("[::TransferIssueImpl::] updateIssueData 파트 아이디 -> " + partInfo.getId());
+                    }
+                }
+            }
+
+            // 계약 여부
+            FieldInfo contractStatusInfo = FieldInfo.ofLabel(FieldInfoCategory.CONTRACT_STATUS, baseInfo.getContract());
+            if (contractStatusInfo != null) {
+                maintenanceBuilder.contractStatus(new FieldDTO.Field(contractStatusInfo.getId()));
+                logger.info("[::TransferIssueImpl::] updateIssueData 계약 여부 -> " + contractStatusInfo.getId());
+            }
+
+            // TODO: 점검 방법 - 장애 시 지원을 default로 설정
+
+            MaintenanceInfoDTO maintenanceInfoDTO = maintenanceBuilder.build();
+            createIssueDTO = new CreateIssueDTO<>(maintenanceInfoDTO);
+
+            // 기본 정보 이슈 키 조회
+            String issueType = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, maintenanceTitle).getId();
+            jiraIssueKey = getBaseIssueKey(jiraProjectCode, issueType);
+            logger.info("[::TransferIssueImpl::] updateIssueData 이슈타입 -> " + issueType);
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        String jsonRequestBody = objectMapper.writeValueAsString(createIssueDTO);
+        logger.info("[::TransferIssueImpl::] updateIssueData 최종 DTO -> " + jsonRequestBody);
+
+        AdminInfoDTO info = account.getAdminInfo(1);
+        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
+
+        // 이슈 업데이트
+        if (jiraIssueKey != null) {
+            String endpoint = "/rest/api/3/issue/" + jiraIssueKey;
+            Optional<Boolean> response = WebClientUtils.executePut(webClient, endpoint, createIssueDTO);
+            if (response.isPresent()) {
+                if (response.get()) {
+                    result.put("jiraIssueKey", jiraIssueKey);
+                    result.put("result", "이슈 업데이트 성공");
+
+                    Optional<TB_JML_Entity> entity =  TB_JML_JpaRepository.findById(jiraProjectCode);
+                    if(entity.isPresent()){
+                        TB_JML_Entity updatedEntity = entity.get();
+                        updatedEntity.setUpdateIssueFlag(true);
+                        TB_JML_JpaRepository.save(updatedEntity);
+                    }
+
+                    return result;
+                }
+            }
+        }
+
+        result.put("jiraIssueKey", jiraIssueKey);
+        result.put("result", "이슈 업데이트 실패");
+
+        return result;
+    }
+
+    @Override
+    public String getBaseIssueKey(String jiraProjectCode, String issueType) {
+
+        AdminInfoDTO info = account.getAdminInfo(1);
+        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
+
+        String jql = "project=" + jiraProjectCode + " AND issuetype=" + issueType;
+        String fields = "key";
+        String endpoint = "/rest/api/3/search?jql=" + jql + "&fields=" + fields;
+
+        return WebClientUtils.get(webClient, endpoint, String.class)
+                .map(responseString -> {
+                    // JSON 문자열 파싱
+                    JSONObject jsonObject = new JSONObject(responseString);
+                    JSONArray issues = jsonObject.getJSONArray("issues");
+                    if (issues != null && issues.length() > 0) {
+                        // 첫 번째 이슈 객체에서 key 값을 추출
+                        JSONObject firstIssue = issues.getJSONObject(0);
+                        logger.info("[::TransferIssueImpl::] getBaseIssueKey 기본 정보 이슈키 -> " + firstIssue.getString("key"));
+                        return firstIssue.getString("key");
+                    } else {
+                        // 이슈가 없는 경우
+                        return null;
+                    }
+                })
+                .block(); // 동기적으로 결과를 기다림
+    }
 }

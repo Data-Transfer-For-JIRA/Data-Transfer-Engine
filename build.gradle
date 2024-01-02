@@ -49,6 +49,8 @@ dependencies {
 	//logback
 	implementation 'ch.qos.logback:logback-classic:1.2.6'
 
+	//json
+	implementation 'org.json:json:20210307'
 }
 
 tasks.named('test') {

@@ -13,12 +13,16 @@ import com.scheduler.issue.model.bulk.CreateBulkIssueFieldsDTO;
 import com.transfer.issue.model.entity.PJ_PG_SUB_Entity;
 import com.transfer.issue.service.TransferIssue;
 import com.transfer.project.model.entity.TB_JML_Entity;
+import com.transfer.project.service.TransferProject;
 import com.utils.SaveLog;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -28,6 +32,8 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Date;
+import java.util.List;
 import java.util.*;
 
 @AllArgsConstructor
@@ -50,6 +56,9 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
 
     @Autowired
     private com.transfer.issue.model.dao.PJ_PG_SUB_JpaRepository PJ_PG_SUB_JpaRepository;
+
+    @Autowired
+    TransferProject transferProject;
 
     @Autowired
     TransferIssue transferIssue;
@@ -218,5 +227,18 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
         return response;
     }
 
+    @Override
+    public void updateIssueByScheduler(int page, int size) throws Exception {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<TB_JML_Entity> jmlEntityPage = TB_JML_JpaRepository.findAllByUpdateIssueFlagFalseOrderByMigratedDateDesc(pageable);
+
+        for(TB_JML_Entity updateProject : jmlEntityPage){
+            String projectCode = updateProject.getProjectCode();
+            TransferIssueDTO transferIssueDTO = new TransferIssueDTO();
+            transferIssueDTO.setProjectCode(projectCode);
+            transferIssue.updateIssueData(transferIssueDTO);
+        }
+    }
 
 }

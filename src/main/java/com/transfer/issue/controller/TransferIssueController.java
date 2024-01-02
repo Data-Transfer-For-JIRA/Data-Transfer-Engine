@@ -34,6 +34,15 @@ public class TransferIssueController {
         return transferIssue.transferIssueData(transferIssueDTO);
     }
 
+    @ResponseBody
+    @RequestMapping(
+            value = {"/update"},
+            method = {RequestMethod.PUT}
+    )
+    public Map<String, String> updateIssueData(@RequestBody TransferIssueDTO transferIssueDTO) throws Exception {
+        logger.info("이슈 업데이트 컨트롤러 진입");
+        return transferIssue.updateIssueData(transferIssueDTO);
+    }
 
 }
 

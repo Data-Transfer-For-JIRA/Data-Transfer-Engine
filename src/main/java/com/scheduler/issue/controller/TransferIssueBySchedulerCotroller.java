@@ -56,5 +56,15 @@ public class TransferIssueBySchedulerCotroller {
     }
 
 
+    @ResponseBody
+    @RequestMapping(
+            value = {"/update"},
+            method = {RequestMethod.PUT}
+    )
+    public void TransferIssueUpdateByScheduler(@RequestParam(defaultValue = "0") int page,
+                                               @RequestParam(defaultValue = "100") int size) throws Exception {
+        logger.info("스케줄러로 생성된 지라 이슈 필드 업데이트");
+        transferIssueByScheduler.updateIssueByScheduler(page, size);
+    }
 
 }

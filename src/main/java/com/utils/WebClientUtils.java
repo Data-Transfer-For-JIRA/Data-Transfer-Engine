@@ -10,9 +10,9 @@ import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.ClientHttpRequest;
-import org.springframework.web.reactive.function.BodyInserter;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -21,6 +21,7 @@ import reactor.core.publisher.Mono;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Optional;
 
 public class WebClientUtils {
 
@@ -112,5 +113,16 @@ public class WebClientUtils {
         //InputStream에서 데이터를 읽어서 bufferSize 크기의 DataBuffer로 나눈 후, 이들을 Flux<DataBuffer>로 반환
     }
 
+    public static Optional<Boolean> executePut(WebClient webClient, String uri, Object requestBody) {
+
+        Mono<ResponseEntity<Void>> response = webClient.put()
+                .uri(uri)
+                .body(BodyInserters.fromValue(requestBody))
+                .retrieve()
+                .toEntity(Void.class);
+
+        return response.map(entity -> entity.getStatusCode() == HttpStatus.NO_CONTENT) // 결과가 204인가 확인
+                .blockOptional();
+    }
 
 }

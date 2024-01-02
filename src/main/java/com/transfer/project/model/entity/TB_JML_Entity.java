@@ -45,11 +45,21 @@ public class TB_JML_Entity {
     @Column(name = "WP_ASSIGNEES")
     private String projectAssignees;
 
+    @Column(name = "U_DATE")
+    private LocalDateTime updateDate;
+
+    @Column(name = "JI_U_FLAG")
+    private Boolean updateIssueFlag;
+
     @PrePersist
     public void prePersist() {
         LocalDateTime now = LocalDateTime.now();
         this.migratedDate = now;
+    }
 
+    @PreUpdate
+    public void preUpdate() {
+        this.updateDate = LocalDateTime.now();
     }
 
 }

@@ -12,17 +12,22 @@ import com.transfer.project.service.TransferProjectImpl;
 import com.utils.ProjectConfig;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @AllArgsConstructor
 @Service("platformProject")
 public class PlatformProjectImpl implements PlatformProject {
 
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    
     @Autowired
     private TransferProjectImpl transferProject;
 
@@ -37,6 +42,8 @@ public class PlatformProjectImpl implements PlatformProject {
 
     @Override
     public Map<String, String> platformCreateProject(BaseDTO baseDTO) throws Exception {
+
+        Map<String, String> result = new HashMap<>();
 
         CreateProjectDTO createProjectDTO = new CreateProjectDTO();
 
@@ -61,15 +68,37 @@ public class PlatformProjectImpl implements PlatformProject {
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
 
         // 템플릿으로 프로젝트 생성
+        // TODO: 프로젝트 코드는 필수 필드 아니므로 처리 필요, BaseDTO 구조 정리 필요
         String endpoint = "/rest/simplified/latest/project/shared";
-        CreateProjectResponseDTO response = WebClientUtils.post(webClient, endpoint, createProjectDTO, CreateProjectResponseDTO.class).block();
+        String finalJiraProjectName = jiraProjectName;
 
-        // DB 저장
-        transferProject.saveSuccessData(jiraProjectKey, response.getProjectId(), projectCode, projectName, jiraProjectName, projectFlag,null);
+        result.put("jiraProjectCode", jiraProjectKey);
+        result.put("jiraProjectName", finalJiraProjectName);
+        try {
+            CreateProjectResponseDTO response = WebClientUtils.post(webClient, endpoint, createProjectDTO, CreateProjectResponseDTO.class)
+                    .doOnSuccess(res -> {
+                        // 성공적으로 응답을 받았을 때
+                        result.put("result", "프로젝트 생성 성공");
 
-        System.out.println("response: " + response.toString());
+                        try {
+                            transferProject.saveSuccessData(jiraProjectKey, res.getProjectId(), projectCode, projectName, finalJiraProjectName, projectFlag, null); // DB 저장
+                        } catch (Exception e) {
+                            logger.error("[::platformCreateProject::] DB 저장 실패");
+                        }
+                    })
+                    .doOnError(e -> {
+                        // 에러 처리
+                        result.put("result", "프로젝트 생성 실패");
+                    })
+                    .block();
 
-        return null;
+            System.out.println("[::platformCreateProject::] response -> " + response.toString());
+            return result;
+
+        } catch (Exception ex) {
+            result.put("result", "프로젝트 생성 실패");
+            return result;
+        }
     }
     /*
     *  API를 통해 생성된 프로젝트의 담당자를 변경하는 메서드

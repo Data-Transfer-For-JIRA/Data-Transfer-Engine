@@ -61,7 +61,7 @@ public class TB_PJT_BASE_Entity {
 
     // 계약 여부
     @Column(name = "BS_CONYN")
-    private Boolean contract;
+    private String contract;
 
     // 점검 방식
     @Column(name = "BS_CHKTYPE")

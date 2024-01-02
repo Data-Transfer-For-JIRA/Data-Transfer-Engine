@@ -15,4 +15,8 @@ public interface TransferIssue {
     void changeIssueStatus(String issueKey) throws Exception;
     /**/
     public String getOneAssigneeId(String userName) throws Exception;
+
+    Map<String, String> updateIssueData(TransferIssueDTO transferIssueDTO) throws Exception;
+
+    String getBaseIssueKey(String jiraProjectCode, String issueType);
 }
