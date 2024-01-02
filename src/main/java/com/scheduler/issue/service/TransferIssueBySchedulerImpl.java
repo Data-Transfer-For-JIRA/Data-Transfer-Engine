@@ -134,7 +134,7 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
 
         for(PJ_PG_SUB_Entity issueData : issueList){
 
-            String wssAssignee = getOneAssigneeId(issueData.getWriter());
+            String wssAssignee = transferIssue.getOneAssigneeId(issueData.getWriter());
 
             String wssContent  = issueData.getIssueContent();
             Date wssWriteDate  = issueData.getCreationDate();
@@ -218,19 +218,5 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
         return response;
     }
 
-    /*
-     *  이슈 담당자 이름으로 지라서버 아이디 디비 검색
-     * */
-    public String getOneAssigneeId(String userName) throws Exception {
-        logger.info("[::TransferIssueBySchedulerImpl::] getOneAssigneeId");
-        String epageDivAccountId = TB_JIRA_USER_JpaRepository.findByDisplayName("epage div").getAccountId();
 
-        List<TB_JIRA_USER_Entity> user = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(userName);
-        if (!user.isEmpty()) {
-            String userId = user.get(0).getAccountId();
-            return userId;
-        } else {
-            return epageDivAccountId; // 담당자가 관리 목록에 없으면 전자문서 사업부 기본아이디로 삽입
-        }
-    }
 }

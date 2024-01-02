@@ -13,4 +13,6 @@ public interface TransferIssue {
      *  생성한 이슈의 상태를 변환하는 메서드
      * */
     void changeIssueStatus(String issueKey) throws Exception;
+    /**/
+    public String getOneAssigneeId(String userName) throws Exception;
 }
