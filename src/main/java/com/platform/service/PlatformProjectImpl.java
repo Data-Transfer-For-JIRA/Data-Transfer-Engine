@@ -2,12 +2,10 @@ package com.platform.service;
 
 import com.account.dto.AdminInfoDTO;
 import com.account.service.Account;
-import com.platform.dto.AssignProjectDTO;
 import com.platform.dto.BaseDTO;
-import com.transfer.issue.model.dto.ResponseIssueDTO;
-import com.transfer.issue.service.TransferIssue;
 import com.transfer.project.model.dto.CreateProjectDTO;
 import com.transfer.project.model.dto.CreateProjectResponseDTO;
+import com.transfer.project.service.TransferProject;
 import com.transfer.project.service.TransferProjectImpl;
 import com.utils.ProjectConfig;
 import com.utils.WebClientUtils;
@@ -16,9 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,12 +25,9 @@ import java.util.Map;
 public class PlatformProjectImpl implements PlatformProject {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    
-    @Autowired
-    private TransferProjectImpl transferProject;
 
     @Autowired
-    private TransferIssue transferIssue;
+    private TransferProjectImpl transferProject;
 
     @Autowired
     private ProjectConfig projectConfig;
@@ -74,7 +69,7 @@ public class PlatformProjectImpl implements PlatformProject {
             }
             assignees += subAssignee;
         }
-        
+
         if (projectFlag.equals("P")) { // 프로젝트
             jiraProjectName = "ED-P_" + projectName;
             createProjectDTO.setName(jiraProjectName);
@@ -97,7 +92,7 @@ public class PlatformProjectImpl implements PlatformProject {
         result.put("jiraProjectCode", jiraProjectKey);
         result.put("jiraProjectName", finalJiraProjectName);
         try {
-            
+
             logger.info("[::platformCreateProject::] dto 확인 " + createProjectDTO.toString());
             CreateProjectResponseDTO response = WebClientUtils.post(webClient, endpoint, createProjectDTO, CreateProjectResponseDTO.class)
                     .doOnSuccess(res -> {
@@ -109,6 +104,15 @@ public class PlatformProjectImpl implements PlatformProject {
                             logger.error("[::platformCreateProject::] DB 저장 완료");
                         } catch (Exception e) {
                             logger.error("[::platformCreateProject::] DB 저장 실패");
+                        }
+                        if(finalAssignees != null){
+                            try {
+                                String leader = Arrays.stream(finalAssignees.split(",")).findFirst().toString();
+                                transferProject.reassignProjectLeader(res.getProjectKey(),leader);
+                                logger.info("[::platformCreateProject::] 프로젝트 담당자 지정 성공");
+                            } catch (Exception e) {
+                                logger.error("[::platformCreateProject::] 프로젝트 담당자 지정 실패");
+                            }
                         }
                     })
                     .doOnError(e -> {
@@ -126,45 +130,5 @@ public class PlatformProjectImpl implements PlatformProject {
             result.put("result", "프로젝트 생성 실패");
             return result;
         }
-    }
-    /*
-    *  API를 통해 생성된 프로젝트의 담당자를 변경하는 메서드
-    * */
-    @Override
-    public Map<String,String> platformAssignProject(AssignProjectDTO assignProjectDTO) throws Exception{
-        String jiraProjectCode = assignProjectDTO.getJiraProjectCode();
-        //String assignee    = assignProjectDTO.getAssignee();
-        //String assigneeId = transferIssue.getOneAssigneeId(assignee);
-        String assigneeId = assignProjectDTO.getAssigneeId();
-
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-        String endpoint ="/rest/api/3/project/"+jiraProjectCode;
-
-        CreateProjectDTO createProjectDTO = new CreateProjectDTO();
-        createProjectDTO.setLeadAccountId(assigneeId);
-        createProjectDTO.setAssigneeType("PROJECT_LEAD");
-
-        String result = WebClientUtils.put(webClient, endpoint, createProjectDTO, String.class).block();
-
-        return null;
-    }
-
-    /*
-     *  메서드 통해 생성된 프로젝트의 담당자를 변경하는 메서드
-     * */
-    public Map<String,String> platformAssignProjectByMethod(String jiraProjectCode, String assigneeId) throws Exception{
-
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-        String endpoint ="/rest/api/3/project/"+jiraProjectCode;
-
-        CreateProjectDTO createProjectDTO = new CreateProjectDTO();
-        createProjectDTO.setLeadAccountId(assigneeId);
-        createProjectDTO.setAssigneeType("PROJECT_LEAD");
-
-        String result = WebClientUtils.put(webClient, endpoint, createProjectDTO, String.class).block();
-
-        return null;
     }
 }

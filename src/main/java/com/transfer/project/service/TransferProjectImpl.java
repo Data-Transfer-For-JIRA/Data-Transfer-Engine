@@ -3,12 +3,14 @@ package com.transfer.project.service;
 import com.account.dto.AdminInfoDTO;
 import com.account.service.Account;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.transfer.issue.service.TransferIssue;
 import com.transfer.issuetype.model.dto.IssueTypeSchemeDTO;
 import com.transfer.issuetype.model.dto.IssueTypeScreenScheme;
 import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.dao.TB_JML_JpaRepository;
 import com.transfer.project.model.dto.CreateProjectResponseDTO;
 
+import com.transfer.project.model.dto.ProjectDTO;
 import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 
@@ -46,6 +48,9 @@ public class TransferProjectImpl implements TransferProject {
 
     @Autowired
     private Account account;
+
+    @Autowired
+    private TransferIssue transferIssue;
 
 
     @Override
@@ -334,6 +339,33 @@ public class TransferProjectImpl implements TransferProject {
         issueTypeScreenScheme.setProjectId(projectId);
 
         WebClientUtils.put(webClient, endpoint, issueTypeScreenScheme,void.class).block();
+    }
+
+
+    @Override
+    public ProjectDTO reassignProjectLeader(String jiraProjectCode, String assignee) throws Exception{
+        logger.info("[::reassignProjectLeader::]  프로젝트 담당자 지정 변경");
+        try {
+            AdminInfoDTO info = account.getAdminInfo(1);
+            WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
+            String endpoint ="/rest/api/3/project/"+jiraProjectCode;
+
+            CreateProjectDTO createProjectDTO = new CreateProjectDTO();
+            createProjectDTO.setAssigneeType("PROJECT_LEAD");
+            String assigneeId = null;
+            if(Character.isDigit(assignee.charAt(0))) { // 숫자로 시작하면
+                assigneeId = assignee;
+            } else if(Character.isLetter(assignee.charAt(0))) {// 문자로 시작하면
+                assigneeId =  transferIssue.getOneAssigneeId(assignee);
+            }
+            createProjectDTO.setLeadAccountId(assigneeId);
+
+            ProjectDTO returnDate = WebClientUtils.put(webClient, endpoint, createProjectDTO, ProjectDTO.class).block();
+
+            return returnDate;
+        }catch (Exception e){
+            return null;
+        }
     }
 
 }

@@ -1,4 +1,4 @@
-package com.platform.dto;
+package com.transfer.project.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;

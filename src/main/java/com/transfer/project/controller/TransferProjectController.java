@@ -1,9 +1,6 @@
 package com.transfer.project.controller;
 
-import com.transfer.project.model.dto.CreateBulkResultDTO;
-import com.transfer.project.model.dto.ProjcetCodeDTO;
-import com.transfer.project.model.dto.CreateProjectDTO;
-import com.transfer.project.model.dto.CreateProjectResponseDTO;
+import com.transfer.project.model.dto.*;
 import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 import com.transfer.project.service.TransferProject;
@@ -211,7 +208,18 @@ public class TransferProjectController {
     public Boolean  checkJiraKey(@RequestParam String jiraKey) throws Exception {
         return  transferProject.checkValidationJiraKey(jiraKey);
     }
-
+    /*
+     *  생성된 프로젝트의 담당자를 변경하는 컨틀롤러
+     * */
+    @ResponseBody
+    @RequestMapping(
+            value = {"/assignee"},
+            method = {RequestMethod.PUT}
+    )
+    public ProjectDTO reassignProjectLeader(@RequestParam String jiraProjectCode,@RequestParam String assignee) throws Exception {
+        logger.info("[::ProjectController::] 프로젝트 담당자 지정 변경 컨틀롤러");
+        return  transferProject.reassignProjectLeader(jiraProjectCode,assignee );
+    }
 
 
 }

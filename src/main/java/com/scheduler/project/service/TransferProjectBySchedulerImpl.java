@@ -2,8 +2,11 @@ package com.scheduler.project.service;
 
 import com.account.dao.TB_JIRA_USER_JpaRepository;
 import com.account.service.Account;
+import com.platform.service.PlatformProject;
+import com.transfer.issue.service.TransferIssue;
 import com.transfer.project.model.dao.TB_JML_JpaRepository;
 import com.transfer.project.model.dto.CreateBulkResultDTO;
+import com.transfer.project.model.dto.ProjectDTO;
 import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 import com.transfer.project.service.TransferProject;
@@ -34,6 +37,10 @@ public class TransferProjectBySchedulerImpl implements TransferProjectBySchedule
 
     @Autowired
     private TransferProject transferProject;
+
+    @Autowired
+    private TransferIssue transferIssue;
+
 
     @Autowired
     private Account account;
@@ -82,5 +89,34 @@ public class TransferProjectBySchedulerImpl implements TransferProjectBySchedule
             }
             SaveLog.SchedulerResult("PROJECT\\SUCCESS",scheduler_result_success,currentTime);
         }
+    }
+
+
+    @Override
+    public void reAssgineProjectByScheduler() throws Exception{
+        List<TB_JML_Entity> jiraProjectList = TB_JML_JpaRepository.findAll();
+        String scheduler_resul_fail = null;
+        String scheduler_result_success = null;
+
+        for(TB_JML_Entity project : jiraProjectList){
+            Date currentTime = new Date();
+            String jiraProjectCode = project.getKey();
+            String assignee = project.getProjectAssignees();
+            String assigneeId = transferIssue.getOneAssigneeId(assignee);
+
+            ProjectDTO result = transferProject.reassignProjectLeader(jiraProjectCode,assigneeId);
+
+            if(result.getId() != null){
+                String leader = result.getLead().getDisplayName();
+                scheduler_result_success =  "["+jiraProjectCode+"] 해당 프로젝트의 할당자는 "+leader+"로 재 할당되었습니다.";
+
+                SaveLog.SchedulerResult("ASSIGNEE\\SUCCESS",scheduler_result_success,currentTime);
+            }else {
+                scheduler_resul_fail = "["+jiraProjectCode+"] 해당 프로젝트는 재 할당에 실패하였습니다.";
+                SaveLog.SchedulerResult("ASSIGNEE\\FAIL",scheduler_resul_fail,currentTime);
+            }
+
+        }
+
     }
 }
