@@ -55,6 +55,7 @@ public class TB_JML_Entity {
     public void prePersist() {
         LocalDateTime now = LocalDateTime.now();
         this.migratedDate = now;
+        this.updateIssueFlag = false;
     }
 
     @PreUpdate

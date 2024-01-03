@@ -43,16 +43,38 @@ public class PlatformProjectImpl implements PlatformProject {
     @Override
     public Map<String, String> platformCreateProject(BaseDTO baseDTO) throws Exception {
 
+        BaseDTO.EssentialDTO essentialDTO = baseDTO.getEssential();
+        BaseDTO.CommonDTO commonDTO = baseDTO.getCommon();
+        BaseDTO.SelectedDTO selectedDTO = baseDTO.getSelected();
+
         Map<String, String> result = new HashMap<>();
 
         CreateProjectDTO createProjectDTO = new CreateProjectDTO();
 
         String jiraProjectKey = transferProject.NamingJiraKey();
-        String projectFlag = baseDTO.getProjectFlag();
-        String projectCode = baseDTO.getProjectCode();
-        String projectName = baseDTO.getProjectName();
         String jiraProjectName = "";
 
+        // 필수
+        String projectFlag = essentialDTO.getProjectFlag();
+        String projectName = essentialDTO.getProjectName();
+
+        // 선택
+        String projectCode = commonDTO.getProjectCode();
+        String assignee = commonDTO.getAssignee();
+        String subAssignee = commonDTO.getSubAssignee();
+
+        // 담당자 설정
+        String assignees = "";
+        if (assignee != null && !assignee.trim().isEmpty()) {
+            assignees = assignee;
+        }
+        if (subAssignee != null && !subAssignee.trim().isEmpty()) {
+            if (!assignees.isEmpty()) {
+                assignees += ",";
+            }
+            assignees += subAssignee;
+        }
+        
         if (projectFlag.equals("P")) { // 프로젝트
             jiraProjectName = "ED-P_" + projectName;
             createProjectDTO.setName(jiraProjectName);
@@ -68,34 +90,39 @@ public class PlatformProjectImpl implements PlatformProject {
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
 
         // 템플릿으로 프로젝트 생성
-        // TODO: 프로젝트 코드는 필수 필드 아니므로 처리 필요, BaseDTO 구조 정리 필요
         String endpoint = "/rest/simplified/latest/project/shared";
         String finalJiraProjectName = jiraProjectName;
+        String finalAssignees = assignees;
 
         result.put("jiraProjectCode", jiraProjectKey);
         result.put("jiraProjectName", finalJiraProjectName);
         try {
+            
+            logger.info("[::platformCreateProject::] dto 확인 " + createProjectDTO.toString());
             CreateProjectResponseDTO response = WebClientUtils.post(webClient, endpoint, createProjectDTO, CreateProjectResponseDTO.class)
                     .doOnSuccess(res -> {
                         // 성공적으로 응답을 받았을 때
                         result.put("result", "프로젝트 생성 성공");
 
                         try {
-                            transferProject.saveSuccessData(jiraProjectKey, res.getProjectId(), projectCode, projectName, finalJiraProjectName, projectFlag, null); // DB 저장
+                            transferProject.saveSuccessData(jiraProjectKey, res.getProjectId(), projectCode, projectName, finalJiraProjectName, projectFlag, finalAssignees); // DB 저장
+                            logger.error("[::platformCreateProject::] DB 저장 완료");
                         } catch (Exception e) {
                             logger.error("[::platformCreateProject::] DB 저장 실패");
                         }
                     })
                     .doOnError(e -> {
                         // 에러 처리
+                        logger.info("[::platformCreateProject::] error 발생");
                         result.put("result", "프로젝트 생성 실패");
                     })
                     .block();
 
-            System.out.println("[::platformCreateProject::] response -> " + response.toString());
+            logger.info("[::platformCreateProject::] response -> " + response.toString());
             return result;
 
         } catch (Exception ex) {
+            logger.info("[::platformCreateProject::] try-catch");
             result.put("result", "프로젝트 생성 실패");
             return result;
         }
