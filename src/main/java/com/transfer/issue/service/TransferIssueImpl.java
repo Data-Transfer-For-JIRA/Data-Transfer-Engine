@@ -24,13 +24,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Predicate;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -881,7 +885,9 @@ public class TransferIssueImpl implements TransferIssue {
                 logger.info("[::TransferIssueImpl::] updateIssueData 계약 여부 -> " + contractStatusInfo.getId());
             }
 
-            // TODO: 점검 방법 - 장애 시 지원을 default로 설정
+            // 점검 방법: 장애 시 지원을 기본으로 설정
+            FieldInfo inspectionMethodInfo = FieldInfo.ofLabel(FieldInfoCategory.INSPECTION_METHOD, "장애시 지원");
+            maintenanceBuilder.inspectionMethod(new FieldDTO.Field(inspectionMethodInfo.getId()));
 
             MaintenanceInfoDTO maintenanceInfoDTO = maintenanceBuilder.build();
             createIssueDTO = new CreateIssueDTO<>(maintenanceInfoDTO);
@@ -953,5 +959,19 @@ public class TransferIssueImpl implements TransferIssue {
                     }
                 })
                 .block(); // 동기적으로 결과를 기다림
+    }
+
+    @Override
+    public Specification<TB_JML_Entity> hasDateTimeBeforeIsNull(String field) {
+        return (root, query, cb) -> {
+            Path<LocalDateTime> updateDate = root.get(field); // 필드 가져오기
+
+            // 현재 날짜에서 하루를 빼서 어제 날짜 생성
+            LocalDate yesterday = LocalDate.now().minusDays(1);
+
+            Predicate isNull = cb.isNull(updateDate);
+            Predicate isBefore = cb.lessThanOrEqualTo(updateDate.as(LocalDate.class), yesterday);
+            return cb.or(isNull, isBefore);
+        };
     }
 }

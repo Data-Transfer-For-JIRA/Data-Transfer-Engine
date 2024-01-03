@@ -1,7 +1,8 @@
 package com.transfer.issue.service;
 
-import com.transfer.issue.model.dto.CreateIssueDTO;
 import com.transfer.issue.model.dto.TransferIssueDTO;
+import com.transfer.project.model.entity.TB_JML_Entity;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.Map;
 
@@ -19,4 +20,6 @@ public interface TransferIssue {
     Map<String, String> updateIssueData(TransferIssueDTO transferIssueDTO) throws Exception;
 
     String getBaseIssueKey(String jiraProjectCode, String issueType);
+
+    Specification<TB_JML_Entity> hasDateTimeBeforeIsNull(String field);
 }

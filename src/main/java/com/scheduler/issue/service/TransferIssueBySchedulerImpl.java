@@ -1,10 +1,7 @@
 package com.scheduler.issue.service;
 
 import com.account.dto.AdminInfoDTO;
-import com.account.entity.TB_JIRA_USER_Entity;
 import com.account.service.Account;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.scheduler.issue.model.bulk.ResponseBulkIssueDTO;
 import com.transfer.issue.model.dto.FieldDTO;
 import com.transfer.issue.model.dto.TransferIssueDTO;
@@ -26,8 +23,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -231,9 +226,9 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
     public void updateIssueByScheduler(int page, int size) throws Exception {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<TB_JML_Entity> jmlEntityPage = TB_JML_JpaRepository.findAllByUpdateIssueFlagFalseOrderByMigratedDateDesc(pageable);
+        Page<TB_JML_Entity> jmlEntityPage = TB_JML_JpaRepository.findAll(transferIssue.hasDateTimeBeforeIsNull("updateDate"), pageable);
 
-        for(TB_JML_Entity updateProject : jmlEntityPage){
+        for (TB_JML_Entity updateProject : jmlEntityPage){
             String projectCode = updateProject.getProjectCode();
             TransferIssueDTO transferIssueDTO = new TransferIssueDTO();
             transferIssueDTO.setProjectCode(projectCode);
