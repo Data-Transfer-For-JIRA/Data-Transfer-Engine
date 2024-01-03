@@ -1,9 +1,11 @@
 package com.transfer.issue.service;
 
 import com.transfer.issue.model.dto.TransferIssueDTO;
+import com.transfer.issue.model.dto.weblink.WebLinkDTO;
 import com.transfer.project.model.entity.TB_JML_Entity;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.List;
 import java.util.Map;
 
 public interface TransferIssue {
@@ -22,4 +24,9 @@ public interface TransferIssue {
     String getBaseIssueKey(String jiraProjectCode, String issueType);
 
     Specification<TB_JML_Entity> hasDateTimeBeforeIsNull(String field);
+
+    /*
+    *  프로젝트에 걸린 웹링크 조회
+    */
+    List<WebLinkDTO> getWebLinkByJiraKey(String jiraKey) throws Exception;
 }

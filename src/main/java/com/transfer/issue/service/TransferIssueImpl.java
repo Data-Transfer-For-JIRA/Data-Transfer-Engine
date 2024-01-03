@@ -12,6 +12,7 @@ import com.transfer.issue.model.FieldInfo;
 import com.transfer.issue.model.FieldInfoCategory;
 import com.transfer.issue.model.dao.PJ_PG_SUB_JpaRepository;
 import com.transfer.issue.model.dto.*;
+import com.transfer.issue.model.dto.weblink.WebLinkDTO;
 import com.transfer.issue.model.entity.PJ_PG_SUB_Entity;
 import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.entity.TB_JML_Entity;
@@ -977,5 +978,35 @@ public class TransferIssueImpl implements TransferIssue {
             Predicate isBefore = cb.lessThanOrEqualTo(updateDate.as(LocalDate.class), yesterday);
             return cb.or(isNull, isBefore);
         };
+    }
+
+    @Override
+    public List<WebLinkDTO> getWebLinkByJiraKey(String jiraKey) throws Exception{
+        logger.info("[::TransferIssueImpl::] 웹링크 조회 대상 키 -> " + jiraKey);
+        // 기본정보 이슈타입 적용된 이슈아이디 조회
+        // 기본 정보 이슈 키 조회
+        String projectTitle = "프로젝트 기본 정보";
+        String maintenanceTitle = "유지보수 기본 정보";
+        String issueType ="";
+
+        TB_JML_Entity projectInfo = TB_JML_JpaRepository.findByKey(jiraKey);
+        String flag = projectInfo.getFlag();
+        
+        if(flag.equals("P")){
+            issueType = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, projectTitle).getId();
+        } else if (flag.equals("M")) {
+            issueType = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, maintenanceTitle).getId();
+        }
+
+        String jiraIssueKey = getBaseIssueKey(jiraKey, issueType);
+        // 해당 이슈 아이디의 웹 링크 조회
+
+        AdminInfoDTO info = account.getAdminInfo(1);
+        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
+
+        String endpoint = "/rest/api/3/issue/"+jiraIssueKey+"/remotelink";
+        List<WebLinkDTO>  result =  WebClientUtils.get(webClient,endpoint,List.class).block();
+
+        return result;
     }
 }
