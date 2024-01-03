@@ -27,4 +27,6 @@ public interface TB_JML_JpaRepository extends JpaRepository<TB_JML_Entity,String
     List<TB_JML_Entity> findProjectCodeByMigratedDateBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
     Page<TB_JML_Entity> findAll(Specification<TB_JML_Entity> updateDate, Pageable pageable);
+
+    TB_JML_Entity findByKey(String jiraKey);
 }
