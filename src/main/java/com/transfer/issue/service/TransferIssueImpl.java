@@ -337,6 +337,10 @@ public class TransferIssueImpl implements TransferIssue {
         logger.info("[::TransferIssueBySchedulerImpl::] getOneAssigneeId");
         String epageDivAccountId = TB_JIRA_USER_JpaRepository.findByDisplayName("epage div").getAccountId();
 
+        if (userName == null || userName.trim().isEmpty()) {
+            return epageDivAccountId;
+        }
+
         List<TB_JIRA_USER_Entity> user = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(userName);
         if (!user.isEmpty()) {
             String userId = user.get(0).getAccountId();
