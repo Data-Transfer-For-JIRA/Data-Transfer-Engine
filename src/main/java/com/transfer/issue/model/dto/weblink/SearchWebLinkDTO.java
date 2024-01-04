@@ -1,4 +1,4 @@
-package com.transfer.issue.model.dto;
+package com.transfer.issue.model.dto.weblink;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
@@ -10,8 +10,11 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class WebLinkDTO {
+public class SearchWebLinkDTO {
+    private String id;
+    private String self;
     private Object object;
+
     @Getter
     @Setter
     @Builder
@@ -20,19 +23,8 @@ public class WebLinkDTO {
     @AllArgsConstructor
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Object{
-        private Icon icon;
-        private String title;
         private String url;
+        private String title;
+    }
 
-    }
-    @Getter
-    @Setter
-    @Builder
-    @ToString
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class Icon{
-        private String url16x16;
-    }
 }

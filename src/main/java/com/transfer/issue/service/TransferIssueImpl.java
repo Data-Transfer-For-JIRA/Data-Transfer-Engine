@@ -12,7 +12,9 @@ import com.transfer.issue.model.FieldInfo;
 import com.transfer.issue.model.FieldInfoCategory;
 import com.transfer.issue.model.dao.PJ_PG_SUB_JpaRepository;
 import com.transfer.issue.model.dto.*;
-import com.transfer.issue.model.dto.WebLinkDTO;
+import com.transfer.issue.model.dto.weblink.CreateWebLinkDTO;
+import com.transfer.issue.model.dto.weblink.RequestWeblinkDTO;
+import com.transfer.issue.model.dto.weblink.SearchWebLinkDTO;
 import com.transfer.issue.model.entity.PJ_PG_SUB_Entity;
 import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.entity.TB_JML_Entity;
@@ -574,20 +576,20 @@ public class TransferIssueImpl implements TransferIssue {
                 String title = migratedProject.getValue();
                 String url = "https://markany.atlassian.net/jira/core/projects/" + key + "/board";
 
-                WebLinkDTO.Icon icon = WebLinkDTO.Icon.builder()
+                CreateWebLinkDTO.Icon icon = CreateWebLinkDTO.Icon.builder()
                         .url16x16("https://markany.atlassian.net/favicon.ico")
                         .build();
-                WebLinkDTO.Object object = WebLinkDTO.Object.builder()
+                CreateWebLinkDTO.Object object = CreateWebLinkDTO.Object.builder()
                         .icon(icon)
                         .title(title)
                         .url(url)
                         .build();
 
-                WebLinkDTO webLinkDTO = new WebLinkDTO();
-                webLinkDTO.setObject(object);
+                CreateWebLinkDTO createWebLinkDTO = new CreateWebLinkDTO();
+                createWebLinkDTO.setObject(object);
 
                 String endpoint = "/rest/api/3/issue/"+issueIdOrKey+"/remotelink";
-                WebClientUtils.post(webClient,endpoint,webLinkDTO,String.class).block();
+                WebClientUtils.post(webClient,endpoint, createWebLinkDTO,String.class).block();
             }
 
         }
@@ -981,7 +983,7 @@ public class TransferIssueImpl implements TransferIssue {
     }
 
     @Override
-    public List<WebLinkDTO> getWebLinkByJiraKey(String jiraKey) throws Exception{
+    public List<SearchWebLinkDTO> getWebLinkByJiraKey(String jiraKey) throws Exception{
         logger.info("[::TransferIssueImpl::] 웹링크 조회 대상 키 -> " + jiraKey);
         // 기본정보 이슈타입 적용된 이슈아이디 조회
         // 기본 정보 이슈 키 조회
@@ -1005,8 +1007,40 @@ public class TransferIssueImpl implements TransferIssue {
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
 
         String endpoint = "/rest/api/3/issue/"+jiraIssueKey+"/remotelink";
-        List<WebLinkDTO>  result =  WebClientUtils.get(webClient,endpoint,List.class).block();
+        List<SearchWebLinkDTO>  result =  WebClientUtils.get(webClient,endpoint,List.class).block();
 
         return result;
     }
+    /*
+    *  이슈에(이슈키) 프로젝트(프로젝트키) 연결
+    * */
+    @Override
+    public String createWebLinkByIssueKeyAndJiraKey(RequestWeblinkDTO requestWeblinkDTO) throws Exception{
+        String issueIdOrKey = requestWeblinkDTO.getIssueIdOrKey();
+        String jiraKey = requestWeblinkDTO.getJiraKey();
+        String title = requestWeblinkDTO.getTitle();
+        logger.info("[::TransferIssueImpl::] 웹링크 연결 정보 -> 연결 이슈: " + issueIdOrKey+" 연결대상 지라 키: "+jiraKey);
+        // 웹링크 연결 로직
+        String url = "https://markany.atlassian.net/jira/core/projects/" + jiraKey + "/board";
+
+        CreateWebLinkDTO.Icon icon = CreateWebLinkDTO.Icon.builder()
+                .url16x16("https://markany.atlassian.net/favicon.ico")
+                .build();
+        CreateWebLinkDTO.Object object = CreateWebLinkDTO.Object.builder()
+                .icon(icon)
+                .title(title)
+                .url(url)
+                .build();
+
+        CreateWebLinkDTO createWebLinkDTO = new CreateWebLinkDTO();
+        createWebLinkDTO.setObject(object);
+
+        AdminInfoDTO info = account.getAdminInfo(1);
+        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
+        String endpoint = "/rest/api/3/issue/"+issueIdOrKey+"/remotelink";
+        String result =  WebClientUtils.post(webClient,endpoint,createWebLinkDTO,String.class).block();
+
+        return result;
+    }
+
 }
