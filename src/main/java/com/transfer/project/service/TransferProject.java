@@ -22,12 +22,14 @@ public interface TransferProject {
 
     public Page<TB_PJT_BASE_Entity>  getTransferredProjectsList(int pageIndex, int pageSize) throws Exception;
 
-    public Page<TB_JML_Entity>  getDataAfterSeachProjectData(String seachKeyWord, int pageIndex, int pageSize) throws Exception;
+    public Page<TB_JML_Entity>  getDataAfterSearchProjectData(String seachKeyWord, int pageIndex, int pageSize) throws Exception;
 
     public Map<String, String> CreateProjectFromDB(int personalId,String projectCode) throws Exception;
 
     public Boolean checkValidationJiraKey(String key) throws Exception;
 
     public ProjectDTO reassignProjectLeader(String jiraProjectCode, String assignee) throws Exception;
+
+    public ProjectDTO getJiraProjectInfoByJiraKey(String jiraKey) throws Exception;
 
 }

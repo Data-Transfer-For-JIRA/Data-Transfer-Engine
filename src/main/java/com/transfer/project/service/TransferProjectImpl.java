@@ -126,7 +126,7 @@ public class TransferProjectImpl implements TransferProject {
 
     @Override
     @Transactional
-    public Page<TB_JML_Entity> getDataAfterSeachProjectData(String seachKeyWord,int pageIndex, int pageSize) throws Exception{
+    public Page<TB_JML_Entity> getDataAfterSearchProjectData(String seachKeyWord,int pageIndex, int pageSize) throws Exception{
         Pageable pageable = PageRequest.of(pageIndex, pageSize);
         Page<TB_JML_Entity> searchResult = TB_JML_JpaRepository.findByWssProjectNameContainingOrderByMigratedDateDesc(seachKeyWord,pageable);
 
@@ -366,6 +366,18 @@ public class TransferProjectImpl implements TransferProject {
         }catch (Exception e){
             return null;
         }
+    }
+
+    @Override
+    public ProjectDTO getJiraProjectInfoByJiraKey(String jiraKey) throws Exception{
+        logger.info("[::TransferProjectImpl::]  지라 프로젝트 조회 -> "+jiraKey);
+        AdminInfoDTO info = account.getAdminInfo(1);
+        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
+        String endpoint ="/rest/api/3/project/"+jiraKey;
+
+        ProjectDTO result = WebClientUtils.get(webClient,endpoint,ProjectDTO.class).block();
+
+        return result;
     }
 
 }

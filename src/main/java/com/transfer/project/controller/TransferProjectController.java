@@ -118,7 +118,7 @@ public class TransferProjectController {
 
         logger.info("이관후 목록에서 검색");
 
-        return transferProject.getDataAfterSeachProjectData(searchKeyWord,pageIndex,pageSize);
+        return transferProject.getDataAfterSearchProjectData(searchKeyWord,pageIndex,pageSize);
     }
     /*
      *  해당 지라키가 지라 서버에 존재하는지 확인하는 컨트롤러
@@ -217,9 +217,20 @@ public class TransferProjectController {
             method = {RequestMethod.PUT}
     )
     public ProjectDTO reassignProjectLeader(@RequestParam String jiraProjectCode,@RequestParam String assignee) throws Exception {
-        logger.info("[::ProjectController::] 프로젝트 담당자 지정 변경 컨틀롤러");
+        logger.info("[::TransferProjectController::] 프로젝트 담당자 지정 변경 컨틀롤러");
         return  transferProject.reassignProjectLeader(jiraProjectCode,assignee );
     }
 
-
+    /*
+     *  지라키로 프로젝트 조회하는 API
+     * */
+    @ResponseBody
+    @RequestMapping(
+            value = {"/jira"},
+            method = {RequestMethod.GET}
+    )
+    public ProjectDTO  getJiraProjectInfoByJiraKey(@RequestParam String jiraKey) throws Exception {
+        logger.info("[::TransferProjectController::] 지라키로 프로젝트 조회 컨틀롤러");
+        return  transferProject.getJiraProjectInfoByJiraKey(jiraKey);
+    }
 }
