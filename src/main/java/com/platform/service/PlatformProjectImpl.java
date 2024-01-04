@@ -105,9 +105,9 @@ public class PlatformProjectImpl implements PlatformProject {
                         } catch (Exception e) {
                             logger.error("[::platformCreateProject::] DB 저장 실패");
                         }
-                        if(finalAssignees != null){
+                        if (finalAssignees != null && !finalAssignees.trim().isEmpty()){
                             try {
-                                String leader = Arrays.stream(finalAssignees.split(",")).findFirst().toString();
+                                String leader = Arrays.stream(finalAssignees.split(",")).findFirst().orElse(finalAssignees);
                                 transferProject.reassignProjectLeader(res.getProjectKey(),leader);
                                 logger.info("[::platformCreateProject::] 프로젝트 담당자 지정 성공");
                             } catch (Exception e) {

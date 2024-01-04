@@ -1,7 +1,7 @@
 package com.transfer.issue.controller;
 
 import com.transfer.issue.model.dto.TransferIssueDTO;
-import com.transfer.issue.model.dto.weblink.WebLinkDTO;
+import com.transfer.issue.model.dto.WebLinkDTO;
 import com.transfer.issue.service.TransferIssue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

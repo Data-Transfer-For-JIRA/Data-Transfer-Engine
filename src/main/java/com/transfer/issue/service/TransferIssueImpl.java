@@ -12,7 +12,7 @@ import com.transfer.issue.model.FieldInfo;
 import com.transfer.issue.model.FieldInfoCategory;
 import com.transfer.issue.model.dao.PJ_PG_SUB_JpaRepository;
 import com.transfer.issue.model.dto.*;
-import com.transfer.issue.model.dto.weblink.WebLinkDTO;
+import com.transfer.issue.model.dto.WebLinkDTO;
 import com.transfer.issue.model.entity.PJ_PG_SUB_Entity;
 import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.entity.TB_JML_Entity;

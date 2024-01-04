@@ -1,7 +1,7 @@
 package com.transfer.issue.service;
 
 import com.transfer.issue.model.dto.TransferIssueDTO;
-import com.transfer.issue.model.dto.weblink.WebLinkDTO;
+import com.transfer.issue.model.dto.WebLinkDTO;
 import com.transfer.project.model.entity.TB_JML_Entity;
 import org.springframework.data.jpa.domain.Specification;
 
