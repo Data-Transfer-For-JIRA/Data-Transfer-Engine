@@ -926,6 +926,7 @@ public class TransferIssueImpl implements TransferIssue {
                     if(entity.isPresent()){
                         TB_JML_Entity updatedEntity = entity.get();
                         updatedEntity.setUpdateIssueFlag(true);
+                        updatedEntity.setUpdateDate(LocalDateTime.now());
                         TB_JML_JpaRepository.save(updatedEntity);
                     }
 
@@ -977,8 +978,9 @@ public class TransferIssueImpl implements TransferIssue {
             LocalDate yesterday = LocalDate.now().minusDays(1);
 
             Predicate isNull = cb.isNull(updateDate);
-            Predicate isBefore = cb.lessThanOrEqualTo(updateDate.as(LocalDate.class), yesterday);
-            return cb.or(isNull, isBefore);
+//            Predicate isBefore = cb.lessThanOrEqualTo(updateDate.as(LocalDate.class), yesterday);
+//            return cb.or(isNull, isBefore);
+            return isNull;
         };
     }
 
