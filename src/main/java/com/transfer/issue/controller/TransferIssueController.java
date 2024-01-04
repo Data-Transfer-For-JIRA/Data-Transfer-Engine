@@ -1,7 +1,8 @@
 package com.transfer.issue.controller;
 
 import com.transfer.issue.model.dto.TransferIssueDTO;
-import com.transfer.issue.model.dto.WebLinkDTO;
+import com.transfer.issue.model.dto.weblink.RequestWeblinkDTO;
+import com.transfer.issue.model.dto.weblink.SearchWebLinkDTO;
 import com.transfer.issue.service.TransferIssue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,10 +52,23 @@ public class TransferIssueController {
             value = {"/weblink"},
             method = {RequestMethod.GET}
     )
-    public List<WebLinkDTO> getWebLinkByJiraKey(@RequestParam String jiraKey) throws Exception {
+    public List<SearchWebLinkDTO> getWebLinkByJiraKey(@RequestParam String jiraKey) throws Exception {
         logger.info("이슈 업데이트 컨트롤러 진입");
         return transferIssue.getWebLinkByJiraKey(jiraKey);
     }
+
+    @ResponseBody
+    @RequestMapping(
+            value = {"/add/weblink"},
+            method = {RequestMethod.POST}
+    )
+    public String createWebLinkByIssueKeyAndJiraKey(@RequestBody RequestWeblinkDTO requestWeblinkDTO) throws Exception {
+        logger.info("이슈 업데이트 컨트롤러 진입");
+        return transferIssue.createWebLinkByIssueKeyAndJiraKey(requestWeblinkDTO);
+
+    }
+
+
 }
 
 
