@@ -66,4 +66,19 @@ public class CustomFieldDTO extends FieldDTO {
     @JsonProperty("customfield_10442")
     private Description etc;
 
+    // ======================== 변경 필드 ========================
+    @JsonProperty("customfield_10445")
+    private List<Field> productInfo1;
+
+    @JsonProperty("customfield_10446")
+    private List<Field> productInfo2;
+
+    @JsonProperty("customfield_10447")
+    private List<Field> productInfo3;
+
+    @JsonProperty("customfield_10448")
+    private List<Field> productInfo4;
+
+    @JsonProperty("customfield_10449")
+    private List<Field> productInfo5;
 }

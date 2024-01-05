@@ -28,6 +28,14 @@ public class PlatformController {
         return platformProject.platformCreateProject(baseDTO);
     }
 
-
-
+    @ResponseBody
+    @RequestMapping(
+            value = {"/service"},
+            method = {RequestMethod.POST}
+    )
+    public Map<String, String> platformService(@RequestBody BaseDTO baseDTO) throws Exception {
+        logger.info("[::PlatformController::] 플랫폼을 통한 프로젝트 생성 및 이슈 생성");
+        return platformProject.platformService(baseDTO);
+    }
+    
 }

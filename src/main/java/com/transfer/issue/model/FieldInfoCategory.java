@@ -16,6 +16,11 @@ public class FieldInfoCategory {
     public static final String INSPECTION_METHOD = "점검방법";
     public static final String INSPECTION_CYCLE = "점검주기";
     public static final String ISSUE_STATUS = "이슈상태";
+    public static final String PRODUCT_INFO1 = "제품정보1";
+    public static final String PRODUCT_INFO2 = "제품정보2";
+    public static final String PRODUCT_INFO3 = "제품정보3";
+    public static final String PRODUCT_INFO4 = "제품정보4";
+    public static final String PRODUCT_INFO5 = "제품정보5";
 
     private FieldInfoCategory() {} // 인스턴스 생성 방지
 
