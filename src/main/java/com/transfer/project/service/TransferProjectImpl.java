@@ -380,4 +380,35 @@ public class TransferProjectImpl implements TransferProject {
         return result;
     }
 
+    @Override
+    public List<Map<String, String>> deleteJiraProject(List<String> jiraProjectCodes) {
+
+        logger.info("[::TransferProjectImpl::] 지라 프로젝트 삭제");
+
+        List<Map<String, String>> resultList = new ArrayList<>();
+
+        AdminInfoDTO info = account.getAdminInfo(1);
+        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
+
+        String baseEndpoint = "/rest/api/3/project/";
+        for (String jiraProjectCode : jiraProjectCodes) {
+            String endpoint = baseEndpoint + jiraProjectCode;
+
+            Optional<Boolean> response = WebClientUtils.executeDelete(webClient, endpoint);
+            Map<String, String> resultMap = new HashMap<>();
+            resultMap.put("jiraProjectCode", jiraProjectCode);
+
+            if (response.isPresent()) {
+                resultMap.put("result", "프로젝트 삭제 성공");
+                TB_JML_JpaRepository.delete(TB_JML_JpaRepository.findByKey(jiraProjectCode));
+            } else {
+                resultMap.put("result", "프로젝스 삭제 실패 또는 이미 삭제된 프로젝트");
+            }
+
+            resultList.add(resultMap);
+        }
+
+        return resultList;
+    }
+
 }

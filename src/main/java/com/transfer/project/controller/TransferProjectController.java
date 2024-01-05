@@ -233,4 +233,17 @@ public class TransferProjectController {
         logger.info("[::TransferProjectController::] 지라키로 프로젝트 조회 컨틀롤러");
         return  transferProject.getJiraProjectInfoByJiraKey(jiraKey);
     }
+
+    /*
+     *  지라 프로젝트 삭제 API
+     * */
+    @ResponseBody
+    @RequestMapping(
+            value = {"/delete"},
+            method = {RequestMethod.DELETE}
+    )
+    public List<Map<String, String>> deleteJiraProject(@RequestBody List<String> jiraProjectCodes) throws Exception {
+        logger.info("[::TransferProjectController::] 지라 프로젝트 삭제");
+        return transferProject.deleteJiraProject(jiraProjectCodes);
+    }
 }
