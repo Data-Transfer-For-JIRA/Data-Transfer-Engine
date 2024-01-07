@@ -74,6 +74,16 @@ public class BaseDTO {
         private String etc; // 기타 정보
 
         private String description; // 기본 이력 내용
+
+        private String productInfo1; // 제품 정보1
+
+        private String productInfo2; // 제품 정보2
+
+        private String productInfo3; // 제품 정보3
+
+        private String productInfo4; // 제품 정보4
+
+        private String productInfo5; // 제품 정보5
     }
 
     @Getter

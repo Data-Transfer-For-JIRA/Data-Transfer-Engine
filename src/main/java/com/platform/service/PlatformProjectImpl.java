@@ -258,8 +258,11 @@ public class PlatformProjectImpl implements PlatformProject {
                     }
 
                     // 프로젝트 배정일
+                    if (!selectedDTO.getProjectAssignmentDate().trim().isEmpty()) {
+                        projectBuilder.projectAssignmentDate(selectedDTO.getProjectAssignmentDate());
+                    }
 
-                    // 프로젝트 진행 단계
+                    // TODO: 프로젝트 진행 단계
 
                     ProjectInfoDTO projectInfoDTO = projectBuilder.build();
                     createIssueDTO = new CreateIssueDTO<>(projectInfoDTO);
@@ -279,15 +282,38 @@ public class PlatformProjectImpl implements PlatformProject {
                         maintenanceBuilder.maintenanceName(jiraProjectName);
                     }
 
+                    // 계약 여부
+                    FieldInfo contractStatusInfo = FieldInfo.ofLabel(FieldInfoCategory.CONTRACT_STATUS, selectedDTO.getContractStatus());
+                    if (contractStatusInfo != null) {
+                        maintenanceBuilder.contractStatus(new FieldDTO.Field(contractStatusInfo.getId()));
+                    }
+
                     // 유지보수 시작일
+                    if (!selectedDTO.getMaintenanceStartDate().trim().isEmpty()) {
+                        maintenanceBuilder.maintenanceStartDate(selectedDTO.getMaintenanceStartDate());
+                    }
 
                     // 유지보수 종료일
+                    if (!selectedDTO.getMaintenanceEndDate().trim().isEmpty()) {
+                        maintenanceBuilder.maintenanceEndDate(selectedDTO.getMaintenanceEndDate());
+                    }
 
                     // 점검 방법
+                    FieldInfo inspectionMethodInfo = FieldInfo.ofLabel(FieldInfoCategory.INSPECTION_METHOD, selectedDTO.getInspectionMethod());
+                    if (inspectionMethodInfo != null) {
+                        maintenanceBuilder.inspectionMethod(new FieldDTO.Field(inspectionMethodInfo.getId()));
+                    }
 
                     // 점검 방법 기타
+                    if (!selectedDTO.getInspectionMethodEtc().trim().isEmpty()) {
+                        maintenanceBuilder.inspectionMethodEtc(selectedDTO.getInspectionMethodEtc());
+                    }
 
                     // 점검 주기
+                    FieldInfo inspectionCycleInfo = FieldInfo.ofLabel(FieldInfoCategory.INSPECTION_CYCLE, selectedDTO.getInspectionCycle());
+                    if (inspectionCycleInfo != null) {
+                        maintenanceBuilder.inspectionCycle(new FieldDTO.Field(inspectionCycleInfo.getId()));
+                    }
 
                     MaintenanceInfoDTO maintenanceInfoDTO = maintenanceBuilder.build();
                     createIssueDTO = new CreateIssueDTO<>(maintenanceInfoDTO);
@@ -404,17 +430,45 @@ public class PlatformProjectImpl implements PlatformProject {
             customBuilder.contractor(commonDTO.getContractor());
         }
 
-        // 제품 유형
+        // 제품 정보1
+        String productInfo1 = commonDTO.getProductInfo1();
+        if (!productInfo1.trim().isEmpty()) {
+            Optional.ofNullable(setProductInfo(FieldInfoCategory.PRODUCT_INFO1, productInfo1))
+                    .ifPresent(productInfoList -> customBuilder.productInfo1(productInfoList));
 
-        // 제품 유형 기타
+        }
 
-        // 제품 정보
+        // 제품 정보2
+        String productInfo2 = commonDTO.getProductInfo2();
+        if (!productInfo2.trim().isEmpty()) {
+            Optional.ofNullable(setProductInfo(FieldInfoCategory.PRODUCT_INFO2, productInfo2))
+                    .ifPresent(productInfoList -> customBuilder.productInfo2(productInfoList));
 
-        // 제품 정보 기타
+        }
 
-        // 연동 정보
+        // 제품 정보3
+        String productInfo3 = commonDTO.getProductInfo3();
+        if (!productInfo3.trim().isEmpty()) {
+            Optional.ofNullable(setProductInfo(FieldInfoCategory.PRODUCT_INFO3, productInfo3))
+                    .ifPresent(productInfoList -> customBuilder.productInfo3(productInfoList));
 
-        // 연동 정보 기타
+        }
+
+        // 제품 정보4
+        String productInfo4 = commonDTO.getProductInfo4();
+        if (!productInfo4.trim().isEmpty()) {
+            Optional.ofNullable(setProductInfo(FieldInfoCategory.PRODUCT_INFO4, productInfo4))
+                    .ifPresent(productInfoList -> customBuilder.productInfo4(productInfoList));
+
+        }
+
+        // 제품 정보5
+        String productInfo5 = commonDTO.getProductInfo5();
+        if (!productInfo5.trim().isEmpty()) {
+            Optional.ofNullable(setProductInfo(FieldInfoCategory.PRODUCT_INFO5, productInfo5))
+                    .ifPresent(productInfoList -> customBuilder.productInfo5(productInfoList));
+
+        }
 
         // 바코드 타입
         FieldInfo barcodeTypeInfo = FieldInfo.ofLabel(FieldInfoCategory.BARCODE_TYPE, String.valueOf(commonDTO.getBarcodeType()));
@@ -458,5 +512,20 @@ public class PlatformProjectImpl implements PlatformProject {
         }
 
         return customBuilder;
+    }
+
+    public List<FieldDTO.Field> setProductInfo(String category, String info) {
+
+        String[] productList = info.split(",");
+        List<FieldDTO.Field> productInfoList = null;
+
+        for (String product : productList) {
+            FieldInfo productInfo = FieldInfo.ofLabel(category, product);
+            if (productInfo != null) {
+                productInfoList.add(new FieldDTO.Field(productInfo.getId()));
+            }
+        }
+
+        return productInfoList;
     }
 }
