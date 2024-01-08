@@ -34,7 +34,7 @@ public class AccountController {
 
     @ResponseBody
     @RequestMapping(
-            value = {"/collect"},
+            value = {"/users"},
             method = {RequestMethod.GET}
     )
     public Flux<UserInfoDTO> GetCollectUserInfo() throws Exception {

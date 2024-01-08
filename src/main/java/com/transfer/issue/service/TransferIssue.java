@@ -33,6 +33,6 @@ public interface TransferIssue {
     /*
     *  지라 프로젝트 대상이슈에키와 프로젝트 키로 걸기
     * */
-    String createWebLinkByIssueKeyAndJiraKey(RequestWeblinkDTO requestWeblinkDTO) throws Exception;
+    String createWebLink(RequestWeblinkDTO requestWeblinkDTO) throws Exception;
 
 }

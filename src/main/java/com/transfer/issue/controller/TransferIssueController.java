@@ -62,9 +62,9 @@ public class TransferIssueController {
             value = {"/add/weblink"},
             method = {RequestMethod.POST}
     )
-    public String createWebLinkByIssueKeyAndJiraKey(@RequestBody RequestWeblinkDTO requestWeblinkDTO) throws Exception {
+    public String createWebLink(@RequestBody RequestWeblinkDTO requestWeblinkDTO) throws Exception {
         logger.info("이슈 업데이트 컨트롤러 진입");
-        return transferIssue.createWebLinkByIssueKeyAndJiraKey(requestWeblinkDTO);
+        return transferIssue.createWebLink(requestWeblinkDTO);
 
     }
 
