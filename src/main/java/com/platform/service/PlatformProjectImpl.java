@@ -247,6 +247,16 @@ public class PlatformProjectImpl implements PlatformProject {
                     ProjectInfoDTO.ProjectInfoDTOBuilder<?, ?> projectBuilder = ProjectInfoDTO.builder();
                     projectBuilder = setCommonFields(projectBuilder, jiraProjectCode, commonDTO);
 
+                    // 이슈타입
+                    FieldInfo issueTypeFieldInfo = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "프로젝트 기본 정보");
+                    if (issueTypeFieldInfo != null) {
+                        projectBuilder.issuetype(new FieldDTO.Field(issueTypeFieldInfo.getId()));
+                    }
+
+                    // 제목
+                    String baseSummary = "프로젝트 기본 정보";
+                    projectBuilder.summary(baseSummary);
+                    
                     // 프로젝트 코드
                     if (!projectCode.trim().isEmpty()) {
                         projectBuilder.projectCode(projectCode);
@@ -262,7 +272,11 @@ public class PlatformProjectImpl implements PlatformProject {
                         projectBuilder.projectAssignmentDate(selectedDTO.getProjectAssignmentDate());
                     }
 
-                    // TODO: 프로젝트 진행 단계
+                    // 프로젝트 진행 단계
+                    FieldInfo projectProgressStepInfo = FieldInfo.ofLabel(FieldInfoCategory.PROJECT_PROGRESS_STEP, selectedDTO.getProjectProgressStep());
+                    if (projectProgressStepInfo != null) {
+                        projectBuilder.projectProgressStep(new FieldDTO.Field(projectProgressStepInfo.getId()));
+                    }
 
                     ProjectInfoDTO projectInfoDTO = projectBuilder.build();
                     createIssueDTO = new CreateIssueDTO<>(projectInfoDTO);
@@ -272,6 +286,16 @@ public class PlatformProjectImpl implements PlatformProject {
                     MaintenanceInfoDTO.MaintenanceInfoDTOBuilder<?, ?> maintenanceBuilder = MaintenanceInfoDTO.builder();
                     maintenanceBuilder = setCommonFields(maintenanceBuilder, jiraProjectCode, commonDTO);
 
+                    // 이슈타입
+                    FieldInfo issueTypeFieldInfo = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "유지보수 기본 정보");
+                    if (issueTypeFieldInfo != null) {
+                        maintenanceBuilder.issuetype(new FieldDTO.Field(issueTypeFieldInfo.getId()));
+                    }
+
+                    // 제목
+                    String baseSummary = "유지보수 기본 정보";
+                    maintenanceBuilder.summary(baseSummary);
+                    
                     // 프로젝트 코드
                     if (!projectCode.trim().isEmpty()) {
                         maintenanceBuilder.maintenanceCode(projectCode);
@@ -517,13 +541,17 @@ public class PlatformProjectImpl implements PlatformProject {
     public List<FieldDTO.Field> setProductInfo(String category, String info) {
 
         String[] productList = info.split(",");
-        List<FieldDTO.Field> productInfoList = null;
+        List<FieldDTO.Field> productInfoList = new ArrayList<>();
 
         for (String product : productList) {
             FieldInfo productInfo = FieldInfo.ofLabel(category, product);
             if (productInfo != null) {
                 productInfoList.add(new FieldDTO.Field(productInfo.getId()));
             }
+        }
+
+        if (productInfoList.isEmpty()) {
+            return null;
         }
 
         return productInfoList;

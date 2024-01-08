@@ -37,13 +37,15 @@ public enum FieldInfo {
     // 바코드 타입
     BASIC(FieldInfoCategory.BARCODE_TYPE, "0", "10199"), // 기본
     THREE_STEP(FieldInfoCategory.BARCODE_TYPE, "1", "10200"), // 3단
+    JIRA_BASIC(FieldInfoCategory.BARCODE_TYPE, "기본", "10199"), // 기본
+    JIRA_THREE_STEP(FieldInfoCategory.BARCODE_TYPE, "3단", "10200"), // 3단
 
     // 팀
-    EDOC_PIO_TEAM1(FieldInfoCategory.TEAM, "전자문서 PIO 1팀", "958ac74d-b505-42bd-951d-d33cd54a4db8"), // 전자문서_PIO 1팀
-    EDOC_PIO_TEAM2(FieldInfoCategory.TEAM, "전자문서 PIO 2팀", "563a40c8-3310-4acf-995f-c5e912d662f8"), // 전자문서_PIO 2팀
-    EDOC_PIO_TEAM2_PART1(FieldInfoCategory.TEAM, "전자문서 PIO 2팀 1파트", "6949b496-8918-4bdc-81a7-fb71193e8a4b"), // 전자문서_PIO 2팀 1파트
-    EDOC_PIO_TEAM2_PART2(FieldInfoCategory.TEAM, "전자문서 PIO 2팀 2파트", "f866aef7-eed7-4c50-9aea-be7ce383c10c"), // 전자문서_PIO 2팀 2파트
-    EDOC_PIO_TEAM2_PART3(FieldInfoCategory.TEAM, "전자문서 PIO 2팀 3파트", "dad204ef-b2e1-444e-accc-850560ea6550"), // 전자문서_PIO 2팀 3파트
+    EDOC_PIO_TEAM1(FieldInfoCategory.TEAM, "전자문서_PIO 1팀", "958ac74d-b505-42bd-951d-d33cd54a4db8"), // 전자문서_PIO 1팀
+    EDOC_PIO_TEAM2(FieldInfoCategory.TEAM, "전자문서_PIO 2팀", "563a40c8-3310-4acf-995f-c5e912d662f8"), // 전자문서_PIO 2팀
+    EDOC_PIO_TEAM2_PART1(FieldInfoCategory.TEAM, "전자문서_PIO 2팀 1파트", "6949b496-8918-4bdc-81a7-fb71193e8a4b"), // 전자문서_PIO 2팀 1파트
+    EDOC_PIO_TEAM2_PART2(FieldInfoCategory.TEAM, "전자문서_PIO 2팀 2파트", "f866aef7-eed7-4c50-9aea-be7ce383c10c"), // 전자문서_PIO 2팀 2파트
+    EDOC_PIO_TEAM2_PART3(FieldInfoCategory.TEAM, "전자문서_PIO 2팀 3파트", "dad204ef-b2e1-444e-accc-850560ea6550"), // 전자문서_PIO 2팀 3파트
 
     // 파트
     PART_0(FieldInfoCategory.PART, "0", "10210"), // 0파트
@@ -53,28 +55,40 @@ public enum FieldInfo {
 
     // 멀티 OS
     MULTI_OS(FieldInfoCategory.OS, "Multi OS", "10467"),
+    JIRA_MULTI_OS(FieldInfoCategory.OS, "지원", "10467"),
 
     // 프린터 지원 범위
     ALL_PRINTER_SHARED_PRINTER(FieldInfoCategory.PRINTER_SUPPORT_RANGE, "모두 지원/공유 지원", "10195"),
     ALL_PRINTER_NO_SHARED_PRINTER(FieldInfoCategory.PRINTER_SUPPORT_RANGE, "모두 지원/공유 불가", "10196"),
     DEFAULT_PRINTER_SHARED_PRINTER(FieldInfoCategory.PRINTER_SUPPORT_RANGE, "등록 지원/공유 지원", "10197"),
     DEFAULT_PRINTER_NO_SHARED_PRINTER(FieldInfoCategory.PRINTER_SUPPORT_RANGE, "등록 지원/공유 불가", "10198"),
+    JIRA_ALL_PRINTER_SHARED_PRINTER(FieldInfoCategory.PRINTER_SUPPORT_RANGE, "모든 프린터 / 공유 지원", "10195"),
+    JIRA_ALL_PRINTER_NO_SHARED_PRINTER(FieldInfoCategory.PRINTER_SUPPORT_RANGE, "모든 프린터 / 공유 미지원", "10196"),
+    JIRA_DEFAULT_PRINTER_SHARED_PRINTER(FieldInfoCategory.PRINTER_SUPPORT_RANGE, "기본 프린터 / 공유 지원", "10197"),
+    JIRA_DEFAULT_PRINTER_NO_SHARED_PRINTER(FieldInfoCategory.PRINTER_SUPPORT_RANGE, "기본프린터 / 공유 미지원", "10198"),
 
     // 프로젝트 진행 단계
     PRE_PROJECT(FieldInfoCategory.PROJECT_PROGRESS_STEP, "0_9", "10211"), // 사전 진행 단계: 0, 9
     PROJECT_START(FieldInfoCategory.PROJECT_PROGRESS_STEP, "1", "10212"), // 프로젝트 시작: 1
-    DEVELOPMENT_SERVER_INSTALL(FieldInfoCategory.PROJECT_PROGRESS_STEP, "2. 개발서버 설치", "10214"),
-    OPERATION_SERVER_INSTALL(FieldInfoCategory.PROJECT_PROGRESS_STEP, "3. 운영서버 설치", "10215"),
     PROJECT_STABILIZATION(FieldInfoCategory.PROJECT_PROGRESS_STEP, "5_8", "10216"), // 프로젝트 안정화 기간: 5, 8
     PROJECT_END(FieldInfoCategory.PROJECT_PROGRESS_STEP, "92_93_94", "10217"), // 프로젝트 종료: 92, 93, 94
+    JIRA_PRE_PROJECT(FieldInfoCategory.PROJECT_PROGRESS_STEP, "0. 사전 진행 단계", "10211"),
+    JIRA_PROJECT_START(FieldInfoCategory.PROJECT_PROGRESS_STEP, "1. 프로젝트 시작", "10212"),
+    JIRA_DEVELOPMENT_SERVER_INSTALL(FieldInfoCategory.PROJECT_PROGRESS_STEP, "2. 개발서버 설치", "10214"),
+    JIRA_OPERATION_SERVER_INSTALL(FieldInfoCategory.PROJECT_PROGRESS_STEP, "3. 운영서버 설치", "10215"),
+    JIRA_PROJECT_STABILIZATION(FieldInfoCategory.PROJECT_PROGRESS_STEP, "4. 프로젝트 안정화 기간", "10216"),
+    JIRA_PROJECT_END(FieldInfoCategory.PROJECT_PROGRESS_STEP, "5. 프로젝트 종료", "10217"),
 
     // 계약 여부
     CONTRACTED(FieldInfoCategory.CONTRACT_STATUS, "1", "10201"),
-    NON_CONTRACT(FieldInfoCategory.CONTRACT_STATUS, "0", "10202"),
+    UNCONTRACTED(FieldInfoCategory.CONTRACT_STATUS, "0", "10202"),
+    JIRA_CONTRACTED(FieldInfoCategory.CONTRACT_STATUS, "계약", "10201"),
+    JIRA_UNCONTRACTED(FieldInfoCategory.CONTRACT_STATUS, "미계약", "10202"),
+    JIRA_CONTRACT_TERMINATION(FieldInfoCategory.CONTRACT_STATUS, "계약 종료", "10479"),
 
     // 점검 방법
-    VISIT_INSPECTION(FieldInfoCategory.INSPECTION_METHOD, "방문", "10470"),
-    REMOTE_INSPECTION(FieldInfoCategory.INSPECTION_METHOD, "원격", "10471"),
+    VISIT_INSPECTION(FieldInfoCategory.INSPECTION_METHOD, "방문 점검", "10470"),
+    REMOTE_INSPECTION(FieldInfoCategory.INSPECTION_METHOD, "원격 점검", "10471"),
     OTHER_INSPECTION(FieldInfoCategory.INSPECTION_METHOD, "기타", "10472"),
     SUPPORT_WHEN_FAIL(FieldInfoCategory.INSPECTION_METHOD, "장애시 지원", "10478"),
 
