@@ -1,5 +1,6 @@
 package com.transfer.issue.controller;
 
+import com.transfer.issue.model.dto.CommentDTO;
 import com.transfer.issue.model.dto.TransferIssueDTO;
 import com.transfer.issue.model.dto.weblink.RequestWeblinkDTO;
 import com.transfer.issue.model.dto.weblink.SearchWebLinkDTO;
