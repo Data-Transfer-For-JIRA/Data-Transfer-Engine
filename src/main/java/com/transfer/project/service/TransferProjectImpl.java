@@ -6,12 +6,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.transfer.issue.service.TransferIssue;
 import com.transfer.issuetype.model.dto.IssueTypeSchemeDTO;
 import com.transfer.issuetype.model.dto.IssueTypeScreenScheme;
+import com.transfer.project.model.dao.TB_JLL_JpaRepository;
 import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.dao.TB_JML_JpaRepository;
 import com.transfer.project.model.dto.CreateProjectResponseDTO;
 
 import com.transfer.project.model.dto.ProjectDTO;
 import com.transfer.project.model.entity.TB_JML_Entity;
+import com.transfer.project.model.entity.TB_JLL_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 
 import com.transfer.project.model.dto.CreateProjectDTO;
@@ -29,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Service("transferProjcet")
@@ -45,6 +48,9 @@ public class TransferProjectImpl implements TransferProject {
 
     @Autowired
     private TB_JML_JpaRepository TB_JML_JpaRepository;
+
+    @Autowired
+    private TB_JLL_JpaRepository TB_JLL_JpaRepository;
 
     @Autowired
     private Account account;
@@ -378,6 +384,55 @@ public class TransferProjectImpl implements TransferProject {
         ProjectDTO result = WebClientUtils.get(webClient,endpoint,ProjectDTO.class).block();
 
         return result;
+    }
+    @Override
+    @Transactional
+    public List<TB_JLL_Entity> saveProjectsRelation() throws Exception{
+        logger.info("[::TransferProjectImpl::] 연결된 프로젝트 목록 저장 메서드");
+        List<TB_PJT_BASE_Entity> relatedProjectIsNotNull = TB_PJT_BASE_JpaRepository.findNonNullAndNonEmptyRelatedProjects(); // 널값과 빈 값이 있는 데이터는 제외하고 조회
+        Map<String, List<String>> result = mappingRelatedProject(relatedProjectIsNotNull);
+        saveRelationsOnDB(result);
+
+        return TB_JLL_JpaRepository.findAll();
+    }
+
+    public Map<String, List<String>> mappingRelatedProject(List<TB_PJT_BASE_Entity> relatedProjectIsNotNull ) throws Exception{
+        logger.info("[::TransferProjectImpl::] 연결된 프로젝트 목록 조회");
+        // 프로젝트 코드와 Jira 키를 매핑하는 Map을 생성
+        Map<String, String> projectCodeToJiraKey = TB_JML_JpaRepository.findAll().stream()
+                .collect(Collectors.toMap(TB_JML_Entity::getProjectCode, TB_JML_Entity::getKey));
+
+        Map<String, List<String>> relatedProjectMappingList = new HashMap<>();
+        for(TB_PJT_BASE_Entity project : relatedProjectIsNotNull) {
+            String projectCode = project.getRelatedProject();
+            String jiraKey = projectCodeToJiraKey.get(projectCode);
+
+            if (jiraKey != null) {  // jiraKey가 null이 아닌 경우에만 처리
+                List<String> linkedProjectList = TB_PJT_BASE_JpaRepository.findProjectCodesByRelatedProject(projectCode);
+                List<String> jiraLinkedProjectKey = new ArrayList<>();
+                for(String linkedProject : linkedProjectList){
+                    // 미리 생성해둔 Map을 이용해 Jira 키를 찾음
+                    String JiraLinkedProject = projectCodeToJiraKey.get(linkedProject);
+                    jiraLinkedProjectKey.add(JiraLinkedProject);
+                }
+                relatedProjectMappingList.put(jiraKey, jiraLinkedProjectKey);
+            }
+        }
+
+        // 프로젝트 - 연관된 프로젝트로 구조화
+        System.out.println(relatedProjectMappingList);
+        return relatedProjectMappingList;
+    }
+
+    public void saveRelationsOnDB(Map<String, List<String>> resultMap) throws Exception{
+        resultMap.entrySet().stream()
+                .flatMap(entry -> entry.getValue().stream().map(value -> new AbstractMap.SimpleEntry<>(entry.getKey(), value)))
+                .forEach(entry -> saveForJLL(entry.getKey(),entry.getValue()));
+    }
+
+    public TB_JLL_Entity saveForJLL(String parentKey, String childKey){
+       TB_JLL_Entity entity = TB_JLL_Entity.builder().parentKey(parentKey).childKey(childKey).build();
+       return TB_JLL_JpaRepository.save(entity);
     }
 
     @Override

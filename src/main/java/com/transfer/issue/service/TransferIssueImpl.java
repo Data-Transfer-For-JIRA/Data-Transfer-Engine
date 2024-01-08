@@ -1017,7 +1017,7 @@ public class TransferIssueImpl implements TransferIssue {
     *  이슈에(이슈키) 프로젝트(프로젝트키) 연결
     * */
     @Override
-    public String createWebLinkByIssueKeyAndJiraKey(RequestWeblinkDTO requestWeblinkDTO) throws Exception{
+    public String createWebLink(RequestWeblinkDTO requestWeblinkDTO) throws Exception{
         String issueIdOrKey = requestWeblinkDTO.getIssueIdOrKey();
         String jiraKey = requestWeblinkDTO.getJiraKey();
         String title = requestWeblinkDTO.getTitle();

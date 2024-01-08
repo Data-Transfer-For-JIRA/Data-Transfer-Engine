@@ -1,6 +1,7 @@
 package com.transfer.project.controller;
 
 import com.transfer.project.model.dto.*;
+import com.transfer.project.model.entity.TB_JLL_Entity;
 import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 import com.transfer.project.service.TransferProject;
@@ -245,5 +246,18 @@ public class TransferProjectController {
     public List<Map<String, String>> deleteJiraProject(@RequestBody List<String> jiraProjectCodes) throws Exception {
         logger.info("[::TransferProjectController::] 지라 프로젝트 삭제");
         return transferProject.deleteJiraProject(jiraProjectCodes);
+    }
+
+    /*
+     *  프로젝트 연결 관계 디비에 저장하는 API (DB 기준)
+     * */
+    @ResponseBody
+    @RequestMapping(
+            value = {"/save/relation"},
+            method = {RequestMethod.POST}
+    )
+    public List<TB_JLL_Entity> saveProjectsRelation() throws Exception {
+        logger.info("[::TransferProjectController::] 프로젝트 연결관계 디비에 저장하는 API");
+        return  transferProject.saveProjectsRelation();
     }
 }

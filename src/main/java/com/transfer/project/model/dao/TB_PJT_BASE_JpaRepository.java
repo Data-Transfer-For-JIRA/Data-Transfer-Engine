@@ -44,5 +44,11 @@ public interface TB_PJT_BASE_JpaRepository extends JpaRepository<TB_PJT_BASE_Ent
     * */
 
     List<TB_PJT_BASE_Entity> findByRelatedProject(String projectCode);
-    
+    @Query("SELECT t.projectCode FROM TB_PJT_BASE_Entity t WHERE t.relatedProject = :relatedProject")
+    List<String> findProjectCodesByRelatedProject(@Param("relatedProject")String relatedProject);
+
+    @Query("SELECT t FROM TB_PJT_BASE_Entity t WHERE t.relatedProject IS NOT NULL AND t.relatedProject <> ''")
+    List<TB_PJT_BASE_Entity> findNonNullAndNonEmptyRelatedProjects();
+
+
 }

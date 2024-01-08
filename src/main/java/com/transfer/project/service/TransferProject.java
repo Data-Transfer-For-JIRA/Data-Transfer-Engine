@@ -3,6 +3,7 @@ package com.transfer.project.service;
 import com.transfer.project.model.dto.CreateProjectDTO;
 import com.transfer.project.model.dto.CreateProjectResponseDTO;
 import com.transfer.project.model.dto.ProjectDTO;
+import com.transfer.project.model.entity.TB_JLL_Entity;
 import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 import org.springframework.data.domain.Page;
@@ -34,5 +35,6 @@ public interface TransferProject {
     public ProjectDTO getJiraProjectInfoByJiraKey(String jiraKey) throws Exception;
 
     List<Map<String, String>> deleteJiraProject(List<String> jiraProjectCodes);
+    List<TB_JLL_Entity> saveProjectsRelation() throws Exception;
 
 }
