@@ -1045,4 +1045,32 @@ public class TransferIssueImpl implements TransferIssue {
         return result;
     }
 
+    /*
+    *  댓글 삭제
+    * */
+    @Override
+    public void deleteComment(String issueIdOrKey,String id) throws Exception{
+
+        AdminInfoDTO info = account.getAdminInfo(1);
+        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
+        String endpoint = "/rest/api/3/issue/"+issueIdOrKey+"/comment"+id;
+
+        WebClientUtils.delete(webClient,endpoint,Void.class);
+
+    }
+    /*
+    *  댓글 조회
+    * */
+    @Override
+    public CommentDTO getComment(String issueIdOrKey) throws Exception{
+
+        AdminInfoDTO info = account.getAdminInfo(1);
+        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
+        String endpoint = "/rest/api/3/issue/"+issueIdOrKey+"/comment";
+
+        CommentDTO result = WebClientUtils.get(webClient,endpoint,CommentDTO.class).block();
+
+        return result ;
+    }
+
 }

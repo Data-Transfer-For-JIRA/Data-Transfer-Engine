@@ -1,5 +1,6 @@
 package com.transfer.issue.service;
 
+import com.transfer.issue.model.dto.CommentDTO;
 import com.transfer.issue.model.dto.TransferIssueDTO;
 import com.transfer.issue.model.dto.weblink.RequestWeblinkDTO;
 import com.transfer.issue.model.dto.weblink.SearchWebLinkDTO;
@@ -34,5 +35,10 @@ public interface TransferIssue {
     *  지라 프로젝트 대상이슈에키와 프로젝트 키로 걸기
     * */
     String createWebLink(RequestWeblinkDTO requestWeblinkDTO) throws Exception;
+
+
+    void deleteComment(String issueIdOrKey,String id) throws Exception;
+
+    CommentDTO getComment(String issueIdOrKey) throws Exception;
 
 }
