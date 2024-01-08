@@ -68,6 +68,28 @@ public class TransferIssueController {
 
     }
 
+    @ResponseBody
+    @RequestMapping(
+            value = {"/delete/comment"},
+            method = {RequestMethod.DELETE}
+    )
+    public void deleteComment(@RequestParam String issueIdOrKey, @RequestParam String id) throws Exception {
+        logger.info("이슈 업데이트 컨트롤러 진입");
+        transferIssue.deleteComment(issueIdOrKey,id);
+
+    }
+
+    @ResponseBody
+    @RequestMapping(
+            value = {"/get/comment"},
+            method = {RequestMethod.GET}
+    )
+    public CommentDTO getComment(@RequestParam String issueIdOrKey) throws Exception {
+        logger.info("이슈 업데이트 컨트롤러 진입");
+        return transferIssue.getComment(issueIdOrKey);
+
+    }
+
 
 }
 
