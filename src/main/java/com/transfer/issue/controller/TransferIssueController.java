@@ -54,7 +54,8 @@ public class TransferIssueController {
             method = {RequestMethod.GET}
     )
     public List<SearchWebLinkDTO> getWebLinkByJiraKey(@RequestParam String jiraKey) throws Exception {
-        logger.info("이슈 업데이트 컨트롤러 진입");
+
+        logger.info("[::TransferIssueController::] 웹링크 조회 -> " + jiraKey);
         return transferIssue.getWebLinkByJiraKey(jiraKey);
     }
 
@@ -64,8 +65,19 @@ public class TransferIssueController {
             method = {RequestMethod.POST}
     )
     public String createWebLink(@RequestBody RequestWeblinkDTO requestWeblinkDTO) throws Exception {
-        logger.info("이슈 업데이트 컨트롤러 진입");
+        logger.info("[::TransferIssueController::] 웹링크  생성 정보 -> " +requestWeblinkDTO.getIssueIdOrKey() +"  "+requestWeblinkDTO.getJiraKey()+"  "+requestWeblinkDTO.getTitle());
         return transferIssue.createWebLink(requestWeblinkDTO);
+
+    }
+
+    @ResponseBody
+    @RequestMapping(
+            value = {"/add/weblink/both"},
+            method = {RequestMethod.POST}
+    )
+    public Boolean createWebLinkBothSides(@RequestParam String mainJiraKey ,@RequestParam String subJiraKey ) throws Exception {
+        logger.info("[::TransferIssueController::] 웹링크  양방향 생성 -> " + mainJiraKey + "  "+ subJiraKey);
+        return transferIssue.createWebLinkBothSides(mainJiraKey,subJiraKey);
 
     }
 
@@ -75,7 +87,7 @@ public class TransferIssueController {
             method = {RequestMethod.DELETE}
     )
     public void deleteComment(@RequestParam String issueIdOrKey, @RequestParam String id) throws Exception {
-        logger.info("이슈 업데이트 컨트롤러 진입");
+        logger.info("[::TransferIssueController::] 댓글 삭제 -> " + issueIdOrKey+" "+id);
         transferIssue.deleteComment(issueIdOrKey,id);
 
     }
@@ -86,7 +98,7 @@ public class TransferIssueController {
             method = {RequestMethod.GET}
     )
     public CommentDTO getComment(@RequestParam String issueIdOrKey) throws Exception {
-        logger.info("이슈 업데이트 컨트롤러 진입");
+        logger.info("[::TransferIssueController::] 댓글 조회 -> " + issueIdOrKey);
         return transferIssue.getComment(issueIdOrKey);
 
     }

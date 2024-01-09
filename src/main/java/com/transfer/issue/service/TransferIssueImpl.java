@@ -16,7 +16,9 @@ import com.transfer.issue.model.dto.weblink.CreateWebLinkDTO;
 import com.transfer.issue.model.dto.weblink.RequestWeblinkDTO;
 import com.transfer.issue.model.dto.weblink.SearchWebLinkDTO;
 import com.transfer.issue.model.entity.PJ_PG_SUB_Entity;
+import com.transfer.project.model.dao.TB_JLL_JpaRepository;
 import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
+import com.transfer.project.model.entity.TB_JLL_Entity;
 import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 import com.utils.WebClientUtils;
@@ -55,6 +57,9 @@ public class TransferIssueImpl implements TransferIssue {
 
     @Autowired
     private com.transfer.project.model.dao.TB_JML_JpaRepository TB_JML_JpaRepository;
+
+    @Autowired
+    private TB_JLL_JpaRepository TB_JLL_JpaRepository;
 
     @Autowired
     private PJ_PG_SUB_JpaRepository PJ_PG_SUB_JpaRepository;
@@ -1087,6 +1092,50 @@ public class TransferIssueImpl implements TransferIssue {
 
         return result;
     }
+    /*
+    *  두개의 지라키로 양방향으로 웹링크 거는 로직 + 디비 업데이트
+    * */
+    @Override
+    public Boolean createWebLinkBothSides(String mainJiraKey, String subJiraKey) throws Exception {
+        logger.info("[::TransferIssueImpl::] 웹링크 양방향 생성 -> " + mainJiraKey + "  " + subJiraKey);
+        // mainJiraKey에 subJiraKey 걸기
+        TB_JML_Entity mainInfo = TB_JML_JpaRepository.findByKey(mainJiraKey);
+        TB_JML_Entity subInfo = TB_JML_JpaRepository.findByKey(subJiraKey);
+
+        if (mainInfo != null && subInfo != null) {
+            String mainIssueKeyOrId = getBaseIssueKeyByJiraKey(mainJiraKey);
+            String subTitle = subInfo.getJiraProjectName();
+
+            RequestWeblinkDTO main = new RequestWeblinkDTO();
+            main.setIssueIdOrKey(mainIssueKeyOrId);
+            main.setJiraKey(subJiraKey);
+            main.setTitle(subTitle);
+            String mainResult = createWebLink(main);
+
+            // subJiraKey에 mainJiraKey 걸기
+            String subIssueKeyOrId = getBaseIssueKeyByJiraKey(subJiraKey);
+            String mainTitle = mainInfo.getJiraProjectName();
+
+            RequestWeblinkDTO sub = new RequestWeblinkDTO();
+            sub.setIssueIdOrKey(subIssueKeyOrId);
+            sub.setJiraKey(mainJiraKey);
+            sub.setTitle(mainTitle);
+            String subResult = createWebLink(sub);
+
+            if (mainResult != null && subResult != null) {
+                TB_JLL_Entity entity = TB_JLL_JpaRepository.findByParentKeyAndChildKey(mainJiraKey, subJiraKey);
+                entity.setLinkCheckFlag(true);
+                TB_JLL_Entity savedEntity = TB_JLL_JpaRepository.save(entity);
+                if (savedEntity != null) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+
 
     /*
     *  댓글 삭제

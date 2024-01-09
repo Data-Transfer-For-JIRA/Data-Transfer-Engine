@@ -17,4 +17,6 @@ public interface TB_JLL_JpaRepository extends JpaRepository<TB_JLL_Entity,String
     List<String> findChildKeysByParentKeyAndLinkCheckFlagFalse(@Param("parentKey") String parentKey);
     Page<TB_JLL_Entity> findAllByLinkCheckFlagIsFalse(Pageable pageable);
 
+    TB_JLL_Entity findByParentKeyAndChildKey(String parentKey, String childKey);
+
 }
