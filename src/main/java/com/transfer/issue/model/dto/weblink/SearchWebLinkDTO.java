@@ -11,6 +11,7 @@ import lombok.*;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SearchWebLinkDTO {
+
     private String id;
     private String self;
     private Object object;

@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -970,6 +971,44 @@ public class TransferIssueImpl implements TransferIssue {
     }
 
     @Override
+    public String getBaseIssueKeyByJiraKey(String jiraKey) {
+
+        AdminInfoDTO info = account.getAdminInfo(1);
+        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
+
+        TB_JML_Entity projectInfo  = TB_JML_JpaRepository.findByKey(jiraKey);
+        String issueType = "";
+
+        if(projectInfo.getFlag().equals("P")){
+            issueType = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "프로젝트 기본 정보").getId();
+        }else{
+            issueType = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "유지보수 기본 정보").getId();
+        }
+
+        String jql = "project=" + jiraKey + " AND issuetype=" + issueType;
+        String fields = "key";
+        String endpoint = "/rest/api/3/search?jql=" + jql + "&fields=" + fields;
+
+        return WebClientUtils.get(webClient, endpoint, String.class)
+                .map(responseString -> {
+                    // JSON 문자열 파싱
+                    JSONObject jsonObject = new JSONObject(responseString);
+                    JSONArray issues = jsonObject.getJSONArray("issues");
+                    if (issues != null && issues.length() > 0) {
+                        // 첫 번째 이슈 객체에서 key 값을 추출
+                        JSONObject firstIssue = issues.getJSONObject(0);
+                        logger.info("[::TransferIssueImpl::] getBaseIssueKey 기본 정보 이슈키 -> " + firstIssue.getString("key"));
+                        return firstIssue.getString("key");
+                    } else {
+                        // 이슈가 없는 경우
+                        return null;
+                    }
+                })
+                .block(); // 동기적으로 결과를 기다림
+    }
+
+
+    @Override
     public Specification<TB_JML_Entity> hasDateTimeBeforeIsNull(String field) {
         return (root, query, cb) -> {
             Path<LocalDateTime> updateDate = root.get(field); // 필드 가져오기
@@ -1009,7 +1048,11 @@ public class TransferIssueImpl implements TransferIssue {
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
 
         String endpoint = "/rest/api/3/issue/"+jiraIssueKey+"/remotelink";
-        List<SearchWebLinkDTO>  result =  WebClientUtils.get(webClient,endpoint,List.class).block();
+        ParameterizedTypeReference<List<SearchWebLinkDTO>> typeRef = new ParameterizedTypeReference<List<SearchWebLinkDTO>>() {};
+        /*
+        * ParameterizedTypeReference는 Spring Framework에서 제공하는 클래스로, 런타임 시점에 제네릭 타입 정보를 유지할 수 있게 해주는 역할을 함
+        * */
+        List<SearchWebLinkDTO>  result =  WebClientUtils.get(webClient,endpoint,typeRef).block();
 
         return result;
     }

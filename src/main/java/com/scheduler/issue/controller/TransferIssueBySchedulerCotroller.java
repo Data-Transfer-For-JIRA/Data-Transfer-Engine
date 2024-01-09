@@ -67,4 +67,15 @@ public class TransferIssueBySchedulerCotroller {
         transferIssueByScheduler.updateIssueByScheduler(page, size);
     }
 
+
+    @ResponseBody
+    @RequestMapping(
+            value = {"/weblink"},
+            method = {RequestMethod.PUT}
+    )
+    public void linkAssociatedProject() throws Exception {
+        logger.info("프로젝트 스케줄러를 통한 생성 컨트롤러 진입");
+        transferIssueByScheduler.updateAssociatedProject();
+    }
+
 }

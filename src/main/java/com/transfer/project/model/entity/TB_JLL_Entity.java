@@ -24,4 +24,7 @@ public class TB_JLL_Entity {
     @Column(name = "C_JIRAKEY")
     private String childKey;
 
+
+    @Column(name = "L_FLAG")
+    private Boolean linkCheckFlag;
 }

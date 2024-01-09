@@ -25,6 +25,8 @@ public interface TransferIssue {
 
     String getBaseIssueKey(String jiraProjectCode, String issueType);
 
+    String getBaseIssueKeyByJiraKey(String jiraKey);
+
     Specification<TB_JML_Entity> hasDateTimeBeforeIsNull(String field);
 
     /*
