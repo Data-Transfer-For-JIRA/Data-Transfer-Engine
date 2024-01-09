@@ -253,10 +253,6 @@ public class PlatformProjectImpl implements PlatformProject {
                         projectBuilder.issuetype(new FieldDTO.Field(issueTypeFieldInfo.getId()));
                     }
 
-                    // 제목
-                    String baseSummary = "프로젝트 기본 정보";
-                    projectBuilder.summary(baseSummary);
-                    
                     // 프로젝트 코드
                     if (!projectCode.trim().isEmpty()) {
                         projectBuilder.projectCode(projectCode);
@@ -292,10 +288,6 @@ public class PlatformProjectImpl implements PlatformProject {
                         maintenanceBuilder.issuetype(new FieldDTO.Field(issueTypeFieldInfo.getId()));
                     }
 
-                    // 제목
-                    String baseSummary = "유지보수 기본 정보";
-                    maintenanceBuilder.summary(baseSummary);
-                    
                     // 프로젝트 코드
                     if (!projectCode.trim().isEmpty()) {
                         maintenanceBuilder.maintenanceCode(projectCode);
@@ -366,7 +358,7 @@ public class PlatformProjectImpl implements PlatformProject {
                 // 이슈 생성되었는지 체크 / 이슈 상태를 완료됨으로 변경
                 if (responseIssueDTO.getKey() != null) {
                     //relatedProject(wssProjectCode,responseIssueDTO.getKey());
-                    //changeIssueStatus(responseIssueDTO.getKey());
+                    transferIssue.changeIssueStatus(responseIssueDTO.getKey());
                     createInfo.put("result2", "이슈 생성 성공");
                 } else {
                     createInfo.put("result2", "이슈 생성 실패");
@@ -421,6 +413,10 @@ public class PlatformProjectImpl implements PlatformProject {
         // 프로젝트
         customBuilder.project(new FieldDTO.Project(jiraProjectCode, null));
 
+        // 제목
+        String summary = "기본 정보";
+        customBuilder.summary(summary);
+
         // 담당자 및 부 담당자
         String assignees = setAssignees(commonDTO.getAssignee(), commonDTO.getSubAssignee());
         List<String> assigneeList = transferIssue.getSeveralAssigneeId(assignees);
@@ -451,7 +447,7 @@ public class PlatformProjectImpl implements PlatformProject {
 
         // 고객사
         if (!commonDTO.getClient().isEmpty()) {
-            customBuilder.contractor(commonDTO.getContractor());
+            customBuilder.contractor(commonDTO.getClient());
         }
 
         // 제품 정보1
