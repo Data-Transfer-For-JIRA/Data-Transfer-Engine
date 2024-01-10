@@ -342,14 +342,15 @@ public class TransferIssueImpl implements TransferIssue {
      *  이슈 담당자 이름으로 지라서버 아이디 디비 검색
      * */
     @Override
-    public String getOneAssigneeId(String userName) throws Exception {
+    public String getOneAssigneeId(String userNames) throws Exception {
         logger.info("[::TransferIssueBySchedulerImpl::] getOneAssigneeId");
         String epageDivAccountId = TB_JIRA_USER_JpaRepository.findByDisplayName("epage div").getAccountId();
 
-        if (userName == null || userName.trim().isEmpty()) {
+        if (userNames == null || userNames.trim().isEmpty()) {
             return epageDivAccountId;
         }
 
+        String userName = Arrays.stream(userNames.split(",")).findFirst().orElse(userNames);
         List<TB_JIRA_USER_Entity> user = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(userName);
         if (!user.isEmpty()) {
             String userId = user.get(0).getAccountId();

@@ -218,7 +218,7 @@ public class TransferProjectController {
             method = {RequestMethod.PUT}
     )
     public ProjectDTO reassignProjectLeader(@RequestParam String jiraProjectCode,@RequestParam String assignee) throws Exception {
-        logger.info("[::TransferProjectController::] 프로젝트 담당자 지정 변경 컨틀롤러");
+        logger.info("[::TransferProjectController::] 프로젝트 담당자 지정 변경 컨트롤러");
         return  transferProject.reassignProjectLeader(jiraProjectCode,assignee );
     }
 
