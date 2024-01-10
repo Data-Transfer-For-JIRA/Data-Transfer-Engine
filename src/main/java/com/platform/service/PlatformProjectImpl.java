@@ -447,7 +447,7 @@ public class PlatformProjectImpl implements PlatformProject {
 
         // 고객사
         if (!commonDTO.getClient().isEmpty()) {
-            customBuilder.contractor(commonDTO.getClient());
+            customBuilder.client(commonDTO.getClient());
         }
 
         // 제품 정보1

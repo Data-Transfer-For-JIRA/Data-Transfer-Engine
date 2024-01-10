@@ -643,7 +643,7 @@ public class TransferIssueImpl implements TransferIssue {
 
         // 고객사
         if (baseInfo.getClient() != null && !baseInfo.getClient().isEmpty()) {
-            customBuilder.contractor(baseInfo.getContractor());
+            customBuilder.client(baseInfo.getClient());
         }
 
         // 바코드 타입
@@ -844,22 +844,27 @@ public class TransferIssueImpl implements TransferIssue {
             ProjectInfoDTO.ProjectInfoDTOBuilder<?, ?> projectBuilder = ProjectInfoDTO.builder();
 
             // 팀, 파트
-            if (assigneeList != null && !assigneeList.isEmpty()) {
-                TB_JIRA_USER_Entity userEntity = TB_JIRA_USER_JpaRepository.findByAccountId(assigneeList.get(0));
+//            if (assigneeList != null && !assigneeList.isEmpty()) {
+//                TB_JIRA_USER_Entity userEntity = TB_JIRA_USER_JpaRepository.findByAccountId(assigneeList.get(0));
+//
+//                if (userEntity != null) {
+//                    FieldInfo teamInfo = FieldInfo.ofLabel(FieldInfoCategory.TEAM, userEntity.getTeam());
+//                    if (teamInfo != null) {
+//                        projectBuilder.team(teamInfo.getId());
+//                        logger.info("[::TransferIssueImpl::] updateIssueData 팀 아이디 -> " + teamInfo.getId());
+//                    }
+//
+//                    FieldInfo partInfo = FieldInfo.ofLabel(FieldInfoCategory.PART, userEntity.getPart());
+//                    if (partInfo != null) {
+//                        projectBuilder.part(new FieldDTO.Field(partInfo.getId()));
+//                        logger.info("[::TransferIssueImpl::] updateIssueData 파트 아이디 -> " + partInfo.getId());
+//                    }
+//                }
+//            }
 
-                if (userEntity != null) {
-                    FieldInfo teamInfo = FieldInfo.ofLabel(FieldInfoCategory.TEAM, userEntity.getTeam());
-                    if (teamInfo != null) {
-                        projectBuilder.team(teamInfo.getId());
-                        logger.info("[::TransferIssueImpl::] updateIssueData 팀 아이디 -> " + teamInfo.getId());
-                    }
-
-                    FieldInfo partInfo = FieldInfo.ofLabel(FieldInfoCategory.PART, userEntity.getPart());
-                    if (partInfo != null) {
-                        projectBuilder.part(new FieldDTO.Field(partInfo.getId()));
-                        logger.info("[::TransferIssueImpl::] updateIssueData 파트 아이디 -> " + partInfo.getId());
-                    }
-                }
+            // 고객사
+            if (baseInfo.getClient() != null && !baseInfo.getClient().isEmpty()) {
+                projectBuilder.client(baseInfo.getClient());
             }
 
             ProjectInfoDTO projectInfoDTO = projectBuilder.build();
@@ -874,34 +879,39 @@ public class TransferIssueImpl implements TransferIssue {
             MaintenanceInfoDTO.MaintenanceInfoDTOBuilder<?, ?> maintenanceBuilder = MaintenanceInfoDTO.builder();
 
             // 팀, 파트
-            if (assigneeList != null && !assigneeList.isEmpty()) {
-                TB_JIRA_USER_Entity userEntity = TB_JIRA_USER_JpaRepository.findByAccountId(assigneeList.get(0));
+//            if (assigneeList != null && !assigneeList.isEmpty()) {
+//                TB_JIRA_USER_Entity userEntity = TB_JIRA_USER_JpaRepository.findByAccountId(assigneeList.get(0));
+//
+//                if (userEntity != null) {
+//                    FieldInfo teamInfo = FieldInfo.ofLabel(FieldInfoCategory.TEAM, userEntity.getTeam());
+//                    if (teamInfo != null) {
+//                        maintenanceBuilder.team(teamInfo.getId());
+//                        logger.info("[::TransferIssueImpl::] updateIssueData 팀 아이디 -> " + teamInfo.getId());
+//                    }
+//
+//                    FieldInfo partInfo = FieldInfo.ofLabel(FieldInfoCategory.PART, userEntity.getPart());
+//                    if (partInfo != null) {
+//                        maintenanceBuilder.part(new FieldDTO.Field(partInfo.getId()));
+//                        logger.info("[::TransferIssueImpl::] updateIssueData 파트 아이디 -> " + partInfo.getId());
+//                    }
+//                }
+//            }
+//
+//            // 계약 여부
+//            FieldInfo contractStatusInfo = FieldInfo.ofLabel(FieldInfoCategory.CONTRACT_STATUS, baseInfo.getContract());
+//            if (contractStatusInfo != null) {
+//                maintenanceBuilder.contractStatus(new FieldDTO.Field(contractStatusInfo.getId()));
+//                logger.info("[::TransferIssueImpl::] updateIssueData 계약 여부 -> " + contractStatusInfo.getId());
+//            }
+//
+//            // 점검 방법: 장애 시 지원을 기본으로 설정
+//            FieldInfo inspectionMethodInfo = FieldInfo.ofLabel(FieldInfoCategory.INSPECTION_METHOD, "장애시 지원");
+//            maintenanceBuilder.inspectionMethod(new FieldDTO.Field(inspectionMethodInfo.getId()));
 
-                if (userEntity != null) {
-                    FieldInfo teamInfo = FieldInfo.ofLabel(FieldInfoCategory.TEAM, userEntity.getTeam());
-                    if (teamInfo != null) {
-                        maintenanceBuilder.team(teamInfo.getId());
-                        logger.info("[::TransferIssueImpl::] updateIssueData 팀 아이디 -> " + teamInfo.getId());
-                    }
-
-                    FieldInfo partInfo = FieldInfo.ofLabel(FieldInfoCategory.PART, userEntity.getPart());
-                    if (partInfo != null) {
-                        maintenanceBuilder.part(new FieldDTO.Field(partInfo.getId()));
-                        logger.info("[::TransferIssueImpl::] updateIssueData 파트 아이디 -> " + partInfo.getId());
-                    }
-                }
+            // 고객사
+            if (baseInfo.getClient() != null && !baseInfo.getClient().isEmpty()) {
+                maintenanceBuilder.client(baseInfo.getClient());
             }
-
-            // 계약 여부
-            FieldInfo contractStatusInfo = FieldInfo.ofLabel(FieldInfoCategory.CONTRACT_STATUS, baseInfo.getContract());
-            if (contractStatusInfo != null) {
-                maintenanceBuilder.contractStatus(new FieldDTO.Field(contractStatusInfo.getId()));
-                logger.info("[::TransferIssueImpl::] updateIssueData 계약 여부 -> " + contractStatusInfo.getId());
-            }
-
-            // 점검 방법: 장애 시 지원을 기본으로 설정
-            FieldInfo inspectionMethodInfo = FieldInfo.ofLabel(FieldInfoCategory.INSPECTION_METHOD, "장애시 지원");
-            maintenanceBuilder.inspectionMethod(new FieldDTO.Field(inspectionMethodInfo.getId()));
 
             MaintenanceInfoDTO maintenanceInfoDTO = maintenanceBuilder.build();
             createIssueDTO = new CreateIssueDTO<>(maintenanceInfoDTO);
@@ -1019,13 +1029,13 @@ public class TransferIssueImpl implements TransferIssue {
         return (root, query, cb) -> {
             Path<LocalDateTime> updateDate = root.get(field); // 필드 가져오기
 
-            // 현재 날짜에서 하루를 빼서 어제 날짜 생성
-            LocalDate yesterday = LocalDate.now().minusDays(1);
+            // 현재 날짜에서 하루를 빼서 어제 날짜 생성 -> 스케줄러 실행 주기를 고려하여 2일 전으로 수정
+            LocalDate yesterday = LocalDate.now().minusDays(2);
 
             Predicate isNull = cb.isNull(updateDate);
-//            Predicate isBefore = cb.lessThanOrEqualTo(updateDate.as(LocalDate.class), yesterday);
-//            return cb.or(isNull, isBefore);
-            return isNull;
+            Predicate isBefore = cb.lessThanOrEqualTo(updateDate.as(LocalDate.class), yesterday);
+            return cb.or(isNull, isBefore);
+            //return isNull;
         };
     }
 
