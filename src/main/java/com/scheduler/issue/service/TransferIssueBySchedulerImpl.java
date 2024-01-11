@@ -1,10 +1,7 @@
 package com.scheduler.issue.service;
 
-import com.account.dto.AdminInfoDTO;
-import com.account.service.Account;
 import com.scheduler.issue.model.bulk.ResponseBulkIssueDTO;
-import com.transfer.issue.model.FieldInfo;
-import com.transfer.issue.model.FieldInfoCategory;
+import com.transfer.issue.model.dao.PJ_PG_SUB_JpaRepository;
 import com.transfer.issue.model.dto.CommentDTO;
 import com.transfer.issue.model.dto.FieldDTO;
 import com.transfer.issue.model.dto.TransferIssueDTO;
@@ -16,9 +13,9 @@ import com.transfer.issue.model.entity.PJ_PG_SUB_Entity;
 import com.transfer.issue.service.TransferIssue;
 import com.transfer.project.model.dao.TB_JLL_JpaRepository;
 import com.transfer.project.model.dao.TB_JML_JpaRepository;
+import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.entity.TB_JLL_Entity;
 import com.transfer.project.model.entity.TB_JML_Entity;
-import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 import com.transfer.project.service.TransferProject;
 import com.utils.SaveLog;
 import com.utils.WebClientUtils;
@@ -31,7 +28,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -42,7 +38,6 @@ import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Service("TransferIssueByScheduler")
@@ -51,22 +46,19 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private Account account;
+    private WebClientUtils webClientUtils;
 
     @Autowired
-    private com.transfer.project.model.dao.TB_JML_JpaRepository TB_JML_JpaRepository;
+    private TB_JML_JpaRepository TB_JML_JpaRepository;
 
     @Autowired
-    private com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository TB_PJT_BASE_JpaRepository;
+    private TB_PJT_BASE_JpaRepository TB_PJT_BASE_JpaRepository;
 
     @Autowired
     private TB_JLL_JpaRepository TB_JLL_JpaRepository;
 
     @Autowired
-    private com.account.dao.TB_JIRA_USER_JpaRepository TB_JIRA_USER_JpaRepository;
-
-    @Autowired
-    private com.transfer.issue.model.dao.PJ_PG_SUB_JpaRepository PJ_PG_SUB_JpaRepository;
+    private PJ_PG_SUB_JpaRepository PJ_PG_SUB_JpaRepository;
 
     @Autowired
     TransferProject transferProject;
@@ -216,11 +208,9 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
 
         bulkIssueDTO.setIssueUpdates(issueUpdates);
 
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
         String endpoint ="/rest/api/3/issue/bulk";
 
-        ResponseBulkIssueDTO response = WebClientUtils.post(webClient,endpoint,bulkIssueDTO,ResponseBulkIssueDTO.class).block();
+        ResponseBulkIssueDTO response = webClientUtils.post(endpoint, bulkIssueDTO, ResponseBulkIssueDTO.class).block();
 
         // 이슈 flag 변경
         String successMent = "";

@@ -1,9 +1,11 @@
 package com.utils;
 
+import com.account.dto.AdminInfoDTO;
+import com.account.service.Account;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
@@ -13,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -23,7 +26,16 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Optional;
 
+@Component
 public class WebClientUtils {
+
+    private final WebClient webClient;
+
+    @Autowired
+    public WebClientUtils(Account account) {
+        AdminInfoDTO info = account.getAdminInfo(1);
+        this.webClient = createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
+    }
 
     public static WebClient createJiraWebClient(String baseUrl, String jiraId, String apiToken) {
 
@@ -40,7 +52,7 @@ public class WebClientUtils {
         return new String(Base64.getEncoder().encode(credentials.getBytes()));
     }
 
-    public static <T> Mono<T> get(WebClient webClient, String uri, Class<T> responseType) {
+    public <T> Mono<T> get(String uri, Class<T> responseType) {
 
         return webClient.get()
                 .uri(uri)
@@ -48,7 +60,7 @@ public class WebClientUtils {
                 .bodyToMono(responseType);
     }
 
-    public static <T> Mono<T> get(WebClient webClient, String uri, ParameterizedTypeReference<T> elementTypeRef) {
+    public <T> Mono<T> get(String uri, ParameterizedTypeReference<T> elementTypeRef) {
 
         return webClient.get()
                 .uri(uri)
@@ -56,7 +68,7 @@ public class WebClientUtils {
                 .bodyToMono(elementTypeRef);
     }
 
-    public static <T> Mono<T> post(WebClient webClient, String uri, Object requestBody, Class<T> responseType) {
+    public <T> Mono<T> post(String uri, Object requestBody, Class<T> responseType) {
 
         return webClient.post()
                 .uri(uri)
@@ -66,7 +78,7 @@ public class WebClientUtils {
     }
 
 
-    public static <T> Mono<T> put(WebClient webClient, String uri, Object requestBody, Class<T> responseType) {
+    public <T> Mono<T> put(String uri, Object requestBody, Class<T> responseType) {
 
         return webClient.put()
                 .uri(uri)
@@ -75,14 +87,14 @@ public class WebClientUtils {
                 .bodyToMono(responseType);
     }
 
-    public static <T> Mono<T> delete(WebClient webClient, String uri, Class<T> responseType) {
+    public <T> Mono<T> delete(String uri, Class<T> responseType) {
 
         return webClient.delete()
                 .uri(uri)
                 .retrieve()
                 .bodyToMono(responseType);
     }
-    public static <T> Flux<T> postByFlux(WebClient webClient, String uri, Object requestBody, Class<T> responseType) {
+    public <T> Flux<T> postByFlux(String uri, Object requestBody, Class<T> responseType) {
 
         // 리쿼스트 객체를 JSON 타입으로 형변환
         ObjectMapper objectMapper = new ObjectMapper();
@@ -103,7 +115,7 @@ public class WebClientUtils {
                 .bodyToFlux(responseType);
     }
 
-    private static Flux<DataBuffer> getBufferFlux(String data, DataBufferFactory bufferFactory, int bufferSize) {
+    private Flux<DataBuffer> getBufferFlux(String data, DataBufferFactory bufferFactory, int bufferSize) {
         ByteArrayInputStream bis = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8)); 
         // 문자열 data를 UTF-8 인코딩의 바이트 배열로 변환 후 ByteArrayInputStream로 생성(바이트 배열을 순차적으로 읽을수있음)
         // ByteArrayInputStream 바이트 배열을 입력 스트림으로 처리할 수 있게 해주는 클래스
@@ -113,7 +125,7 @@ public class WebClientUtils {
         //InputStream에서 데이터를 읽어서 bufferSize 크기의 DataBuffer로 나눈 후, 이들을 Flux<DataBuffer>로 반환
     }
 
-    public static Optional<Boolean> executePut(WebClient webClient, String uri, Object requestBody) {
+    public Optional<Boolean> executePut(String uri, Object requestBody) {
 
         Mono<ResponseEntity<Void>> response = webClient.put()
                 .uri(uri)
@@ -125,7 +137,7 @@ public class WebClientUtils {
                 .blockOptional();
     }
 
-    public static Optional<Boolean> executeDelete(WebClient webClient, String uri) {
+    public Optional<Boolean> executeDelete(String uri) {
 
         Mono<ResponseEntity<Void>> response = webClient.delete()
                 .uri(uri)

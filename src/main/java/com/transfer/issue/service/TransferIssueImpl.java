@@ -1,9 +1,8 @@
 package com.transfer.issue.service;
 
 
-import com.account.dto.AdminInfoDTO;
+import com.account.dao.TB_JIRA_USER_JpaRepository;
 import com.account.entity.TB_JIRA_USER_Entity;
-import com.account.service.Account;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -17,6 +16,7 @@ import com.transfer.issue.model.dto.weblink.RequestWeblinkDTO;
 import com.transfer.issue.model.dto.weblink.SearchWebLinkDTO;
 import com.transfer.issue.model.entity.PJ_PG_SUB_Entity;
 import com.transfer.project.model.dao.TB_JLL_JpaRepository;
+import com.transfer.project.model.dao.TB_JML_JpaRepository;
 import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.entity.TB_JLL_Entity;
 import com.transfer.project.model.entity.TB_JML_Entity;
@@ -34,7 +34,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import javax.persistence.criteria.Path;
@@ -53,10 +52,10 @@ public class TransferIssueImpl implements TransferIssue {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private Account account;
+    private WebClientUtils webClientUtils;
 
     @Autowired
-    private com.transfer.project.model.dao.TB_JML_JpaRepository TB_JML_JpaRepository;
+    private TB_JML_JpaRepository TB_JML_JpaRepository;
 
     @Autowired
     private TB_JLL_JpaRepository TB_JLL_JpaRepository;
@@ -65,7 +64,7 @@ public class TransferIssueImpl implements TransferIssue {
     private PJ_PG_SUB_JpaRepository PJ_PG_SUB_JpaRepository;
 
     @Autowired
-    private com.account.dao.TB_JIRA_USER_JpaRepository TB_JIRA_USER_JpaRepository;
+    private TB_JIRA_USER_JpaRepository TB_JIRA_USER_JpaRepository;
 
     @Autowired
     private TB_PJT_BASE_JpaRepository TB_PJT_BASE_JpaRepository;
@@ -263,14 +262,11 @@ public class TransferIssueImpl implements TransferIssue {
             createIssueDTO = new CreateIssueDTO<>(maintenanceInfoDTO);
         }
 
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-
         // 이슈 생성
         String endpoint = "/rest/api/3/issue";
         ResponseIssueDTO responseIssueDTO = null;
         try {
-            responseIssueDTO = WebClientUtils.post(webClient, endpoint, createIssueDTO, ResponseIssueDTO.class).block();
+            responseIssueDTO = webClientUtils.post(endpoint, createIssueDTO, ResponseIssueDTO.class).block();
 
 
         } catch (Exception e) {
@@ -380,8 +376,6 @@ public class TransferIssueImpl implements TransferIssue {
     public void changeIssueStatus(String issueKey) throws Exception {
         logger.info("[::TransferIssueImpl::] changeIssueStatus");
 
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
         String endpoint ="/rest/api/3/issue/"+issueKey+"/transitions";
         String transitionID = ofLabel(FieldInfoCategory.ISSUE_STATUS,"완료됨").getId();
         TransitionDTO transitionDTO = new TransitionDTO();
@@ -391,7 +385,7 @@ public class TransferIssueImpl implements TransferIssue {
         transitionDTO.setTransition(transition);
 
         try{
-            WebClientUtils.post(webClient,endpoint,transitionDTO,void.class).block();
+            webClientUtils.post(endpoint, transitionDTO, void.class).block();
             /*
             * WebClient는 Spring WebFlux의 일부로, 리액티브 프로그래밍 모델을 따릅니다. 이 모델에서는 데이터 스트림이 "핫" 또는 "콜드" 두 가지로 분류됩니다.
             * "핫" 스트림은 구독자가 없어도 데이터를 방출하지만, "콜드" 스트림은 구독자가 있을 때만 데이터를 방출하며, WebClient가 반환하는 Mono와 Flux는 "콜드" 스트림에 속합니다.
@@ -482,14 +476,12 @@ public class TransferIssueImpl implements TransferIssue {
             createIssueDTOList.add(createIssueDTO);  // 리스트에 추가
         }
 
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
         String endpoint ="/rest/api/3/issue";
 
         List<ResponseIssueDTO> responseList = new ArrayList<>();
 
         for(CreateIssueDTO createIssueDTO : createIssueDTOList){
-            ResponseIssueDTO response = WebClientUtils.postByFlux(webClient, endpoint, createIssueDTO, ResponseIssueDTO.class).blockFirst();
+            ResponseIssueDTO response = webClientUtils.postByFlux(endpoint, createIssueDTO, ResponseIssueDTO.class).blockFirst();
             changeIssueStatus(response.getKey());
             responseList.add(response);
         }
@@ -537,9 +529,6 @@ public class TransferIssueImpl implements TransferIssue {
                 })
                 .collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
         //  스트림의 Entry 객체들을 이관 여부를 기준으로 그룹화하고, 각 그룹의 프로젝트 정보를 List로 수집하는 Collector를 생성 ,이관 여부를 키로, 그룹의 프로젝트 정보 리스트를 값으로 가지는 Map
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-
 
         String result = "";
         if (groupedProjects.containsKey(false)) {
@@ -574,7 +563,7 @@ public class TransferIssueImpl implements TransferIssue {
 
             addCommentDTO.setBody(body);
             String endpoint = "/rest/api/3/issue/"+issueIdOrKey+"/comment";
-            WebClientUtils.post(webClient,endpoint,addCommentDTO,String.class).block();
+            webClientUtils.post(endpoint, addCommentDTO, String.class).block();
         }
         if (groupedProjects.containsKey(true)) { // 이관이 완료된 프로젝트 정보 리스트를 연결한 문자열 반환
             List<AbstractMap.SimpleEntry<String, String>> migratedProjectInfo = groupedProjects.get(true);
@@ -596,7 +585,7 @@ public class TransferIssueImpl implements TransferIssue {
                 createWebLinkDTO.setObject(object);
 
                 String endpoint = "/rest/api/3/issue/"+issueIdOrKey+"/remotelink";
-                WebClientUtils.post(webClient,endpoint, createWebLinkDTO,String.class).block();
+                webClientUtils.post(endpoint, createWebLinkDTO, String.class).block();
             }
 
         }
@@ -927,13 +916,10 @@ public class TransferIssueImpl implements TransferIssue {
         String jsonRequestBody = objectMapper.writeValueAsString(createIssueDTO);
         logger.info("[::TransferIssueImpl::] updateIssueData 최종 DTO -> " + jsonRequestBody);
 
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-
         // 이슈 업데이트
         if (jiraIssueKey != null) {
             String endpoint = "/rest/api/3/issue/" + jiraIssueKey;
-            Optional<Boolean> response = WebClientUtils.executePut(webClient, endpoint, createIssueDTO);
+            Optional<Boolean> response = webClientUtils.executePut(endpoint, createIssueDTO);
             if (response.isPresent()) {
                 if (response.get()) {
                     result.put("jiraIssueKey", jiraIssueKey);
@@ -961,14 +947,11 @@ public class TransferIssueImpl implements TransferIssue {
     @Override
     public String getBaseIssueKey(String jiraProjectCode, String issueType) {
 
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-
         String jql = "project=" + jiraProjectCode + " AND issuetype=" + issueType;
         String fields = "key";
         String endpoint = "/rest/api/3/search?jql=" + jql + "&fields=" + fields;
 
-        return WebClientUtils.get(webClient, endpoint, String.class)
+        return webClientUtils.get(endpoint, String.class)
                 .map(responseString -> {
                     // JSON 문자열 파싱
                     JSONObject jsonObject = new JSONObject(responseString);
@@ -989,9 +972,6 @@ public class TransferIssueImpl implements TransferIssue {
     @Override
     public String getBaseIssueKeyByJiraKey(String jiraKey) {
 
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-
         TB_JML_Entity projectInfo  = TB_JML_JpaRepository.findByKey(jiraKey);
         String issueType = "";
 
@@ -1005,7 +985,7 @@ public class TransferIssueImpl implements TransferIssue {
         String fields = "key";
         String endpoint = "/rest/api/3/search?jql=" + jql + "&fields=" + fields;
 
-        return WebClientUtils.get(webClient, endpoint, String.class)
+        return webClientUtils.get(endpoint, String.class)
                 .map(responseString -> {
                     // JSON 문자열 파싱
                     JSONObject jsonObject = new JSONObject(responseString);
@@ -1060,15 +1040,12 @@ public class TransferIssueImpl implements TransferIssue {
         String jiraIssueKey = getBaseIssueKey(jiraKey, issueType);
         // 해당 이슈 아이디의 웹 링크 조회
 
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-
         String endpoint = "/rest/api/3/issue/"+jiraIssueKey+"/remotelink";
         ParameterizedTypeReference<List<SearchWebLinkDTO>> typeRef = new ParameterizedTypeReference<List<SearchWebLinkDTO>>() {};
         /*
         * ParameterizedTypeReference는 Spring Framework에서 제공하는 클래스로, 런타임 시점에 제네릭 타입 정보를 유지할 수 있게 해주는 역할을 함
         * */
-        List<SearchWebLinkDTO>  result =  WebClientUtils.get(webClient,endpoint,typeRef).block();
+        List<SearchWebLinkDTO>  result =  webClientUtils.get(endpoint, typeRef).block();
 
         return result;
     }
@@ -1096,10 +1073,8 @@ public class TransferIssueImpl implements TransferIssue {
         CreateWebLinkDTO createWebLinkDTO = new CreateWebLinkDTO();
         createWebLinkDTO.setObject(object);
 
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
         String endpoint = "/rest/api/3/issue/"+issueIdOrKey+"/remotelink";
-        String result =  WebClientUtils.post(webClient,endpoint,createWebLinkDTO,String.class).block();
+        String result =  webClientUtils.post(endpoint, createWebLinkDTO, String.class).block();
 
         return result;
     }
@@ -1156,11 +1131,9 @@ public class TransferIssueImpl implements TransferIssue {
     @Override
     public void deleteComment(String issueIdOrKey,String id) throws Exception{
 
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
         String endpoint = "/rest/api/3/issue/"+issueIdOrKey+"/comment"+id;
 
-        WebClientUtils.delete(webClient,endpoint,Void.class);
+        webClientUtils.delete(endpoint, Void.class);
 
     }
     /*
@@ -1169,11 +1142,9 @@ public class TransferIssueImpl implements TransferIssue {
     @Override
     public CommentDTO getComment(String issueIdOrKey) throws Exception{
 
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
         String endpoint = "/rest/api/3/issue/"+issueIdOrKey+"/comment";
 
-        CommentDTO result = WebClientUtils.get(webClient,endpoint,CommentDTO.class).block();
+        CommentDTO result = webClientUtils.get(endpoint,CommentDTO.class).block();
 
         return result ;
     }

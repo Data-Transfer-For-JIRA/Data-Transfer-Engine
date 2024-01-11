@@ -1,11 +1,8 @@
 package com.scheduler.project.service;
 
-import com.account.dao.TB_JIRA_USER_JpaRepository;
-import com.account.service.Account;
-import com.platform.service.PlatformProject;
 import com.transfer.issue.service.TransferIssue;
 import com.transfer.project.model.dao.TB_JML_JpaRepository;
-import com.transfer.project.model.dto.CreateBulkResultDTO;
+import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.dto.ProjectDTO;
 import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
@@ -15,7 +12,6 @@ import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,7 +26,7 @@ public class TransferProjectBySchedulerImpl implements TransferProjectBySchedule
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository TB_PJT_BASE_JpaRepository;
+    private TB_PJT_BASE_JpaRepository TB_PJT_BASE_JpaRepository;
 
     @Autowired
     private TB_JML_JpaRepository TB_JML_JpaRepository;
@@ -41,9 +37,6 @@ public class TransferProjectBySchedulerImpl implements TransferProjectBySchedule
     @Autowired
     private TransferIssue transferIssue;
 
-
-    @Autowired
-    private Account account;
     public void createProject(int project_count) throws Exception{
         String scheduler_resul_fail = null;
         String scheduler_result_success = null;

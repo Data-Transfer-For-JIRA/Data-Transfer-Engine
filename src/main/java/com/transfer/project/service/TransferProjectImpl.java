@@ -1,7 +1,5 @@
 package com.transfer.project.service;
 
-import com.account.dto.AdminInfoDTO;
-import com.account.service.Account;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.transfer.issue.service.TransferIssue;
 import com.transfer.issuetype.model.dto.IssueTypeSchemeDTO;
@@ -28,7 +26,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,7 +35,6 @@ import java.util.stream.Collectors;
 public class TransferProjectImpl implements TransferProject {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    
 
     @Autowired
     private  ProjectConfig projectConfig;
@@ -53,7 +49,7 @@ public class TransferProjectImpl implements TransferProject {
     private TB_JLL_JpaRepository TB_JLL_JpaRepository;
 
     @Autowired
-    private Account account;
+    private WebClientUtils webClientUtils;
 
     @Autowired
     private TransferIssue transferIssue;
@@ -63,18 +59,13 @@ public class TransferProjectImpl implements TransferProject {
     public CreateProjectResponseDTO createProject(CreateProjectDTO createProjectDTO) throws Exception{
 
         try {
-        AdminInfoDTO info = account.getAdminInfo(1); //회원 가입 고려시 변경
+//            createProjectDTO.setAssigneeType(projectConfig.assigneType);
+//            createProjectDTO.setCategoryId(projectConfig.categoryId);
+//            createProjectDTO.setLeadAccountId(projectConfig.leadAccountId);
+//            createProjectDTO.setProjectTypeKey(projectConfig.projectTypeKey);
 
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-
-//        createProjectDTO.setAssigneeType(projectConfig.assigneType);
-//        createProjectDTO.setCategoryId(projectConfig.categoryId);
-//        createProjectDTO.setLeadAccountId(projectConfig.leadAccountId);
-//        createProjectDTO.setProjectTypeKey(projectConfig.projectTypeKey);
-
-
-        String endpoint = "/rest/api/3/project";
-        CreateProjectResponseDTO Response = WebClientUtils.post(webClient, endpoint, createProjectDTO, CreateProjectResponseDTO.class).block();
+            String endpoint = "/rest/api/3/project";
+            CreateProjectResponseDTO Response = webClientUtils.post(endpoint, createProjectDTO, CreateProjectResponseDTO.class).block();
 
             return Response;
         } catch (Exception e) {
@@ -201,16 +192,14 @@ public class TransferProjectImpl implements TransferProject {
 
     public CreateProjectResponseDTO createJiraProject(int personalId , CreateProjectDTO createProjectDTO) throws Exception{
         logger.info("JIRA 프로젝트 생성 시작");
-        AdminInfoDTO info = account.getAdminInfo(personalId);
 
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
         // 프로젝트 기본 생성 방법
         // String endpoint = "/rest/api/3/project";
 
         // 템플릿을 통한 생성 방법
         String endpoint = "/rest/simplified/latest/project/shared";
 
-        CreateProjectResponseDTO Response = WebClientUtils.post(webClient, endpoint, createProjectDTO, CreateProjectResponseDTO.class).block();
+        CreateProjectResponseDTO Response = webClientUtils.post(endpoint, createProjectDTO, CreateProjectResponseDTO.class).block();
         return Response;
 
     }
@@ -258,9 +247,11 @@ public class TransferProjectImpl implements TransferProject {
             return "ED1";
         } else {
             String recentKey = TB_JML_JpaRepository.findTopByOrderByMigratedDateDesc().getKey();
+            //int num = Integer.parseInt(recentKey.substring(3)); // 개발
             int num = Integer.parseInt(recentKey.substring(2));
             while (true) {
                 num++;
+                //jiraKey = "TED" + num; // 개발
                 jiraKey = "ED" + num;
                 if (checkValidationJiraKey(jiraKey)) {
                     return jiraKey;
@@ -274,12 +265,12 @@ public class TransferProjectImpl implements TransferProject {
     public Boolean checkValidationJiraKey(String key) throws Exception{
         logger.info("JIRA 프로젝트 키 유효성 체크 ");
         try {
-            AdminInfoDTO info = account.getAdminInfo(1);
-            WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
             String endpoint = "/rest/api/3/project/"+key;
-            WebClientUtils.get(webClient,endpoint, JsonNode.class).block();
+            webClientUtils.get(endpoint, JsonNode.class).block();
+            logger.info("[::TransferProjectImpl::] checkValidationJiraKey -> " + "존재하는 프로젝트");
             return false; // 있는 프로젝트
         }catch (Exception e){
+            logger.info("[::TransferProjectImpl::] checkValidationJiraKey -> " + "존재하지않는 프로젝트");
             return true; // 없는 프로젝트
         }
     }
@@ -307,8 +298,6 @@ public class TransferProjectImpl implements TransferProject {
         logger.info("프로젝트 이슈타입 연결");
         Integer projectId = Integer.valueOf(self.substring(self.lastIndexOf("/") + 1));
 
-        AdminInfoDTO info = account.getAdminInfo(1);
-
         IssueTypeSchemeDTO issueTypeSchemeDTO = new IssueTypeSchemeDTO();
         if(flag.equals("P")){
             issueTypeSchemeDTO.setIssueTypeSchemeId(projectConfig.projectIssueTypeScheme);
@@ -318,9 +307,8 @@ public class TransferProjectImpl implements TransferProject {
 
         issueTypeSchemeDTO.setProjectId(projectId);
 
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
         String endpoint = "/rest/api/2/issuetypescheme/project";
-        WebClientUtils.put(webClient, endpoint, issueTypeSchemeDTO,void.class).block();
+        webClientUtils.put(endpoint, issueTypeSchemeDTO,void.class).block();
 
 
         setIssueTypeScreen(flag, String.valueOf(projectId));
@@ -331,9 +319,6 @@ public class TransferProjectImpl implements TransferProject {
         logger.info("이슈 타입 스크린 프로젝트 연결");
         IssueTypeScreenScheme issueTypeScreenScheme = new IssueTypeScreenScheme();
 
-
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
         String endpoint;
         if(flag.equals("P")){
             issueTypeScreenScheme.setIssueTypeScreenSchemeId(projectConfig.projectIssueTypeScreenScheme);
@@ -344,16 +329,15 @@ public class TransferProjectImpl implements TransferProject {
         }
         issueTypeScreenScheme.setProjectId(projectId);
 
-        WebClientUtils.put(webClient, endpoint, issueTypeScreenScheme,void.class).block();
+        webClientUtils.put(endpoint, issueTypeScreenScheme,void.class).block();
     }
 
 
     @Override
     public ProjectDTO reassignProjectLeader(String jiraProjectCode, String assignee) throws Exception{
         logger.info("[::reassignProjectLeader::]  프로젝트 담당자 지정 변경");
+        logger.info("[::reassignProjectLeader::]  assignee -> " + assignee);
         try {
-            AdminInfoDTO info = account.getAdminInfo(1);
-            WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
             String endpoint ="/rest/api/3/project/"+jiraProjectCode;
 
             CreateProjectDTO createProjectDTO = new CreateProjectDTO();
@@ -366,7 +350,7 @@ public class TransferProjectImpl implements TransferProject {
             }
             createProjectDTO.setLeadAccountId(assigneeId);
 
-            ProjectDTO returnDate = WebClientUtils.put(webClient, endpoint, createProjectDTO, ProjectDTO.class).block();
+            ProjectDTO returnDate = webClientUtils.put(endpoint, createProjectDTO, ProjectDTO.class).block();
 
             return returnDate;
         }catch (Exception e){
@@ -377,11 +361,9 @@ public class TransferProjectImpl implements TransferProject {
     @Override
     public ProjectDTO getJiraProjectInfoByJiraKey(String jiraKey) throws Exception{
         logger.info("[::TransferProjectImpl::]  지라 프로젝트 조회 -> "+jiraKey);
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
         String endpoint ="/rest/api/3/project/"+jiraKey;
 
-        ProjectDTO result = WebClientUtils.get(webClient,endpoint,ProjectDTO.class).block();
+        ProjectDTO result = webClientUtils.get(endpoint,ProjectDTO.class).block();
 
         return result;
     }
@@ -442,14 +424,11 @@ public class TransferProjectImpl implements TransferProject {
 
         List<Map<String, String>> resultList = new ArrayList<>();
 
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-
         String baseEndpoint = "/rest/api/3/project/";
         for (String jiraProjectCode : jiraProjectCodes) {
             String endpoint = baseEndpoint + jiraProjectCode;
 
-            Optional<Boolean> response = WebClientUtils.executeDelete(webClient, endpoint);
+            Optional<Boolean> response = webClientUtils.executeDelete(endpoint);
             Map<String, String> resultMap = new HashMap<>();
             resultMap.put("jiraProjectCode", jiraProjectCode);
 

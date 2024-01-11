@@ -1,9 +1,7 @@
 package com.platform.service;
 
 import com.account.dao.TB_JIRA_USER_JpaRepository;
-import com.account.dto.AdminInfoDTO;
 import com.account.entity.TB_JIRA_USER_Entity;
-import com.account.service.Account;
 import com.platform.dto.BaseDTO;
 import com.transfer.issue.model.FieldInfo;
 import com.transfer.issue.model.FieldInfoCategory;
@@ -20,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.lang.reflect.Field;
@@ -45,7 +42,7 @@ public class PlatformProjectImpl implements PlatformProject {
     private ProjectConfig projectConfig;
 
     @Autowired
-    private Account account;
+    private WebClientUtils webClientUtils;
 
     @Override
     public Map<String, String> platformCreateProject(BaseDTO baseDTO) throws Exception {
@@ -93,9 +90,6 @@ public class PlatformProjectImpl implements PlatformProject {
         }
         createProjectDTO.setKey(jiraProjectKey);
 
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-
         // 템플릿으로 프로젝트 생성
         String endpoint = "/rest/simplified/latest/project/shared";
         String finalJiraProjectName = jiraProjectName;
@@ -106,7 +100,7 @@ public class PlatformProjectImpl implements PlatformProject {
         try {
 
             logger.info("[::platformCreateProject::] dto 확인 " + createProjectDTO.toString());
-            CreateProjectResponseDTO response = WebClientUtils.post(webClient, endpoint, createProjectDTO, CreateProjectResponseDTO.class)
+            CreateProjectResponseDTO response = webClientUtils.post(endpoint, createProjectDTO, CreateProjectResponseDTO.class)
                     .doOnSuccess(res -> {
                         // 성공적으로 응답을 받았을 때
                         result.put("result", "프로젝트 생성 성공");
@@ -162,9 +156,6 @@ public class PlatformProjectImpl implements PlatformProject {
         }
         createProjectDTO.setKey(jiraProjectCode);
 
-        AdminInfoDTO info = account.getAdminInfo(1);
-        WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-
         // 템플릿으로 프로젝트 생성
         String endpoint = "/rest/simplified/latest/project/shared";
         String finalJiraProjectName = jiraProjectName;
@@ -174,7 +165,7 @@ public class PlatformProjectImpl implements PlatformProject {
         try {
 
             logger.info("[::platformCreateProject::] dto 확인 " + createProjectDTO.toString());
-            CreateProjectResponseDTO response = WebClientUtils.post(webClient, endpoint, createProjectDTO, CreateProjectResponseDTO.class)
+            CreateProjectResponseDTO response = webClientUtils.post(endpoint, createProjectDTO, CreateProjectResponseDTO.class)
                     .doOnSuccess(res -> {
                         // 성공적으로 응답을 받았을 때
                         result.put("result", "프로젝트 생성 성공");
@@ -335,14 +326,11 @@ public class PlatformProjectImpl implements PlatformProject {
                     createIssueDTO = new CreateIssueDTO<>(maintenanceInfoDTO);
                 }
 
-                AdminInfoDTO info = account.getAdminInfo(1);
-                WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-
                 // 이슈 생성
                 String endpoint = "/rest/api/3/issue";
                 ResponseIssueDTO responseIssueDTO = null;
                 try {
-                    responseIssueDTO = WebClientUtils.post(webClient, endpoint, createIssueDTO, ResponseIssueDTO.class).block();
+                    responseIssueDTO = webClientUtils.post(endpoint, createIssueDTO, ResponseIssueDTO.class).block();
 
 
                 } catch (Exception e) {
@@ -365,6 +353,7 @@ public class PlatformProjectImpl implements PlatformProject {
                 }
 
             } else {
+                createInfo.put("result2", "생성할 이슈 정보 없음");
                 logger.info("[::PlatformProjectImpl::] platformService -> " + "이슈를 생성하기 위한 정보가 없음");
             }
         }
@@ -529,6 +518,11 @@ public class PlatformProjectImpl implements PlatformProject {
         // 설명
         if (!commonDTO.getDescription().trim().isEmpty()) {
             customBuilder.description(transferIssue.setDescription(Collections.singletonList(commonDTO.getDescription())));
+        }
+
+        // 기타 정보
+        if (!commonDTO.getEtc().trim().isEmpty()) {
+            customBuilder.etc(transferIssue.setDescription(Collections.singletonList(commonDTO.getEtc())));
         }
 
         return customBuilder;
