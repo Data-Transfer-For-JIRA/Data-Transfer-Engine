@@ -1141,6 +1141,8 @@ public class TransferIssueImpl implements TransferIssue {
                     return true;
                 }
             }
+        }else{
+            return false;
         }
 
         return false;

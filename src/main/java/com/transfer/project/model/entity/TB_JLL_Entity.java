@@ -16,7 +16,7 @@ public class TB_JLL_Entity {
     @Id
     @Column(name = "ID")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
 
     @Column(name = "P_JIRAKEY")
     private String parentKey;

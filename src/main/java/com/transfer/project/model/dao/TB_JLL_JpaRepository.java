@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface TB_JLL_JpaRepository extends JpaRepository<TB_JLL_Entity,String> {
+public interface TB_JLL_JpaRepository extends JpaRepository<TB_JLL_Entity,Integer> {
 
     List<TB_JLL_Entity> findAllByParentKeyAndLinkCheckFlagFalse(String parentKey);
 

@@ -12,5 +12,5 @@ public interface TransferIssueByScheduler {
 
     void updateIssueByScheduler(int page, int size) throws Exception;
 
-    public void updateAssociatedProject() throws Exception;
+    public void updateWebLink(int size) throws Exception;
 }
