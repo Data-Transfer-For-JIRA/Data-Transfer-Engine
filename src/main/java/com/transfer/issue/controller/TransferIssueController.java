@@ -72,17 +72,6 @@ public class TransferIssueController {
 
     @ResponseBody
     @RequestMapping(
-            value = {"/add/weblink/both"},
-            method = {RequestMethod.POST}
-    )
-    public Boolean createWebLinkBothSides(@RequestParam String mainJiraKey ,@RequestParam String subJiraKey ) throws Exception {
-        logger.info("[::TransferIssueController::] 웹링크  양방향 생성 -> " + mainJiraKey + "  "+ subJiraKey);
-        return Boolean.FALSE;
-
-    }
-
-    @ResponseBody
-    @RequestMapping(
             value = {"/delete/comment"},
             method = {RequestMethod.DELETE}
     )

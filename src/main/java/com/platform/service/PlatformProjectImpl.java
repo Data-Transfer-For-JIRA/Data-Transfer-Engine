@@ -3,12 +3,18 @@ package com.platform.service;
 import com.account.dao.TB_JIRA_USER_JpaRepository;
 import com.account.entity.TB_JIRA_USER_Entity;
 import com.platform.dto.BaseDTO;
+import com.platform.dto.ReturnMessage;
 import com.transfer.issue.model.FieldInfo;
 import com.transfer.issue.model.FieldInfoCategory;
 import com.transfer.issue.model.dto.*;
+import com.transfer.issue.model.dto.weblink.RequestWeblinkDTO;
 import com.transfer.issue.service.TransferIssueImpl;
+import com.transfer.project.model.dao.TB_JLL_JpaRepository;
+import com.transfer.project.model.dao.TB_JML_JpaRepository;
 import com.transfer.project.model.dto.CreateProjectDTO;
 import com.transfer.project.model.dto.CreateProjectResponseDTO;
+import com.transfer.project.model.entity.TB_JLL_Entity;
+import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.service.TransferProjectImpl;
 import com.utils.ProjectConfig;
 import com.utils.WebClientUtils;
@@ -18,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.lang.reflect.Field;
@@ -37,6 +44,12 @@ public class PlatformProjectImpl implements PlatformProject {
 
     @Autowired
     private TB_JIRA_USER_JpaRepository TB_JIRA_USER_JpaRepository;
+
+    @Autowired
+    private TB_JLL_JpaRepository TB_JLL_JpaRepository;
+
+    @Autowired
+    private  TB_JML_JpaRepository TB_JML_JpaRepository;
 
     @Autowired
     private ProjectConfig projectConfig;
@@ -546,4 +559,86 @@ public class PlatformProjectImpl implements PlatformProject {
 
         return productInfoList;
     }
+
+    @Override
+    @Transactional
+    public ReturnMessage platformWeblink(String mainJiraKey, String subJiraKey) throws Exception{
+
+        // 프로젝트 연관 관계 설정 및 디비 저장
+        ReturnMessage returnMessage = new ReturnMessage();
+        List<String> messages = new ArrayList<>();
+        String errorMessage;
+
+        TB_JLL_Entity entity = TB_JLL_Entity.builder().parentKey(mainJiraKey).childKey(subJiraKey).linkCheckFlag(false).build();
+        TB_JLL_JpaRepository.save(entity);
+
+        try {
+            TB_JLL_Entity linkInfo = TB_JLL_JpaRepository.findByParentKeyAndChildKey(mainJiraKey, subJiraKey);
+            if(linkInfo != null){
+
+                String parentKey =  linkInfo.getParentKey();
+                String childKey = linkInfo.getChildKey();
+
+                // 프로젝트 기본정보
+                TB_JML_Entity parentInfo = TB_JML_JpaRepository.findByKey(parentKey);
+                TB_JML_Entity childInfo = TB_JML_JpaRepository.findByKey(childKey);
+
+                // 지라 기본정보 이슈 키 조회
+                String parentBaseIssueKey = transferIssue.getBaseIssueKeyByJiraKey(parentKey);
+                String childBaseIssueKey = transferIssue.getBaseIssueKeyByJiraKey(childKey);
+
+                if( parentBaseIssueKey != null && childBaseIssueKey !=null){ // 양 방향 연결 가능한 경우
+
+                    RequestWeblinkDTO parenetWeblink  = new RequestWeblinkDTO();
+                    parenetWeblink.setIssueIdOrKey(parentBaseIssueKey);
+                    parenetWeblink.setJiraKey(childInfo.getKey());
+                    parenetWeblink.setTitle(childInfo.getWssProjectName());
+
+                    transferIssue.createWebLink(parenetWeblink);
+
+                    RequestWeblinkDTO childWeblink  = new RequestWeblinkDTO();
+                    childWeblink.setIssueIdOrKey(childBaseIssueKey);
+                    childWeblink.setJiraKey(parentInfo.getKey());
+                    childWeblink.setTitle(parentInfo.getWssProjectName());
+
+                    transferIssue.createWebLink(childWeblink);
+
+                    TB_JLL_Entity jllEntity = TB_JLL_JpaRepository.findByParentKeyAndChildKey(mainJiraKey, subJiraKey);
+                    jllEntity.setLinkCheckFlag(true);
+                    TB_JLL_Entity savedEntity = TB_JLL_JpaRepository.save(jllEntity);
+
+                    String message = "프로젝트 "+parentKey+"와 "+childInfo+"에 웹링크 생성 완료되었습니다.";
+                    messages.add(message);
+                    returnMessage.setResultMessage(messages);
+                    returnMessage.setResult(true);
+
+                }else {// 기본 정보 이슈가 없는 경우 오류
+                    if(childBaseIssueKey == null){
+                        errorMessage = "프로젝트 "+ childKey+"에 생성된 기본정보 이슈가 없습니다";
+                    }else if(parentBaseIssueKey == null){
+                        errorMessage = "프로젝트 "+ parentInfo+"에 생성된 기본정보 이슈가 없습니다";
+                    }else{
+                        errorMessage = "프로젝트 "+ parentInfo+" 와 "+childKey +"에 생성된 기본정보 이슈가 없습니다";
+                    }
+                    messages.add(errorMessage);
+                    returnMessage.setErrorMessages(messages);
+                    returnMessage.setResult(false);
+                }
+            }else{
+                errorMessage = "웹링크 연결에 실패 하였습니다.";
+                messages.add(errorMessage);
+                returnMessage.setErrorMessages(messages);
+                returnMessage.setResult(false);
+            }
+        }catch (Exception e){
+            errorMessage = "웹링크 연결에 실패 하였습니다.";
+            messages.add(errorMessage);
+            returnMessage.setErrorMessages(messages);
+            returnMessage.setResult(false);
+        }
+
+
+        return returnMessage;
+    }
+
 }
