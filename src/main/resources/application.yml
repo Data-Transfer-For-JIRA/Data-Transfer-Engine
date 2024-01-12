@@ -1,40 +1,13 @@
 server:
   port: 8888
 
-project:
-  create:
-    assigneType: UNASSIGNED
-    categoryId: 10005
-    leadAccountId: 63e5a629724a5c79c7bce462
-    projectTypeKey: business
-    url: https://markany.atlassian.net
-
 template:
   project: 10369 #전자문서사업부_프로젝트_템플릿
   maintenance: 10370 #전자문서사업부_유지보수_템플릿
 
-issueType: #이슈타입
-  project: 10441  # 전자문서 - 프로젝트 기본정보
-  maintenance: 10442 # "전자문서 - 유지보수 기본정보"
-
-issueTypeSchemeId: #이슈타입 스킴
-  #  project: 10644 # 전자문서 - 프로젝트 기본정보
-  #  maintenance: 11051 #전자문서 - 유지보수 기본정보
-  project: 10675  #IHRY
-  maintenance: 10677 #QSHR
-
-issueTypeScreenScheme:
-  project: 10339 # "전자문서_이슈유형화면구성표_프로젝트_ePageSafer"
-  maintenance: 10340 # "전자문서_이슈유형화면구성표_유지보수_ePageSafer"
-
-screenscheme:
-  project: 10841 # "전자문서_이슈유형화면구성표_프로젝트_ePageSafer"
-  maintenance: 10842  # "전자문서_이슈유형화면구성표_유지보수_ePageSafer"
-
-
 spring:
   datasource:
-    url: jdbc:sqlserver://192.168.4.125:1433;databaseName=maedp;encrypt=false
+    url: jdbc:sqlserver://192.168.4.126:1433;databaseName=maedp;encrypt=false
     username: markany
     password: markany
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
@@ -54,21 +27,3 @@ logging:
 
 전자문서사업부 :
   직원: 안용찬, 김은희, 이현진, 안혜진, 한경희, 최진혁, 최완주, 송명규, 임선정, 김선근, 강인환, 김태헌, 최수현, 이호섭, 이선민, 황희원, 최정오, 강창주, 김태호, 김찬호
-  사업부장: 안용찬
-  사업개발팀:
-    팀장: 김은희
-    팀원: 이현진,안혜진
-  PIO1:
-    팀장: 한경희
-    팀원: 최진혁,최완주,송명규
-  PIO2:
-    팀장:  임선정
-    1파트:
-      파트장: 김선근
-      팀원 : 강인환,김태헌,최수현
-    2파트:
-      파트장: 이호섭
-      팀원 : 이선민,황희원
-    3파트:
-      파트장: 최정오
-      팀원: 강창주,김태호,김찬호

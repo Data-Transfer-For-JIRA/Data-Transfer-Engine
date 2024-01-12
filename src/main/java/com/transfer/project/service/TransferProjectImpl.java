@@ -2,8 +2,6 @@ package com.transfer.project.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.transfer.issue.service.TransferIssue;
-import com.transfer.issuetype.model.dto.IssueTypeSchemeDTO;
-import com.transfer.issuetype.model.dto.IssueTypeScreenScheme;
 import com.transfer.project.model.dao.TB_JLL_JpaRepository;
 import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.transfer.project.model.dao.TB_JML_JpaRepository;
@@ -59,10 +57,6 @@ public class TransferProjectImpl implements TransferProject {
     public CreateProjectResponseDTO createProject(CreateProjectDTO createProjectDTO) throws Exception{
 
         try {
-//            createProjectDTO.setAssigneeType(projectConfig.assigneType);
-//            createProjectDTO.setCategoryId(projectConfig.categoryId);
-//            createProjectDTO.setLeadAccountId(projectConfig.leadAccountId);
-//            createProjectDTO.setProjectTypeKey(projectConfig.projectTypeKey);
 
             String endpoint = "/rest/api/3/project";
             CreateProjectResponseDTO Response = webClientUtils.post(endpoint, createProjectDTO, CreateProjectResponseDTO.class).block();
@@ -160,10 +154,7 @@ public class TransferProjectImpl implements TransferProject {
                     CreateProjectDTO projectInfo = RequiredData(flag,projectName, projectKey);
                     // 프로젝트 생성
                     CreateProjectResponseDTO Response = createJiraProject(personalId, projectInfo);
-                    // 프로젝트에 이슈타입 연결
-                    // SetIssueType(Response.getSelf(),flag); // 프로젝트 기본 생성 방법
-                    // 생성 결과 DB 저장
-                    //SaveSuccessData(Response.getKey(),projectCode,projectName,projectInfo.getName(),flag); // 프로젝트 기본 생성 방법
+
                     saveSuccessData(Response.getProjectKey() , Response.getProjectId(),projectCode,projectName,projectInfo.getName(),flag,assignees); // 템플릿을 통한 생성 방법
                     // 디비 이관 flag 변경
                     CheckMigrateFlag(projectCode);
@@ -193,9 +184,6 @@ public class TransferProjectImpl implements TransferProject {
     public CreateProjectResponseDTO createJiraProject(int personalId , CreateProjectDTO createProjectDTO) throws Exception{
         logger.info("JIRA 프로젝트 생성 시작");
 
-        // 프로젝트 기본 생성 방법
-        // String endpoint = "/rest/api/3/project";
-
         // 템플릿을 통한 생성 방법
         String endpoint = "/rest/simplified/latest/project/shared";
 
@@ -207,14 +195,6 @@ public class TransferProjectImpl implements TransferProject {
     public CreateProjectDTO RequiredData(String flag , String projectName, String projectKey) throws Exception{
         logger.info("JIRA 프로젝트 생성시 필요 데이터 조합");
         CreateProjectDTO projectInfo = new CreateProjectDTO(); // 프로젝트 생성 필수 정보
-
-        /*
-        // 프로젝트 기본 생성 방법
-        projectInfo.setAssigneeType(projectConfig.assigneType);
-        projectInfo.setCategoryId(projectConfig.categoryId);
-        projectInfo.setKey(projectKey);
-        projectInfo.setLeadAccountId(projectConfig.leadAccountId);
-        projectInfo.setProjectTypeKey(projectConfig.projectTypeKey);*/
 
         // 템플릿을 통한 생성 방법
         projectInfo.setKey(projectKey);
@@ -259,9 +239,7 @@ public class TransferProjectImpl implements TransferProject {
             }
         }
     }
-    /*
-    *  리펙토링 필요 2023 12 02
-    * */
+
     public Boolean checkValidationJiraKey(String key) throws Exception{
         logger.info("JIRA 프로젝트 키 유효성 체크 ");
         try {
@@ -293,45 +271,6 @@ public class TransferProjectImpl implements TransferProject {
         TB_PJT_BASE_Entity entity =  TB_PJT_BASE_JpaRepository.findById(projectCode).orElseThrow(() -> new NoSuchElementException("프로젝트 코드 조회에 실패하였습니다.: " + projectCode));
         entity.setMigrateFlag(true);
     }
-
-    public void SetIssueType(String self ,String flag) throws Exception {
-        logger.info("프로젝트 이슈타입 연결");
-        Integer projectId = Integer.valueOf(self.substring(self.lastIndexOf("/") + 1));
-
-        IssueTypeSchemeDTO issueTypeSchemeDTO = new IssueTypeSchemeDTO();
-        if(flag.equals("P")){
-            issueTypeSchemeDTO.setIssueTypeSchemeId(projectConfig.projectIssueTypeScheme);
-        }else{
-            issueTypeSchemeDTO.setIssueTypeSchemeId(projectConfig.maintenanceIssueTypeScheme);
-        }
-
-        issueTypeSchemeDTO.setProjectId(projectId);
-
-        String endpoint = "/rest/api/2/issuetypescheme/project";
-        webClientUtils.put(endpoint, issueTypeSchemeDTO,void.class).block();
-
-
-        setIssueTypeScreen(flag, String.valueOf(projectId));
-
-    }
-
-    public void setIssueTypeScreen( String flag ,String projectId) throws Exception{
-        logger.info("이슈 타입 스크린 프로젝트 연결");
-        IssueTypeScreenScheme issueTypeScreenScheme = new IssueTypeScreenScheme();
-
-        String endpoint;
-        if(flag.equals("P")){
-            issueTypeScreenScheme.setIssueTypeScreenSchemeId(projectConfig.projectIssueTypeScreenScheme);
-            endpoint = "/rest/api/2/issuetypescreenscheme/project";
-        }else{
-            issueTypeScreenScheme.setIssueTypeScreenSchemeId(projectConfig.maintenanceIssueTypeScreenScheme);
-            endpoint = "/rest/api/2/issuetypescreenscheme/project";
-        }
-        issueTypeScreenScheme.setProjectId(projectId);
-
-        webClientUtils.put(endpoint, issueTypeScreenScheme,void.class).block();
-    }
-
 
     @Override
     public ProjectDTO reassignProjectLeader(String jiraProjectCode, String assignee) throws Exception{

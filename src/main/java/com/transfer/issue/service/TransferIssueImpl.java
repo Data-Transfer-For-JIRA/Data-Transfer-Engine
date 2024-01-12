@@ -18,7 +18,6 @@ import com.transfer.issue.model.entity.PJ_PG_SUB_Entity;
 import com.transfer.project.model.dao.TB_JLL_JpaRepository;
 import com.transfer.project.model.dao.TB_JML_JpaRepository;
 import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
-import com.transfer.project.model.entity.TB_JLL_Entity;
 import com.transfer.project.model.entity.TB_JML_Entity;
 import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
 import com.utils.WebClientUtils;

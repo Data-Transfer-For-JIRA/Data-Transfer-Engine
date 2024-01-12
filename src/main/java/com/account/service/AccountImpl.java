@@ -93,25 +93,17 @@ public class AccountImpl implements Account {
 
 
         response.doOnNext(userInfo -> {
-            String teamName =  checkTeamName(userInfo.getDisplayName());
 
             TB_JIRA_USER_Entity userEntity = new TB_JIRA_USER_Entity();
 
             userEntity.setAccountId(userInfo.getAccountId());
             userEntity.setEmailAddress(userInfo.getEmailAddress());
             userEntity.setDisplayName(userInfo.getDisplayName());
-            userEntity.setTeam(teamName);
-
             TB_JIRA_USER_JpaRepository.save(userEntity);
 
         }).subscribe();
 
 
         return response;
-    }
-    public String checkTeamName(String userName){
-
-
-        return null;
     }
 }
