@@ -27,8 +27,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.lang.reflect.Field;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 @AllArgsConstructor
 @Service("platformProject")
@@ -219,6 +221,7 @@ public class PlatformProjectImpl implements PlatformProject {
     @Override
     public Map<String, String> platformService(BaseDTO baseDTO) throws Exception {
 
+        // TODO: RequestBody 포맷이 잘못된 경우 등 에러 발생 시, 에러 메시지 리턴 처리 필요
         BaseDTO.EssentialDTO essentialDTO = baseDTO.getEssential();
         BaseDTO.CommonDTO commonDTO = baseDTO.getCommon();
         BaseDTO.SelectedDTO selectedDTO = baseDTO.getSelected();
@@ -243,137 +246,121 @@ public class PlatformProjectImpl implements PlatformProject {
 
         if (createProjectFlag.equals("프로젝트 생성 성공")) {
 
-            if (hasValue(commonDTO) || hasValue(selectedDTO)) { // 필수가 아닌 필드에 값이 있는 경우 이슈 생성
+            CreateIssueDTO<?> createIssueDTO;
+            if (projectFlag.equals("P")) { // 프로젝트 타입
 
-                CreateIssueDTO<?> createIssueDTO;
-                if (projectFlag.equals("P")) { // 프로젝트 타입
+                ProjectInfoDTO.ProjectInfoDTOBuilder<?, ?> projectBuilder = ProjectInfoDTO.builder();
+                projectBuilder = setCommonFields(projectBuilder, jiraProjectCode, commonDTO);
 
-                    ProjectInfoDTO.ProjectInfoDTOBuilder<?, ?> projectBuilder = ProjectInfoDTO.builder();
-                    projectBuilder = setCommonFields(projectBuilder, jiraProjectCode, commonDTO);
+                // 이슈타입
+                setBuilder(
+                        () -> FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "프로젝트 기본 정보"),
+                        fieldInfo -> new FieldDTO.Field(fieldInfo.getId()),
+                        projectBuilder::issuetype
+                );
 
-                    // 이슈타입
-                    FieldInfo issueTypeFieldInfo = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "프로젝트 기본 정보");
-                    if (issueTypeFieldInfo != null) {
-                        projectBuilder.issuetype(new FieldDTO.Field(issueTypeFieldInfo.getId()));
-                    }
+                // 프로젝트 코드
+                setBuilder(projectCode, projectBuilder::projectCode);
 
-                    // 프로젝트 코드
-                    if (!projectCode.trim().isEmpty()) {
-                        projectBuilder.projectCode(projectCode);
-                    }
+                // 프로젝트 이름
+                setBuilder(projectName, projectBuilder::projectName);
 
-                    // 프로젝트 이름
-                    if (!jiraProjectName.trim().isEmpty()) {
-                        projectBuilder.projectName(jiraProjectName);
-                    }
+                // 프로젝트 배정일
+                setBuilder(selectedDTO::getProjectAssignmentDate, projectBuilder::projectAssignmentDate);
 
-                    // 프로젝트 배정일
-                    if (!selectedDTO.getProjectAssignmentDate().trim().isEmpty()) {
-                        projectBuilder.projectAssignmentDate(selectedDTO.getProjectAssignmentDate());
-                    }
+                // 프로젝트 진행 단계
+                setBuilder(
+                        () -> FieldInfo.ofLabel(FieldInfoCategory.PROJECT_PROGRESS_STEP, selectedDTO.getProjectProgressStep()),
+                        fieldInfo -> new FieldDTO.Field(fieldInfo.getId()),
+                        projectBuilder::projectProgressStep
+                );
 
-                    // 프로젝트 진행 단계
-                    FieldInfo projectProgressStepInfo = FieldInfo.ofLabel(FieldInfoCategory.PROJECT_PROGRESS_STEP, selectedDTO.getProjectProgressStep());
-                    if (projectProgressStepInfo != null) {
-                        projectBuilder.projectProgressStep(new FieldDTO.Field(projectProgressStepInfo.getId()));
-                    }
-
-                    ProjectInfoDTO projectInfoDTO = projectBuilder.build();
-                    createIssueDTO = new CreateIssueDTO<>(projectInfoDTO);
-
-                } else {
-
-                    MaintenanceInfoDTO.MaintenanceInfoDTOBuilder<?, ?> maintenanceBuilder = MaintenanceInfoDTO.builder();
-                    maintenanceBuilder = setCommonFields(maintenanceBuilder, jiraProjectCode, commonDTO);
-
-                    // 이슈타입
-                    FieldInfo issueTypeFieldInfo = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "유지보수 기본 정보");
-                    if (issueTypeFieldInfo != null) {
-                        maintenanceBuilder.issuetype(new FieldDTO.Field(issueTypeFieldInfo.getId()));
-                    }
-
-                    // 프로젝트 코드
-                    if (!projectCode.trim().isEmpty()) {
-                        maintenanceBuilder.maintenanceCode(projectCode);
-                    }
-
-                    // 프로젝트 이름
-                    if (!jiraProjectName.trim().isEmpty()) {
-                        maintenanceBuilder.maintenanceName(jiraProjectName);
-                    }
-
-                    // 계약 여부
-                    FieldInfo contractStatusInfo = FieldInfo.ofLabel(FieldInfoCategory.CONTRACT_STATUS, selectedDTO.getContractStatus());
-                    if (contractStatusInfo != null) {
-                        maintenanceBuilder.contractStatus(new FieldDTO.Field(contractStatusInfo.getId()));
-                    }
-
-                    // 유지보수 시작일
-                    if (!selectedDTO.getMaintenanceStartDate().trim().isEmpty()) {
-                        maintenanceBuilder.maintenanceStartDate(selectedDTO.getMaintenanceStartDate());
-                    }
-
-                    // 유지보수 종료일
-                    if (!selectedDTO.getMaintenanceEndDate().trim().isEmpty()) {
-                        maintenanceBuilder.maintenanceEndDate(selectedDTO.getMaintenanceEndDate());
-                    }
-
-                    // 점검 방법
-                    FieldInfo inspectionMethodInfo = FieldInfo.ofLabel(FieldInfoCategory.INSPECTION_METHOD, selectedDTO.getInspectionMethod());
-                    if (inspectionMethodInfo != null) {
-                        maintenanceBuilder.inspectionMethod(new FieldDTO.Field(inspectionMethodInfo.getId()));
-                    }
-
-                    // 점검 방법 기타
-                    if (!selectedDTO.getInspectionMethodEtc().trim().isEmpty()) {
-                        maintenanceBuilder.inspectionMethodEtc(selectedDTO.getInspectionMethodEtc());
-                    }
-
-                    // 점검 주기
-                    FieldInfo inspectionCycleInfo = FieldInfo.ofLabel(FieldInfoCategory.INSPECTION_CYCLE, selectedDTO.getInspectionCycle());
-                    if (inspectionCycleInfo != null) {
-                        maintenanceBuilder.inspectionCycle(new FieldDTO.Field(inspectionCycleInfo.getId()));
-                    }
-
-                    MaintenanceInfoDTO maintenanceInfoDTO = maintenanceBuilder.build();
-                    createIssueDTO = new CreateIssueDTO<>(maintenanceInfoDTO);
-                }
-
-                // 이슈 생성
-                String endpoint = "/rest/api/3/issue";
-                ResponseIssueDTO responseIssueDTO = null;
-                try {
-                    responseIssueDTO = webClientUtils.post(endpoint, createIssueDTO, ResponseIssueDTO.class).block();
-
-
-                } catch (Exception e) {
-                    if (e instanceof WebClientResponseException) {
-                        WebClientResponseException wcException = (WebClientResponseException) e;
-                        HttpStatus status = wcException.getStatusCode();
-                        String body = wcException.getResponseBodyAsString();
-
-                        System.out.println("[::PlatformProjectImpl::] createBaseInfoIssue -> " + status + " : " + body);
-                    }
-                }
-
-                // 이슈 생성되었는지 체크 / 이슈 상태를 완료됨으로 변경
-                if (responseIssueDTO.getKey() != null) {
-                    //relatedProject(wssProjectCode,responseIssueDTO.getKey());
-                    transferIssue.changeIssueStatus(responseIssueDTO.getKey());
-                    createInfo.put("result2", "이슈 생성 성공");
-                } else {
-                    createInfo.put("result2", "이슈 생성 실패");
-                }
+                ProjectInfoDTO projectInfoDTO = projectBuilder.build();
+                createIssueDTO = new CreateIssueDTO<>(projectInfoDTO);
 
             } else {
-                createInfo.put("result2", "생성할 이슈 정보 없음");
-                logger.info("[::PlatformProjectImpl::] platformService -> " + "이슈를 생성하기 위한 정보가 없음");
+
+                MaintenanceInfoDTO.MaintenanceInfoDTOBuilder<?, ?> maintenanceBuilder = MaintenanceInfoDTO.builder();
+                maintenanceBuilder = setCommonFields(maintenanceBuilder, jiraProjectCode, commonDTO);
+
+                // 이슈타입
+                setBuilder(
+                        () -> FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "유지보수 기본 정보"),
+                        fieldInfo -> new FieldDTO.Field(fieldInfo.getId()),
+                        maintenanceBuilder::issuetype
+                );
+
+                // 프로젝트 코드
+                setBuilder(projectCode, maintenanceBuilder::maintenanceCode);
+
+                // 프로젝트 이름
+                setBuilder(projectName, maintenanceBuilder::maintenanceName);
+
+                // 계약 여부
+                setBuilder(
+                        () -> FieldInfo.ofLabel(FieldInfoCategory.CONTRACT_STATUS, selectedDTO.getContractStatus()),
+                        fieldInfo -> new FieldDTO.Field(fieldInfo.getId()),
+                        maintenanceBuilder::contractStatus
+                );
+
+                // 유지보수 시작일
+                setBuilder(selectedDTO::getMaintenanceStartDate, maintenanceBuilder::maintenanceStartDate);
+
+                // 유지보수 종료일
+                setBuilder(selectedDTO::getMaintenanceEndDate, maintenanceBuilder::maintenanceEndDate);
+
+                // 점검 방법
+                setBuilder(
+                        () -> FieldInfo.ofLabel(FieldInfoCategory.INSPECTION_METHOD, selectedDTO.getInspectionMethod()),
+                        fieldInfo -> new FieldDTO.Field(fieldInfo.getId()),
+                        maintenanceBuilder::inspectionMethod
+                );
+
+                // 점검 방법 기타
+                setBuilder(selectedDTO::getInspectionMethodEtc, maintenanceBuilder::inspectionMethodEtc);
+
+                // 점검 주기
+                setBuilder(
+                        () -> FieldInfo.ofLabel(FieldInfoCategory.INSPECTION_CYCLE, selectedDTO.getInspectionCycle()),
+                        fieldInfo -> new FieldDTO.Field(fieldInfo.getId()),
+                        maintenanceBuilder::inspectionCycle
+                );
+
+                MaintenanceInfoDTO maintenanceInfoDTO = maintenanceBuilder.build();
+                createIssueDTO = new CreateIssueDTO<>(maintenanceInfoDTO);
             }
+
+            // 이슈 생성
+            String endpoint = "/rest/api/3/issue";
+            ResponseIssueDTO responseIssueDTO = null;
+            try {
+                responseIssueDTO = webClientUtils.post(endpoint, createIssueDTO, ResponseIssueDTO.class).block();
+
+
+            } catch (Exception e) {
+                if (e instanceof WebClientResponseException) {
+                    WebClientResponseException wcException = (WebClientResponseException) e;
+                    HttpStatus status = wcException.getStatusCode();
+                    String body = wcException.getResponseBodyAsString();
+
+                    System.out.println("[::PlatformProjectImpl::] createBaseInfoIssue -> " + status + " : " + body);
+                }
+            }
+
+            // 이슈 생성되었는지 체크 / 이슈 상태를 완료됨으로 변경
+            if (responseIssueDTO.getKey() != null) {
+                transferIssue.changeIssueStatus(responseIssueDTO.getKey());
+                createInfo.put("result2", "이슈 생성 성공");
+            } else {
+                createInfo.put("result2", "이슈 생성 실패");
+            }
+
         }
 
         return createInfo;
     }
 
+    @Override
     public String setAssignees(String assignee, String subAssignee) {
 
         String assignees = "";
@@ -390,6 +377,7 @@ public class PlatformProjectImpl implements PlatformProject {
         return assignees;
     }
 
+    /*
     public <T> boolean hasValue(T dto) {
 
         for (Field field : dto.getClass().getDeclaredFields()) {
@@ -409,7 +397,9 @@ public class PlatformProjectImpl implements PlatformProject {
         }
         return false;
     }
+    */
 
+    @Override
     public <B extends CustomFieldDTO.CustomFieldDTOBuilder<?, ?>> B setCommonFields(B customBuilder, String jiraProjectCode, BaseDTO.CommonDTO commonDTO) throws Exception {
 
         // 프로젝트
@@ -443,60 +433,47 @@ public class PlatformProjectImpl implements PlatformProject {
         }
 
         // 계약사
-        if (!commonDTO.getContractor().isEmpty()) {
-            customBuilder.contractor(commonDTO.getContractor());
-        }
+        setBuilder(commonDTO::getContractor, customBuilder::contractor);
 
         // 고객사
-        if (!commonDTO.getClient().isEmpty()) {
-            customBuilder.client(commonDTO.getClient());
-        }
+        setBuilder(commonDTO::getClient, customBuilder::client);
 
         // 제품 정보1
-        String productInfo1 = commonDTO.getProductInfo1();
-        if (!productInfo1.trim().isEmpty()) {
-            Optional.ofNullable(setProductInfo(FieldInfoCategory.PRODUCT_INFO1, productInfo1))
-                    .ifPresent(productInfoList -> customBuilder.productInfo1(productInfoList));
-
-        }
+        setBuilder(
+                () -> setProductInfo(FieldInfoCategory.PRODUCT_INFO1, commonDTO.getProductInfo1()),
+                customBuilder::productInfo1
+        );
 
         // 제품 정보2
-        String productInfo2 = commonDTO.getProductInfo2();
-        if (!productInfo2.trim().isEmpty()) {
-            Optional.ofNullable(setProductInfo(FieldInfoCategory.PRODUCT_INFO2, productInfo2))
-                    .ifPresent(productInfoList -> customBuilder.productInfo2(productInfoList));
-
-        }
+        setBuilder(
+                () -> setProductInfo(FieldInfoCategory.PRODUCT_INFO2, commonDTO.getProductInfo2()),
+                customBuilder::productInfo2
+        );
 
         // 제품 정보3
-        String productInfo3 = commonDTO.getProductInfo3();
-        if (!productInfo3.trim().isEmpty()) {
-            Optional.ofNullable(setProductInfo(FieldInfoCategory.PRODUCT_INFO3, productInfo3))
-                    .ifPresent(productInfoList -> customBuilder.productInfo3(productInfoList));
-
-        }
+        setBuilder(
+                () -> setProductInfo(FieldInfoCategory.PRODUCT_INFO3, commonDTO.getProductInfo3()),
+                customBuilder::productInfo3
+        );
 
         // 제품 정보4
-        String productInfo4 = commonDTO.getProductInfo4();
-        if (!productInfo4.trim().isEmpty()) {
-            Optional.ofNullable(setProductInfo(FieldInfoCategory.PRODUCT_INFO4, productInfo4))
-                    .ifPresent(productInfoList -> customBuilder.productInfo4(productInfoList));
-
-        }
+        setBuilder(
+                () -> setProductInfo(FieldInfoCategory.PRODUCT_INFO4, commonDTO.getProductInfo4()),
+                customBuilder::productInfo4
+        );
 
         // 제품 정보5
-        String productInfo5 = commonDTO.getProductInfo5();
-        if (!productInfo5.trim().isEmpty()) {
-            Optional.ofNullable(setProductInfo(FieldInfoCategory.PRODUCT_INFO5, productInfo5))
-                    .ifPresent(productInfoList -> customBuilder.productInfo5(productInfoList));
-
-        }
+        setBuilder(
+                () -> setProductInfo(FieldInfoCategory.PRODUCT_INFO5, commonDTO.getProductInfo5()),
+                customBuilder::productInfo5
+        );
 
         // 바코드 타입
-        FieldInfo barcodeTypeInfo = FieldInfo.ofLabel(FieldInfoCategory.BARCODE_TYPE, String.valueOf(commonDTO.getBarcodeType()));
-        if (barcodeTypeInfo != null) {
-            customBuilder.barcodeType(new FieldDTO.Field(barcodeTypeInfo.getId()));
-        }
+        setBuilder(
+                () -> FieldInfo.ofLabel(FieldInfoCategory.BARCODE_TYPE, commonDTO.getBarcodeType()),
+                fieldInfo -> new FieldDTO.Field(fieldInfo.getId()),
+                customBuilder::barcodeType
+        );
 
         // 팀, 파트
         if (assigneeList != null && !assigneeList.isEmpty()) {
@@ -516,18 +493,20 @@ public class PlatformProjectImpl implements PlatformProject {
         }
 
         // 멀티 OS
-        FieldInfo multiOsInfo = FieldInfo.ofLabel(FieldInfoCategory.OS, commonDTO.getMultiOsSupport());
-        if (multiOsInfo != null) {
-            customBuilder.multiOsSupport(Arrays.asList(new FieldDTO.Field(multiOsInfo.getId())));
-
-        }
+        setBuilder(
+                () -> FieldInfo.ofLabel(FieldInfoCategory.OS, commonDTO.getMultiOsSupport()),
+                fieldInfo -> Arrays.asList(new FieldDTO.Field(fieldInfo.getId())),
+                customBuilder::multiOsSupport
+        );
 
         // 프린터 지원 범위
-        FieldInfo printerSupportRangeInfo = FieldInfo.ofLabel(FieldInfoCategory.PRINTER_SUPPORT_RANGE, commonDTO.getPrinterSupportRange());
-        if (printerSupportRangeInfo != null) {
-            customBuilder.printerSupportRange(new FieldDTO.Field(printerSupportRangeInfo.getId()));
-        }
+        setBuilder(
+                () -> FieldInfo.ofLabel(FieldInfoCategory.PRINTER_SUPPORT_RANGE, commonDTO.getPrinterSupportRange()),
+                fieldInfo -> new FieldDTO.Field(fieldInfo.getId()),
+                customBuilder::printerSupportRange
+        );
 
+        // TODO: 설명 및 기타 정보 - HTML 포맷을 변환하여 set
         // 설명
         if (!commonDTO.getDescription().trim().isEmpty()) {
             customBuilder.description(transferIssue.setDescription(Collections.singletonList(commonDTO.getDescription())));
@@ -541,11 +520,14 @@ public class PlatformProjectImpl implements PlatformProject {
         return customBuilder;
     }
 
-    public List<FieldDTO.Field> setProductInfo(String category, String info) {
+    @Override
+    public List<FieldDTO.Field> setProductInfo(String category, List<String> productList) {
 
-        String[] productList = info.split(",");
+        if (productList == null || productList.isEmpty()) {
+            return Collections.emptyList(); // 값이 없는 경우 빈 리스트 반환
+        }
+
         List<FieldDTO.Field> productInfoList = new ArrayList<>();
-
         for (String product : productList) {
             FieldInfo productInfo = FieldInfo.ofLabel(category, product);
             if (productInfo != null) {
@@ -553,11 +535,33 @@ public class PlatformProjectImpl implements PlatformProject {
             }
         }
 
-        if (productInfoList.isEmpty()) {
-            return null;
-        }
-
         return productInfoList;
+    }
+
+    @Override
+    public void setBuilder(String info, Consumer<String> consumer) {
+        if (info != null && !info.trim().isEmpty()) {
+            consumer.accept(info);
+        }
+    }
+
+    @Override
+    public <T> void setBuilder(Supplier<T> supplier, Consumer<T> consumer) {
+        T info = supplier.get();
+        if (info instanceof String && !((String) info).isEmpty()) {
+            consumer.accept(info);
+        } else if (info instanceof List && !((List<?>) info).isEmpty()) {
+            consumer.accept(info);
+        }
+    }
+
+    @Override
+    public <T, R> void setBuilder(Supplier<T> supplier, Function<T, R> function, Consumer<R> consumer) {
+        T result = supplier.get();
+        if (result != null) {
+            R info = function.apply(result);
+            consumer.accept(info);
+        }
     }
 
     @Override

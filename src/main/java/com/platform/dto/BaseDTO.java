@@ -3,6 +3,8 @@ package com.platform.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Builder
@@ -71,19 +73,19 @@ public class BaseDTO {
 
         private String printerSupportRange; // 프린터 지원 범위(select box)
 
-        private String etc; // 기타 정보
-
         private String description; // 기본 이력 내용
 
-        private String productInfo1; // 제품 정보1
+        private String etc; // 기타 정보
 
-        private String productInfo2; // 제품 정보2
+        private List productInfo1; // 제품 정보1
 
-        private String productInfo3; // 제품 정보3
+        private List productInfo2; // 제품 정보2
 
-        private String productInfo4; // 제품 정보4
+        private List productInfo3; // 제품 정보3
 
-        private String productInfo5; // 제품 정보5
+        private List productInfo4; // 제품 정보4
+
+        private List productInfo5; // 제품 정보5
     }
 
     @Getter
