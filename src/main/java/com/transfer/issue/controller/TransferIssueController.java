@@ -77,7 +77,7 @@ public class TransferIssueController {
     )
     public Boolean createWebLinkBothSides(@RequestParam String mainJiraKey ,@RequestParam String subJiraKey ) throws Exception {
         logger.info("[::TransferIssueController::] 웹링크  양방향 생성 -> " + mainJiraKey + "  "+ subJiraKey);
-        return transferIssue.createWebLinkBothSides(mainJiraKey,subJiraKey);
+        return Boolean.FALSE;
 
     }
 

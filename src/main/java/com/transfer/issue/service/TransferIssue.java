@@ -38,11 +38,6 @@ public interface TransferIssue {
     * */
     String createWebLink(RequestWeblinkDTO requestWeblinkDTO) throws Exception;
 
-    /*
-     *  양 방향으로 웹링크 걸기
-     * */
-    Boolean createWebLinkBothSides(String mainJiraKey, String subJiraKey) throws Exception;
-
 
     void deleteComment(String issueIdOrKey,String id) throws Exception;
 

@@ -271,7 +271,7 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
                         createWeblink(childKey, parentKey);
                         break;
                     case 4: // 둘 다 연결 안된 경우
-                        transferIssue.createWebLinkBothSides(parentKey, childKey);
+                        createWebLinkBothSidesForScheduler(parentKey, childKey);
                         break;
                     default:
                         logger.error("[::TransferIssueBySchedulerImpl::] 연결된 프로젝트 확인 중 오류 발생하였습니다.");
@@ -360,7 +360,7 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
             return false;
         }
     }
-    
+
     /*
     *  댓글 삭제
     * */
@@ -405,6 +405,50 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
             }
         }
 
+    }
+
+    /*
+     *  두개의 지라키로 양방향으로 웹링크 거는 로직 + 디비 업데이트
+     * */
+    public Boolean createWebLinkBothSidesForScheduler(String mainJiraKey, String subJiraKey) throws Exception {
+        logger.info("[::TransferIssueImpl::] 웹링크 양방향 생성 -> " + mainJiraKey + "  " + subJiraKey);
+        // mainJiraKey에 subJiraKey 걸기
+        TB_JML_Entity mainInfo = TB_JML_JpaRepository.findByKey(mainJiraKey);
+        TB_JML_Entity subInfo = TB_JML_JpaRepository.findByKey(subJiraKey);
+
+        if (mainInfo != null && subInfo != null) {
+            String mainIssueKeyOrId = transferIssue.getBaseIssueKeyByJiraKey(mainJiraKey);
+            String subTitle = subInfo.getJiraProjectName();
+
+            RequestWeblinkDTO main = new RequestWeblinkDTO();
+            main.setIssueIdOrKey(mainIssueKeyOrId);
+            main.setJiraKey(subJiraKey);
+            main.setTitle(subTitle);
+            String mainResult = transferIssue.createWebLink(main);
+
+            // subJiraKey에 mainJiraKey 걸기
+            String subIssueKeyOrId = transferIssue.getBaseIssueKeyByJiraKey(subJiraKey);
+            String mainTitle = mainInfo.getJiraProjectName();
+
+            RequestWeblinkDTO sub = new RequestWeblinkDTO();
+            sub.setIssueIdOrKey(subIssueKeyOrId);
+            sub.setJiraKey(mainJiraKey);
+            sub.setTitle(mainTitle);
+            String subResult = transferIssue.createWebLink(sub);
+
+            if (mainResult != null && subResult != null) {
+                TB_JLL_Entity entity = TB_JLL_JpaRepository.findByParentKeyAndChildKey(mainJiraKey, subJiraKey);
+                entity.setLinkCheckFlag(true);
+                TB_JLL_Entity savedEntity = TB_JLL_JpaRepository.save(entity);
+                if (savedEntity != null) {
+                    return true;
+                }
+            }
+        }else{
+            return false;
+        }
+
+        return false;
     }
 
 }

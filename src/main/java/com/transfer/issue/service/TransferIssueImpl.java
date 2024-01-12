@@ -1078,52 +1078,6 @@ public class TransferIssueImpl implements TransferIssue {
 
         return result;
     }
-    /*
-    *  두개의 지라키로 양방향으로 웹링크 거는 로직 + 디비 업데이트
-    * */
-    @Override
-    public Boolean createWebLinkBothSides(String mainJiraKey, String subJiraKey) throws Exception {
-        logger.info("[::TransferIssueImpl::] 웹링크 양방향 생성 -> " + mainJiraKey + "  " + subJiraKey);
-        // mainJiraKey에 subJiraKey 걸기
-        TB_JML_Entity mainInfo = TB_JML_JpaRepository.findByKey(mainJiraKey);
-        TB_JML_Entity subInfo = TB_JML_JpaRepository.findByKey(subJiraKey);
-
-        if (mainInfo != null && subInfo != null) {
-            String mainIssueKeyOrId = getBaseIssueKeyByJiraKey(mainJiraKey);
-            String subTitle = subInfo.getJiraProjectName();
-
-            RequestWeblinkDTO main = new RequestWeblinkDTO();
-            main.setIssueIdOrKey(mainIssueKeyOrId);
-            main.setJiraKey(subJiraKey);
-            main.setTitle(subTitle);
-            String mainResult = createWebLink(main);
-
-            // subJiraKey에 mainJiraKey 걸기
-            String subIssueKeyOrId = getBaseIssueKeyByJiraKey(subJiraKey);
-            String mainTitle = mainInfo.getJiraProjectName();
-
-            RequestWeblinkDTO sub = new RequestWeblinkDTO();
-            sub.setIssueIdOrKey(subIssueKeyOrId);
-            sub.setJiraKey(mainJiraKey);
-            sub.setTitle(mainTitle);
-            String subResult = createWebLink(sub);
-
-            if (mainResult != null && subResult != null) {
-                TB_JLL_Entity entity = TB_JLL_JpaRepository.findByParentKeyAndChildKey(mainJiraKey, subJiraKey);
-                entity.setLinkCheckFlag(true);
-                TB_JLL_Entity savedEntity = TB_JLL_JpaRepository.save(entity);
-                if (savedEntity != null) {
-                    return true;
-                }
-            }
-        }else{
-            return false;
-        }
-
-        return false;
-    }
-
-
 
     /*
     *  댓글 삭제
