@@ -480,15 +480,17 @@ public class PlatformProjectImpl implements PlatformProject {
             TB_JIRA_USER_Entity userEntity = TB_JIRA_USER_JpaRepository.findByAccountId(assigneeList.get(0));
 
             if (userEntity != null) {
-                FieldInfo teamInfo = FieldInfo.ofLabel(FieldInfoCategory.TEAM, userEntity.getTeam());
-                if (teamInfo != null) {
-                    customBuilder.team(teamInfo.getId());
-                }
+                setBuilder(
+                        () -> FieldInfo.ofLabel(FieldInfoCategory.TEAM, userEntity.getTeam()),
+                        fieldInfo -> fieldInfo.getId(),
+                        customBuilder::team
+                );
 
-                FieldInfo partInfo = FieldInfo.ofLabel(FieldInfoCategory.PART, userEntity.getPart());
-                if (partInfo != null) {
-                    customBuilder.part(new FieldDTO.Field(partInfo.getId()));
-                }
+                setBuilder(
+                        () -> FieldInfo.ofLabel(FieldInfoCategory.PART, userEntity.getPart()),
+                        fieldInfo -> new FieldDTO.Field(fieldInfo.getId()),
+                        customBuilder::part
+                );
             }
         }
 
