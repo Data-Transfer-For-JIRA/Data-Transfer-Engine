@@ -1,12 +1,12 @@
 package com.scheduler.project.service;
 
-import com.transfer.issue.service.TransferIssue;
-import com.transfer.project.model.dao.TB_JML_JpaRepository;
-import com.transfer.project.model.dao.TB_PJT_BASE_JpaRepository;
-import com.transfer.project.model.dto.ProjectDTO;
-import com.transfer.project.model.entity.TB_JML_Entity;
-import com.transfer.project.model.entity.TB_PJT_BASE_Entity;
-import com.transfer.project.service.TransferProject;
+import com.api.issue.service.TransferIssue;
+import com.api.project.model.dao.TB_JML_JpaRepository;
+import com.api.project.model.dao.TB_PJT_BASE_JpaRepository;
+import com.api.project.model.dto.ProjectDTO;
+import com.api.project.model.entity.TB_JML_Entity;
+import com.api.project.model.entity.TB_PJT_BASE_Entity;
+import com.api.project.service.TransferProject;
 import com.utils.SaveLog;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;

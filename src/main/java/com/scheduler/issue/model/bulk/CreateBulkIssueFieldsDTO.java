@@ -1,7 +1,7 @@
 package com.scheduler.issue.model.bulk;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.transfer.issue.model.dto.FieldDTO;
+import com.api.issue.model.dto.FieldDTO;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 

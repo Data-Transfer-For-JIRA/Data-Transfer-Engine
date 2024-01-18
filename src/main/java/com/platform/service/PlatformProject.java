@@ -2,8 +2,8 @@ package com.platform.service;
 
 import com.platform.dto.BaseDTO;
 import com.platform.dto.ReturnMessage;
-import com.transfer.issue.model.dto.CustomFieldDTO;
-import com.transfer.issue.model.dto.FieldDTO;
+import com.api.issue.model.dto.CustomFieldDTO;
+import com.api.issue.model.dto.FieldDTO;
 
 import java.util.List;
 import java.util.Map;

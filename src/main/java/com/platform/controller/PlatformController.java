@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/platform")
+@RequestMapping("/api/platform")
 public class PlatformController {
 
     @Autowired
