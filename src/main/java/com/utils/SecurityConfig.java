@@ -1,0 +1,55 @@
+package com.utils;
+
+import com.utils.jwt.JwtAuthenticationFilter;
+import com.utils.jwt.JwtTokenProvider;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+/**
+ * SecurityConfig는 Spring Security 설정을 위한 클래스.
+ */
+@Configuration
+@EnableWebSecurity
+@RequiredArgsConstructor
+public class SecurityConfig {
+    private final JwtTokenProvider jwtTokenProvider;
+    /**
+     * httpBasic().disable().csrf().disable(): rest api이므로 basic auth 및 csrf 보안을 사용하지 않는다는 설정
+     *  sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS): JWT를 사용하기 때문에 세션을 사용하지 않는다는 설정
+     *  antMatchers().permitAll(): 해당 API에 대해서는 모든 요청을 허가한다는 설정
+     *  antMatchers().hasRole("USER"): USER 권한이 있어야 요청할 수 있다는 설정
+     *  anyRequest().authenticated(): 이 밖에 모든 요청에 대해서 인증을 필요로 한다는 설정
+     *  addFilterBefore(new JwtAUthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class): JWT 인증을 위하여 직접 구현한 필터를 UsernamePasswordAuthenticationFilter 전에 실행하겠다는 설정
+     *  passwordEncoder: JWT를 사용하기 위해서는 기본적으로 password encoder가 필요한데, 여기서는 Bycrypt encoder를 사용
+     */
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+        return httpSecurity
+                // REST API이므로 basic auth 및 csrf 보안을 사용하지 않음
+                .httpBasic().disable()//Basic 인증을 사용하지 않음
+                .csrf().disable()//CSRF(Cross-Site Request Forgery) 보안을 비활성화
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)// JWT를 사용하기 때문에 세션을 사용하지 않음
+                .and()
+                .authorizeHttpRequests()//요청에 대한 인가 규칙 설정
+                .antMatchers("/login").permitAll()//  "/login" 경로에 대한 모든 요청을 허가하고
+                .antMatchers("/").hasRole("USER")// "/" 경로에 대해서는 "USER" 권한을 가진 사용자만 요청을 할 수 있음
+                .anyRequest().authenticated()// 이 밖에 모든 요청에 대해서 인증을 필요로 한다는 설정
+                .and()
+                // JWT 인증을 위하여 직접 구현한 필터를 UsernamePasswordAuthenticationFilter 전에 실행
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class).build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() { // 비밀 번호를 인코딩
+        // BCrypt Encoder 사용
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    }
+
+}

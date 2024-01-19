@@ -6,23 +6,18 @@ import com.account.dto.AdminInfoDTO;
 import com.account.dto.UserInfoDTO;
 import com.account.entity.TB_ADMIN_Entity;
 import com.account.entity.TB_JIRA_USER_Entity;
-import com.utils.ProjectConfig;
 import com.utils.WebClientUtils;
 import com.utils.전자문서직원;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Service("AdminInfo")
@@ -36,7 +31,6 @@ public class AccountImpl implements Account {
 
     @Autowired
     private 전자문서직원 전자문서직원;
-
 
     public AdminInfoDTO getAdminInfo(int personalId){
 
@@ -106,4 +100,7 @@ public class AccountImpl implements Account {
 
         return response;
     }
+
+
+
 }

@@ -1,11 +1,7 @@
 package com.account.entity;
 
 import lombok.*;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Getter
 @Setter
@@ -31,4 +27,6 @@ public class TB_JIRA_USER_Entity {
 
     @Column(name = "JU_PART")
     private String part;
+
+
 }
