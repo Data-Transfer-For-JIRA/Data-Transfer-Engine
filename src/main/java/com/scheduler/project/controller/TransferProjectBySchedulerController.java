@@ -37,4 +37,14 @@ public class TransferProjectBySchedulerController {
         transferProjectByScheduler.reAssgineProjectByScheduler();
     }
 
+    @ResponseBody
+    @RequestMapping(
+            value = {"/assignee/periodically"},
+            method = {RequestMethod.PUT}
+    )
+    public void reAssgineProjectBySchedulerPeriodically() throws Exception {
+        logger.info("프로젝트 스케줄러를 통한 생성 컨트롤러 진입");
+        transferProjectByScheduler.reAssgineProjectBySchedulerPeriodically();
+    }
+
 }

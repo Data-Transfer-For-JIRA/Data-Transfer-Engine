@@ -18,6 +18,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 
 @AllArgsConstructor
@@ -88,6 +91,41 @@ public class TransferProjectBySchedulerImpl implements TransferProjectBySchedule
     @Override
     public void reAssgineProjectByScheduler() throws Exception{
         List<TB_JML_Entity> jiraProjectList = TB_JML_JpaRepository.findAll();
+        String scheduler_resul_fail = null;
+        String scheduler_result_success = null;
+
+        for(TB_JML_Entity project : jiraProjectList){
+            Date currentTime = new Date();
+            String jiraProjectCode = project.getKey();
+            String assignee = project.getProjectAssignees();
+            String assigneeId = transferIssue.getOneAssigneeId(assignee);
+
+            ProjectDTO result = transferProject.reassignProjectLeader(jiraProjectCode,assigneeId);
+
+            if(result.getId() != null){
+                String leader = result.getLead().getDisplayName();
+                scheduler_result_success =  "["+jiraProjectCode+"] 해당 프로젝트의 할당자는 "+leader+"로 재 할당되었습니다.";
+
+                SaveLog.SchedulerResult("ASSIGNEE\\SUCCESS",scheduler_result_success,currentTime);
+            }else {
+                scheduler_resul_fail = "["+jiraProjectCode+"] 해당 프로젝트는 재 할당에 실패하였습니다.";
+                SaveLog.SchedulerResult("ASSIGNEE\\FAIL",scheduler_resul_fail,currentTime);
+            }
+
+        }
+
+    }
+
+    /*
+    *  오늘 만든 프로젝트 담당자 제할당 api
+    * */
+    @Override
+    public void reAssgineProjectBySchedulerPeriodically() throws Exception{
+
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = LocalDateTime.of(today, LocalTime.MIN);
+        LocalDateTime endOfDay = LocalDateTime.of(today, LocalTime.MAX);
+        List<TB_JML_Entity> jiraProjectList= TB_JML_JpaRepository.findProjectCodeByMigratedDateBetween(startOfDay,endOfDay);
         String scheduler_resul_fail = null;
         String scheduler_result_success = null;
 
