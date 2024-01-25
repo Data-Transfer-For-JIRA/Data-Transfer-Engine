@@ -384,7 +384,7 @@ public class TransferIssueImpl implements TransferIssue {
         transitionDTO.setTransition(transition);
 
         try{
-            webClientUtils.post(endpoint, transitionDTO, void.class).block();
+            webClientUtils.post(endpoint, transitionDTO, Void.class).block();
             /*
             * WebClient는 Spring WebFlux의 일부로, 리액티브 프로그래밍 모델을 따릅니다. 이 모델에서는 데이터 스트림이 "핫" 또는 "콜드" 두 가지로 분류됩니다.
             * "핫" 스트림은 구독자가 없어도 데이터를 방출하지만, "콜드" 스트림은 구독자가 있을 때만 데이터를 방출하며, WebClient가 반환하는 Mono와 Flux는 "콜드" 스트림에 속합니다.
