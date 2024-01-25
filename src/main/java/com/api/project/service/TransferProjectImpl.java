@@ -156,11 +156,11 @@ public class TransferProjectImpl implements TransferProject {
             return "ED1";
         } else {
             String recentKey = TB_JML_JpaRepository.findTopByOrderByMigratedDateDesc().getKey();
-            int num = Integer.parseInt(recentKey.substring(3)); // 개발
+            int num = Integer.parseInt(recentKey.substring(2)); // 개발
             //int num = Integer.parseInt(recentKey.substring(2));
             while (true) {
                 num++;
-                jiraKey = "TED" + num; // 개발
+                jiraKey = "ED" + num; // 개발
                 //jiraKey = "ED" + num;
                 if (checkValidationJiraKey(jiraKey)) {
                     return jiraKey;
