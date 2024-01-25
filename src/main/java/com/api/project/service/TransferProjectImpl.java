@@ -52,86 +52,16 @@ public class TransferProjectImpl implements TransferProject {
     @Autowired
     private TransferIssue transferIssue;
 
-
-    @Override
-    public CreateProjectResponseDTO createProject(CreateProjectDTO createProjectDTO) throws Exception{
-
-        try {
-
-            String endpoint = "/rest/api/3/project";
-            CreateProjectResponseDTO Response = webClientUtils.post(endpoint, createProjectDTO, CreateProjectResponseDTO.class).block();
-
-            return Response;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
-
-
-
+    /*
+    *  특정 키워드로 디비에서 지라 프로젝트 목록 조회
+    * */
     @Override
     @Transactional
-    public Page<TB_PJT_BASE_Entity> getDataBaseProjectData(int pageIndex, int pageSize) throws Exception{
-
+    public Page<TB_JML_Entity> getJiraProjectListBySearchKeywordOnJML( String searchKeyword ,  int pageIndex,  int pageSize) throws Exception{
         Pageable pageable = PageRequest.of(pageIndex, pageSize);
-
-        Page<TB_PJT_BASE_Entity> page = TB_PJT_BASE_JpaRepository.findAllByOrderByCreatedDateDesc(pageable);
-
-        return page;
-    }
-
-    @Override
-    @Transactional
-    public Page<TB_PJT_BASE_Entity> getDataBeforeProjectData(int pageIndex, int pageSize) throws Exception{
-
-        Pageable pageable = PageRequest.of(pageIndex, pageSize);
-
-        Page<TB_PJT_BASE_Entity> page = TB_PJT_BASE_JpaRepository.findAllByMigrateFlagFalseOrderByCreatedDateDesc(pageable);
-
-        return page;
-    }
-
-    @Override
-    @Transactional
-    public Page<TB_PJT_BASE_Entity> getDataBeforeSeachProjectData(String seachKeyWord,int pageIndex, int pageSize) throws Exception{
-
-        Pageable pageable = PageRequest.of(pageIndex, pageSize);
-        Page<TB_PJT_BASE_Entity> searchResult = TB_PJT_BASE_JpaRepository.findByProjectNameContainingAndMigrateFlagFalseOrderByCreatedDateDesc(seachKeyWord,pageable);
-
+        Page<TB_JML_Entity> searchResult = TB_JML_JpaRepository.findByKeyOrProjectCodeOrWssProjectNameContaining(searchKeyword,pageable);
         return searchResult;
     }
-
-
-    @Override
-    @Transactional
-    public Page<TB_JML_Entity> getDataAfterProjectData(int pageIndex, int pageSize) throws Exception{
-
-        Pageable pageable = PageRequest.of(pageIndex, pageSize);
-        Page<TB_JML_Entity> page = TB_JML_JpaRepository.findAllByOrderByMigratedDateDesc(pageable);
-
-
-        return page;
-    }
-
-    @Override
-    @Transactional
-    public Page<TB_JML_Entity> getDataAfterSearchProjectData(String seachKeyWord,int pageIndex, int pageSize) throws Exception{
-        Pageable pageable = PageRequest.of(pageIndex, pageSize);
-        Page<TB_JML_Entity> searchResult = TB_JML_JpaRepository.findByWssProjectNameContainingOrderByMigratedDateDesc(seachKeyWord,pageable);
-
-        return searchResult;
-    }
-
-    @Override
-    @Transactional
-    public Page<TB_PJT_BASE_Entity>  getTransferredProjectsList(int pageIndex, int pageSize) throws Exception{
-        Pageable pageable = PageRequest.of(pageIndex, pageSize);
-        Page<TB_PJT_BASE_Entity> searchResult = TB_PJT_BASE_JpaRepository.findAllByMigrateFlagTrueAndIssueMigrateFlagTrueOrderByCreatedDateDesc(pageable);
-        return searchResult;
-    }
-
 
     @Override
     @Transactional

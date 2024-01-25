@@ -1,10 +1,10 @@
 package com.account.controller;
 
-import com.account.dto.AdminInfoDTO;
-import com.account.dto.JwtToken;
+//import com.account.dto.AdminInfoDTO;
+//import com.account.dto.JwtToken;
 import com.account.dto.LoginDTO;
-import com.account.service.Login;
-import com.account.service.LoginImpl;
+//import com.account.service.Login;
+//import com.account.service.LoginImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/login")
 public class LoginController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    @Autowired
-    private Login login;
+//    @Autowired
+//    private Login login;
 
     @ResponseBody
     @RequestMapping(
@@ -41,17 +41,17 @@ public class LoginController {
 
     }
 
-    @ResponseBody
-    @RequestMapping(
-            value = {""},
-            method = {RequestMethod.POST}
-    )
-    public JwtToken login(@RequestBody LoginDTO loginDTO) {
-        String memberId = loginDTO.getId();
-        String password = loginDTO.getPwd();
-        JwtToken jwtToken = login.signIn(memberId, password);
-        return jwtToken;
-    }
+//    @ResponseBody
+//    @RequestMapping(
+//            value = {""},
+//            method = {RequestMethod.POST}
+//    )
+//    public JwtToken login(@RequestBody LoginDTO loginDTO) {
+//        String memberId = loginDTO.getId();
+//        String password = loginDTO.getPwd();
+//        JwtToken jwtToken = login.signIn(memberId, password);
+//        return jwtToken;
+//    }
 
     @ResponseBody
     @RequestMapping(

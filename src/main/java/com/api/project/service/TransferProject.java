@@ -7,24 +7,14 @@ import com.api.project.model.entity.TB_JLL_Entity;
 import com.api.project.model.entity.TB_JML_Entity;
 import com.api.project.model.entity.TB_PJT_BASE_Entity;
 import org.springframework.data.domain.Page;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Map;
 
 public interface TransferProject {
 
-    public CreateProjectResponseDTO createProject(CreateProjectDTO createProjectDTO) throws Exception;
-
-    public Page<TB_PJT_BASE_Entity> getDataBaseProjectData(int pageIndex, int pageSize) throws Exception;
-
-    public Page<TB_PJT_BASE_Entity> getDataBeforeProjectData(int pageIndex, int pageSize) throws Exception;
-    public Page<TB_PJT_BASE_Entity> getDataBeforeSeachProjectData(String seachKeyWord,int pageIndex, int pageSize) throws Exception;
-
-    public Page<TB_JML_Entity>  getDataAfterProjectData(int pageIndex, int pageSize) throws Exception;
-
-    public Page<TB_PJT_BASE_Entity>  getTransferredProjectsList(int pageIndex, int pageSize) throws Exception;
-
-    public Page<TB_JML_Entity>  getDataAfterSearchProjectData(String seachKeyWord, int pageIndex, int pageSize) throws Exception;
+    public Page<TB_JML_Entity> getJiraProjectListBySearchKeywordOnJML( String searchKeyWord ,  int pageIndex,  int pageSize) throws Exception;
 
     public Map<String, String> CreateProjectFromDB(int personalId,String projectCode) throws Exception;
 

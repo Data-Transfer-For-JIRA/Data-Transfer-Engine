@@ -31,126 +31,24 @@ public class TransferProjectController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    /*
-    * 지라 프로젝트 생성 하기위한 컨트롤러
-    * */
     @ResponseBody
     @RequestMapping(
-            value = {"/create/test"},
-            method = {RequestMethod.POST}
+        value={"/search"},
+            method={RequestMethod.GET}
     )
-    public CreateProjectResponseDTO CreateProjectData(@RequestBody CreateProjectDTO createProjectDTO,
-                                                      ModelMap model, HttpServletRequest request) throws Exception {
+    public Page<TB_JML_Entity> getJiraProjectListBySearchKeywordOnJML(@RequestParam String searchKeyword ,@RequestParam int pageIndex, @RequestParam int pageSize) throws Exception{
 
-        return transferProject.createProject(createProjectDTO);
-    }
-    /*
-     * DB에서 프로젝트 정보 가져오는 컨트롤러
-     * */
-    @ResponseBody
-    @RequestMapping(
-            value = {"/db/list"},
-            method = {RequestMethod.GET}
-    )
-    public Page<TB_PJT_BASE_Entity> GetDataBaseProjectData(@RequestParam int pageIndex, @RequestParam int pageSize) throws Exception {
+        logger.info("[::TransferProjectController::] 지라에 생성된 프로젝트 목록 키워드로 검색");
+        return transferProject.getJiraProjectListBySearchKeywordOnJML(searchKeyword,pageIndex,pageSize);
 
-        logger.info("디비 목록 조회");
-
-        return transferProject.getDataBaseProjectData(pageIndex,pageSize);
     }
 
-    /*
-     * DB에서 이관 전 프로젝트 정보 가져오는 컨트롤러
-     * */
-    @ResponseBody
-    @RequestMapping(
-            value = {"/before/list"},
-            method = {RequestMethod.GET}
-    )
-    public Page<TB_PJT_BASE_Entity> GetDataBeforeProjectData(@RequestParam int pageIndex, @RequestParam int pageSize) throws Exception {
-
-        logger.info("디비 목록 조회");
-
-        return transferProject.getDataBeforeProjectData(pageIndex,pageSize);
-    }
-    /*
-     * DB에서 이관 전 프로젝트 정보 프로젝트 이름으로 가져오는 컨트롤러
-     * */
-    @ResponseBody
-    @RequestMapping(
-            value = {"/before/list/search"},
-            method = {RequestMethod.GET}
-    )
-    public Page<TB_PJT_BASE_Entity> GetDataBeforeSearchProjectData(@RequestParam String searchKeyWord, @RequestParam int pageIndex, @RequestParam int pageSize) throws Exception {
-
-        logger.info("이관전 목록에서 검색");
-      /*  if(searchKeyWord.isEmpty()){
-            transferProjcet.getDataBeforeProjectData(pageIndex,pageSize);
-        }*/
-
-        return transferProject.getDataBeforeSeachProjectData(searchKeyWord,pageIndex,pageSize);
-    }
-
-
-    /*
-     * DB에서 이관 된 프로젝트 정보 가져오는 컨트롤러
-     * */
-    @ResponseBody
-    @RequestMapping(
-            value = {"/after/list"},
-            method = {RequestMethod.GET}
-    )
-    public Page<TB_JML_Entity>  GetDataAfterProjectData(@RequestParam int pageIndex, @RequestParam int pageSize) throws Exception {
-
-        logger.info("디비 목록 조회");
-
-        return transferProject.getDataAfterProjectData(pageIndex,pageSize);
-    }
-
-    /*
-     * DB에서 이관 된 프로젝트 정보 가져오는 컨트롤러
-     * */
-    @ResponseBody
-    @RequestMapping(
-            value = {"/after/list/search"},
-            method = {RequestMethod.GET}
-    )
-    public Page<TB_JML_Entity>  GetDataAfterSearchProjectData(@RequestParam String searchKeyWord, @RequestParam int pageIndex, @RequestParam int pageSize) throws Exception {
-
-        logger.info("이관후 목록에서 검색");
-
-        return transferProject.getDataAfterSearchProjectData(searchKeyWord,pageIndex,pageSize);
-    }
-    /*
-     *  해당 지라키가 지라 서버에 존재하는지 확인하는 컨트롤러
-     * */
-    @ResponseBody
-    @RequestMapping(
-            value = {"/all"},
-            method = {RequestMethod.GET}
-    )
-    public Page<TB_PJT_BASE_Entity>  getTransferredProjectsList(@RequestParam int pageIndex, @RequestParam int pageSize) throws Exception {
-        return  transferProject.getTransferredProjectsList(pageIndex,pageSize);
-    }
-
-    @ResponseBody
-    @RequestMapping(
-            value = {"/{personalId}/create"},
-            method = {RequestMethod.POST}
-    )
-    public Map<String, String> CreateProjectFrom(@PathVariable int personalId, @RequestParam String projectCode ) throws Exception {
-
-        logger.info("프로젝트 생성");
-
-        return transferProject.CreateProjectFromDB(personalId,projectCode);
-    }
 
     @ResponseBody
     @RequestMapping(
             value = {"/{personalId}/create/bulk"},
             method = {RequestMethod.POST}
     )
-    //public CreateBulkResultDTO CreateBulkProjectFrom(@PathVariable int personalId, @RequestBody ProjcetCodeDTO[] projectCodeDTO ) throws Exception {
     public CreateBulkResultDTO CreateBulkProjectFrom(@PathVariable int personalId, @RequestBody ProjcetCodeDTO projectCodeDTO ) throws Exception {
 
         // ProjcetCodeDTO projectCodeDTO = projectCodeDTO[0];
@@ -198,17 +96,7 @@ public class TransferProjectController {
 
         return createBulkResultDTO;
     }
-    /*
-    *  해당 지라키가 지라 서버에 존재하는지 확인하는 컨트롤러
-    * */
-    @ResponseBody
-    @RequestMapping(
-            value = {"/check/jirakey"},
-            method = {RequestMethod.GET}
-    )
-    public Boolean  checkJiraKey(@RequestParam String jiraKey) throws Exception {
-        return  transferProject.checkValidationJiraKey(jiraKey);
-    }
+
     /*
      *  생성된 프로젝트의 담당자를 변경하는 컨틀롤러
      * */
