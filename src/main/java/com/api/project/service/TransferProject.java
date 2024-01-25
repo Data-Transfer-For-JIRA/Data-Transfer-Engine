@@ -14,7 +14,7 @@ import java.util.Map;
 
 public interface TransferProject {
 
-    public Page<TB_JML_Entity> getJiraProjectListBySearchKeywordOnJML( String searchKeyWord ,  int pageIndex,  int pageSize) throws Exception;
+    public List<TB_JML_Entity> getJiraProjectListBySearchKeywordOnJML( String searchKeyWord) throws Exception;
 
     public Map<String, String> CreateProjectFromDB(int personalId,String projectCode) throws Exception;
 

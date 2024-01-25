@@ -57,9 +57,8 @@ public class TransferProjectImpl implements TransferProject {
     * */
     @Override
     @Transactional
-    public Page<TB_JML_Entity> getJiraProjectListBySearchKeywordOnJML( String searchKeyword ,  int pageIndex,  int pageSize) throws Exception{
-        Pageable pageable = PageRequest.of(pageIndex, pageSize);
-        Page<TB_JML_Entity> searchResult = TB_JML_JpaRepository.findByKeyOrProjectCodeOrWssProjectNameContaining(searchKeyword,pageable);
+    public List<TB_JML_Entity> getJiraProjectListBySearchKeywordOnJML( String searchKeyword ) throws Exception{
+        List<TB_JML_Entity> searchResult = TB_JML_JpaRepository.findByKeyOrProjectCodeOrWssProjectNameContaining(searchKeyword);
         return searchResult;
     }
 

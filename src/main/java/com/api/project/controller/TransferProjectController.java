@@ -36,10 +36,10 @@ public class TransferProjectController {
         value={"/search"},
             method={RequestMethod.GET}
     )
-    public Page<TB_JML_Entity> getJiraProjectListBySearchKeywordOnJML(@RequestParam String searchKeyword ,@RequestParam int pageIndex, @RequestParam int pageSize) throws Exception{
+    public List<TB_JML_Entity> getJiraProjectListBySearchKeywordOnJML(@RequestParam String searchKeyword) throws Exception{
 
         logger.info("[::TransferProjectController::] 지라에 생성된 프로젝트 목록 키워드로 검색");
-        return transferProject.getJiraProjectListBySearchKeywordOnJML(searchKeyword,pageIndex,pageSize);
+        return transferProject.getJiraProjectListBySearchKeywordOnJML(searchKeyword);
 
     }
 
