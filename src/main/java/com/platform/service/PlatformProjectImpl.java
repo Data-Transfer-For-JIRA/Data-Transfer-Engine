@@ -19,6 +19,11 @@ import com.api.project.service.TransferProjectImpl;
 import com.utils.ProjectConfig;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,7 +119,7 @@ public class PlatformProjectImpl implements PlatformProject {
         result.put("jiraProjectName", finalJiraProjectName);
         try {
 
-            logger.info("[::platformCreateProject::] dto 확인 " + createProjectDTO.toString());
+            logger.info("[::platformCreateProject::] dto 확인 " + createProjectDTO);
             CreateProjectResponseDTO response = webClientUtils.post(endpoint, createProjectDTO, CreateProjectResponseDTO.class)
                     .doOnSuccess(res -> {
                         // 성공적으로 응답을 받았을 때
@@ -508,10 +513,39 @@ public class PlatformProjectImpl implements PlatformProject {
                 customBuilder::printerSupportRange
         );
 
-        // TODO: 설명 및 기타 정보 - HTML 포맷을 변환하여 set
         // 설명
         if (!commonDTO.getDescription().trim().isEmpty()) {
-            customBuilder.description(transferIssue.setDescription(Collections.singletonList(commonDTO.getDescription())));
+
+            String desc = commonDTO.getDescription();
+            desc = desc.replace("\t", "@@").replace(" ", "@@");
+
+            Document doc = Jsoup.parse(desc);
+
+            Elements paragraphs  = doc.select("p");
+
+            List<FieldDTO.Content> contents = new ArrayList<>();
+            for (Element paragraph : paragraphs ) {
+
+                // 연속된 공백을 하나의 공백으로 처리
+                // String text = tag.text();
+
+                // HTML 엔티티를 일반 텍스트로 변환
+                String text = StringEscapeUtils.unescapeHtml4(paragraph.html());
+
+                // @@를 공백 두 칸으로 대체
+                text = text.replace("@@", "  ");
+
+                FieldDTO.ContentItem contentItem = FieldDTO.ContentItem.builder().text(text).type("text").build();
+
+                List<FieldDTO.ContentItem> contentItems = new ArrayList<>();
+                contentItems.add(contentItem);
+
+                FieldDTO.Content content = FieldDTO.Content.builder().type("paragraph").content(contentItems).build();
+                contents.add(content);
+            }
+
+            FieldDTO.Description description = FieldDTO.Description.builder().version(1).type("doc").content(contents).build();
+            customBuilder.description(description);
         }
 
         // 기타 정보

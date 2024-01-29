@@ -685,9 +685,23 @@ public class TransferIssueImpl implements TransferIssue {
         List<FieldDTO.ContentItem> contentItems = new ArrayList<>();
 
         for (int i = 0; i < textItems.size(); i++) {
+
+            String text = textItems.get(i)
+                    .replace("<br>", "\n")
+                    .replace("<p>", "\n")
+                    .replace("</p>", "")
+                    .replace("<li>", "\n")
+                    .replace("</li>", "")
+                    .replace("&nbsp;", " ")
+                    .replace("/t", "   ")
+                    .replace("<strong>", "")
+                    .replace("</strong>", "")
+                    .replace("<ul>", "")
+                    .replace("</ul>", "");
+
             FieldDTO.ContentItem textItem = FieldDTO.ContentItem.builder()
                     .type("text")
-                    .text(textItems.get(i))
+                    .text(text)
                     .build();
             contentItems.add(textItem);
 
