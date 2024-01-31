@@ -1,12 +1,12 @@
-package com.scheduler.issue.service;
+package com.scheduler.migrate.issue.service;
 
-import com.scheduler.issue.model.bulk.ResponseBulkIssueDTO;
+import com.scheduler.migrate.issue.model.bulk.ResponseBulkIssueDTO;
 import com.api.issue.model.dao.PJ_PG_SUB_JpaRepository;
 import com.api.issue.model.dto.CommentDTO;
 import com.api.issue.model.dto.FieldDTO;
 import com.api.issue.model.dto.TransferIssueDTO;
-import com.scheduler.issue.model.bulk.CreateBulkIssueDTO;
-import com.scheduler.issue.model.bulk.CreateBulkIssueFieldsDTO;
+import com.scheduler.migrate.issue.model.bulk.CreateBulkIssueDTO;
+import com.scheduler.migrate.issue.model.bulk.CreateBulkIssueFieldsDTO;
 import com.api.issue.model.dto.weblink.RequestWeblinkDTO;
 import com.api.issue.model.dto.weblink.SearchWebLinkDTO;
 import com.api.issue.model.entity.PJ_PG_SUB_Entity;

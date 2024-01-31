@@ -1,4 +1,4 @@
-package com.scheduler.issue.service;
+package com.scheduler.migrate.issue.service;
 
 import java.util.Date;
 

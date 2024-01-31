@@ -1,4 +1,4 @@
-package com.scheduler.project.service;
+package com.scheduler.migrate.project.service;
 
 public interface TransferProjectByScheduler {
     public void createProject(int project_count) throws Exception;

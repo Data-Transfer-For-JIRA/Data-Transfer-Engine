@@ -1,6 +1,6 @@
-package com.scheduler.issue.controller;
+package com.scheduler.migrate.issue.controller;
 
-import com.scheduler.issue.service.TransferIssueByScheduler;
+import com.scheduler.migrate.issue.service.TransferIssueByScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

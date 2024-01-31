@@ -1,4 +1,4 @@
-package com.scheduler.issue.model.bulk;
+package com.scheduler.migrate.issue.model.bulk;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.api.issue.model.dto.FieldDTO;

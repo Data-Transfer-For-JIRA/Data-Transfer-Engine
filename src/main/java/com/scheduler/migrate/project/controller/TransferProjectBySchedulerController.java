@@ -1,6 +1,6 @@
-package com.scheduler.project.controller;
+package com.scheduler.migrate.project.controller;
 
-import com.scheduler.project.service.TransferProjectByScheduler;
+import com.scheduler.migrate.project.service.TransferProjectByScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

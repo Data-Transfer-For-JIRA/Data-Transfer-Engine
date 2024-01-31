@@ -1,4 +1,4 @@
-package com.scheduler.project.service;
+package com.scheduler.migrate.project.service;
 
 import com.api.issue.service.TransferIssue;
 import com.api.project.model.dao.TB_JML_JpaRepository;
