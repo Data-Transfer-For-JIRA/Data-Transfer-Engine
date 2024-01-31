@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -44,9 +46,20 @@ public class PlatformController {
             value = {"/weblink"},
             method = {RequestMethod.PUT}
     )
-    public ReturnMessage platformWeblink(@RequestParam String mainJiraKey , @RequestParam String subJiraKey) throws Exception {
+    public List<ReturnMessage> platformWeblink(@RequestParam String mainJiraKey , @RequestParam List<String> subJiraKeyList) throws Exception {
+
         logger.info("[::PlatformController::] 플랫폼을 통한 웹링크 생성");
-        return platformProject.platformWeblink(mainJiraKey,subJiraKey);
+
+        List<ReturnMessage> ReturnMessageList = new ArrayList<>();
+
+        for(String subJiraKey : subJiraKeyList){
+
+            ReturnMessage returnMessages=  platformProject.platformWeblink(mainJiraKey,subJiraKey);
+
+            ReturnMessageList.add(returnMessages);
+        }
+
+        return ReturnMessageList;
     }
     
 }

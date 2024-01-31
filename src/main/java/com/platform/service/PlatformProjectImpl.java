@@ -609,15 +609,22 @@ public class PlatformProjectImpl implements PlatformProject {
         List<String> messages = new ArrayList<>();
         String errorMessage;
 
-        TB_JLL_Entity entity = TB_JLL_Entity.builder().parentKey(mainJiraKey).childKey(subJiraKey).linkCheckFlag(false).build();
-        TB_JLL_JpaRepository.save(entity);
+        //비정상 정보가 들어왔을 때 에러처리
+        if(mainJiraKey == null || subJiraKey == null || mainJiraKey.equals(subJiraKey)){
+            errorMessage = "웹링크 연결에 실패 하였습니다.";
+            messages.add(errorMessage);
+            returnMessage.setErrorMessages(messages);
+            returnMessage.setResult(false);
+        }
 
         try {
-            TB_JLL_Entity linkInfo = TB_JLL_JpaRepository.findByParentKeyAndChildKey(mainJiraKey, subJiraKey);
-            if(linkInfo != null){
+            TB_JLL_Entity entity = TB_JLL_Entity.builder().parentKey(mainJiraKey).childKey(subJiraKey).linkCheckFlag(false).build(); // 최초 연결 관리 정보 입력
 
-                String parentKey =  linkInfo.getParentKey();
-                String childKey = linkInfo.getChildKey();
+            TB_JLL_Entity saveInfoEntity  = TB_JLL_JpaRepository.save(entity);
+
+            if(saveInfoEntity  != null){
+                String parentKey =  saveInfoEntity.getParentKey();
+                String childKey = saveInfoEntity.getChildKey();
 
                 // 프로젝트 기본정보
                 TB_JML_Entity parentInfo = TB_JML_JpaRepository.findByKey(parentKey);
@@ -645,11 +652,11 @@ public class PlatformProjectImpl implements PlatformProject {
 
                     TB_JLL_Entity jllEntity = TB_JLL_JpaRepository.findByParentKeyAndChildKey(mainJiraKey, subJiraKey);
                     jllEntity.setLinkCheckFlag(true);
-                    TB_JLL_Entity savedEntity = TB_JLL_JpaRepository.save(jllEntity);
+                    TB_JLL_Entity saveFlagEntity = TB_JLL_JpaRepository.save(jllEntity);
 
                     String message = "프로젝트 "+parentKey+"와 "+childInfo+"에 웹링크 생성 완료되었습니다.";
-                    messages.add(message);
-                    returnMessage.setResultMessage(messages);
+
+                    returnMessage.setResultMessage(message);
                     returnMessage.setResult(true);
 
                 }else {// 기본 정보 이슈가 없는 경우 오류

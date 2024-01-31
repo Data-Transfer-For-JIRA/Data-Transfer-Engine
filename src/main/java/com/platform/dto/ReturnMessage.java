@@ -15,5 +15,5 @@ import java.util.List;
 public class ReturnMessage extends ErrorMessage{
     Boolean result;
     String value;
-    List<String> resultMessage;
+    String resultMessage;
 }
