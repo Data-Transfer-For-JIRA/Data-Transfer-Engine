@@ -1106,28 +1106,4 @@ public class TransferIssueImpl implements TransferIssue {
         return result;
     }
 
-    /*
-    *  댓글 삭제
-    * */
-    @Override
-    public void deleteComment(String issueIdOrKey,String id) throws Exception{
-
-        String endpoint = "/rest/api/3/issue/"+issueIdOrKey+"/comment"+id;
-
-        webClientUtils.delete(endpoint, Void.class);
-
-    }
-    /*
-    *  댓글 조회
-    * */
-    @Override
-    public CommentDTO getComment(String issueIdOrKey) throws Exception{
-
-        String endpoint = "/rest/api/3/issue/"+issueIdOrKey+"/comment";
-
-        CommentDTO result = webClientUtils.get(endpoint,CommentDTO.class).block();
-
-        return result ;
-    }
-
 }

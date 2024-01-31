@@ -47,52 +47,6 @@ public class TransferIssueController {
         return transferIssue.updateIssueData(transferIssueDTO);
     }
 
-
-    @ResponseBody
-    @RequestMapping(
-            value = {"/weblink"},
-            method = {RequestMethod.GET}
-    )
-    public List<SearchWebLinkDTO> getWebLinkByJiraKey(@RequestParam String jiraKey) throws Exception {
-
-        logger.info("[::TransferIssueController::] 웹링크 조회 -> " + jiraKey);
-        return transferIssue.getWebLinkByJiraKey(jiraKey);
-    }
-
-    @ResponseBody
-    @RequestMapping(
-            value = {"/add/weblink"},
-            method = {RequestMethod.POST}
-    )
-    public String createWebLink(@RequestBody RequestWeblinkDTO requestWeblinkDTO) throws Exception {
-        logger.info("[::TransferIssueController::] 웹링크  생성 정보 -> " +requestWeblinkDTO.getIssueIdOrKey() +"  "+requestWeblinkDTO.getJiraKey()+"  "+requestWeblinkDTO.getTitle());
-        return transferIssue.createWebLink(requestWeblinkDTO);
-
-    }
-
-    @ResponseBody
-    @RequestMapping(
-            value = {"/delete/comment"},
-            method = {RequestMethod.DELETE}
-    )
-    public void deleteComment(@RequestParam String issueIdOrKey, @RequestParam String id) throws Exception {
-        logger.info("[::TransferIssueController::] 댓글 삭제 -> " + issueIdOrKey+" "+id);
-        transferIssue.deleteComment(issueIdOrKey,id);
-
-    }
-
-    @ResponseBody
-    @RequestMapping(
-            value = {"/get/comment"},
-            method = {RequestMethod.GET}
-    )
-    public CommentDTO getComment(@RequestParam String issueIdOrKey) throws Exception {
-        logger.info("[::TransferIssueController::] 댓글 조회 -> " + issueIdOrKey);
-        return transferIssue.getComment(issueIdOrKey);
-
-    }
-
-
 }
 
 

@@ -39,8 +39,4 @@ public interface TransferIssue {
     String createWebLink(RequestWeblinkDTO requestWeblinkDTO) throws Exception;
 
 
-    void deleteComment(String issueIdOrKey,String id) throws Exception;
-
-    CommentDTO getComment(String issueIdOrKey) throws Exception;
-
 }
