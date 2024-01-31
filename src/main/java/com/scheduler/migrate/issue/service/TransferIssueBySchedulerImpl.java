@@ -347,13 +347,6 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
 
         String result = transferIssue.createWebLink(requestWeblinkDTO);
 
-        // 댓글 걸려있으면 삭제
-        CommentDTO comment =  transferIssue.getComment(issueKey);
-        if(comment != null){
-            logger.info("[::TransferIssueBySchedulerImpl::] 댓글 삭제");
-            deleteCommentOnBaseIssue(issueKey, comment);
-        }
-
         if(result != null ){
             return true;
         }else{
@@ -361,25 +354,7 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
         }
     }
 
-    /*
-    *  댓글 삭제
-    * */
-    public void deleteCommentOnBaseIssue(String issueKey,CommentDTO comment) throws Exception{
 
-        for(CommentDTO.Comments comments : comment.getComments()){
-           Date createdDate = comments.getCreated();
-
-            LocalDate localDate = createdDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-            if (localDate.getYear() == 2023 && localDate.getMonthValue() == 12 &&
-                    (localDate.getDayOfMonth() == 27 || localDate.getDayOfMonth() == 28)) {
-                // createdDate가 2023년 12월 27일 또는 28일인 경우
-                transferIssue.deleteComment(issueKey,comments.getId());
-            }
-
-        }
-
-    }
     /*
     *  이관 완료 flag 처리
     * */
