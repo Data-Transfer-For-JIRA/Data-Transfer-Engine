@@ -131,12 +131,12 @@ public class TransferProjectImpl implements TransferProject {
         String jiraProjectName;
 
         if (flag.equals("P")) { //프로젝트
-            jiraProjectName = "TED-P_WSS_" + projectName;
+            jiraProjectName = "ED-P_WSS_" + projectName;
             projectInfo.setName(jiraProjectName);
             projectInfo.setExistingProjectId(projectConfig.projectTemplate);
 
         } else { // 유지보수
-            jiraProjectName = "TED-M_WSS_" + projectName;
+            jiraProjectName = "ED-M_WSS_" + projectName;
             projectInfo.setName(jiraProjectName);
             projectInfo.setExistingProjectId(projectConfig.maintenanceTemplate);
         }
@@ -156,11 +156,11 @@ public class TransferProjectImpl implements TransferProject {
             return "ED1";
         } else {
             String recentKey = TB_JML_JpaRepository.findTopByOrderByMigratedDateDesc().getKey();
-            int num = Integer.parseInt(recentKey.substring(3)); // 개발
-            //int num = Integer.parseInt(recentKey.substring(2));
+            //int num = Integer.parseInt(recentKey.substring(3)); // 개발
+            int num = Integer.parseInt(recentKey.substring(2));
             while (true) {
                 num++;
-                jiraKey = "TED" + num; // 개발
+                jiraKey = "ED" + num; // 개발
                 //jiraKey = "ED" + num;
                 if (checkValidationJiraKey(jiraKey)) {
                     return jiraKey;
