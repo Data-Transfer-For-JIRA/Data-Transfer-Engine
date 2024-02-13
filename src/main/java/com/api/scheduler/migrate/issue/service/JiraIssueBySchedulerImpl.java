@@ -9,13 +9,13 @@ import com.api.scheduler.migrate.issue.model.bulk.CreateBulkIssueFieldsDTO;
 import com.jira.issue.model.dto.weblink.RequestWeblinkDTO;
 import com.jira.issue.model.dto.weblink.SearchWebLinkDTO;
 import com.jira.issue.model.entity.PJ_PG_SUB_Entity;
-import com.jira.issue.service.TransferIssue;
+import com.jira.issue.service.JiraIssue;
 import com.jira.project.model.dao.TB_JLL_JpaRepository;
 import com.jira.project.model.dao.TB_JML_JpaRepository;
 import com.jira.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.jira.project.model.entity.TB_JLL_Entity;
 import com.jira.project.model.entity.TB_JML_Entity;
-import com.jira.project.service.TransferProject;
+import com.jira.project.service.JiraProject;
 import com.utils.SaveLog;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
@@ -38,8 +38,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @AllArgsConstructor
-@Service("TransferIssueByScheduler")
-public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
+@Service("jiraIssueByScheduler")
+public class JiraIssueBySchedulerImpl implements JiraIssueByScheduler {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -59,10 +59,10 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
     private PJ_PG_SUB_JpaRepository PJ_PG_SUB_JpaRepository;
 
     @Autowired
-    TransferProject transferProject;
+    JiraProject jiraProject;
 
     @Autowired
-    TransferIssue transferIssue;
+    JiraIssue jiraIssue;
 
     @Override
     @Transactional
@@ -81,7 +81,7 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
                 String projectCode = todayMigratedProject.getProjectCode();
                 TransferIssueDTO transferIssueDTO = new TransferIssueDTO();
                 transferIssueDTO.setProjectCode(projectCode);
-                transferIssue.transferIssueData(transferIssueDTO); // 이슈 생성 작업
+                jiraIssue.transferIssueData(transferIssueDTO); // 이슈 생성 작업
 
                 boolean isMigrateAfter = TB_PJT_BASE_JpaRepository.findIssueMigrateFlagByProjectCode(projectCodeFromJML);
 
@@ -144,7 +144,7 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
 
         for(PJ_PG_SUB_Entity issueData : issueList){
 
-            String wssAssignee = transferIssue.getOneAssigneeId(issueData.getWriter());
+            String wssAssignee = jiraIssue.getOneAssigneeId(issueData.getWriter());
 
             String wssContent  = issueData.getIssueContent();
             Date wssWriteDate  = issueData.getCreationDate();
@@ -218,7 +218,7 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
                 String issueKey = issueDTO.getKey();
                 successMent += "["+issueKey+"] 해당 이슈가 WSS에 작성되어 지라에 생성되었습니다. \n";
 
-                transferIssue.changeIssueStatus(issueKey);
+                jiraIssue.changeIssueStatus(issueKey);
             }
         }
         Date currentTime = new Date();
@@ -230,13 +230,13 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
     public void updateIssueByScheduler(int page, int size) throws Exception {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<TB_JML_Entity> jmlEntityPage = TB_JML_JpaRepository.findAll(transferIssue.hasDateTimeBeforeIsNull("updateDate"), pageable);
+        Page<TB_JML_Entity> jmlEntityPage = TB_JML_JpaRepository.findAll(jiraIssue.hasDateTimeBeforeIsNull("updateDate"), pageable);
 
         for (TB_JML_Entity updateProject : jmlEntityPage){
             String projectCode = updateProject.getProjectCode();
             TransferIssueDTO transferIssueDTO = new TransferIssueDTO();
             transferIssueDTO.setProjectCode(projectCode);
-            transferIssue.updateIssueData(transferIssueDTO);
+            jiraIssue.updateIssueData(transferIssueDTO);
         }
     }
 
@@ -283,7 +283,7 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
     * */
     public List<String> getWeblinkListByJiraKey(String jiraKey) throws Exception {
         logger.info("[::TransferIssueBySchedulerImpl::] 연결된 웹링크 확인 ---->"+jiraKey);
-        List<SearchWebLinkDTO> webLinkList =transferIssue.getWebLinkByJiraKey(jiraKey); // 해당 프로젝트에서 연결되어있는 웹링크 조회 (지라 서버)
+        List<SearchWebLinkDTO> webLinkList = jiraIssue.getWebLinkByJiraKey(jiraKey); // 해당 프로젝트에서 연결되어있는 웹링크 조회 (지라 서버)
         List<String>  webLinkProjectList = trimWebLinkSearchListToProjectList(webLinkList); // 웹링크에서 프로젝트 코드 추출 (지라에 등록된 웹링크 조회)
         return webLinkProjectList;
     }
@@ -334,7 +334,7 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
     public Boolean createWeblink(String mainKey , String subKey) throws Exception{
         logger.info("[::TransferIssueBySchedulerImpl::] 웹링크 생성 시작");
         TB_JML_Entity subInfo =TB_JML_JpaRepository.findByKey(subKey);
-        String issueKey = transferIssue.getBaseIssueKeyByJiraKey(mainKey);
+        String issueKey = jiraIssue.getBaseIssueKeyByJiraKey(mainKey);
         String key = subInfo.getKey();
         String title = subInfo.getJiraProjectName();
 
@@ -343,7 +343,7 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
         requestWeblinkDTO.setTitle(title);
         requestWeblinkDTO.setIssueIdOrKey(issueKey);
 
-        String result = transferIssue.createWebLink(requestWeblinkDTO);
+        String result = jiraIssue.createWebLink(requestWeblinkDTO);
 
         if(result != null ){
             return true;
@@ -390,24 +390,24 @@ public class TransferIssueBySchedulerImpl implements TransferIssueByScheduler{
         TB_JML_Entity subInfo = TB_JML_JpaRepository.findByKey(subJiraKey);
 
         if (mainInfo != null && subInfo != null) {
-            String mainIssueKeyOrId = transferIssue.getBaseIssueKeyByJiraKey(mainJiraKey);
+            String mainIssueKeyOrId = jiraIssue.getBaseIssueKeyByJiraKey(mainJiraKey);
             String subTitle = subInfo.getJiraProjectName();
 
             RequestWeblinkDTO main = new RequestWeblinkDTO();
             main.setIssueIdOrKey(mainIssueKeyOrId);
             main.setJiraKey(subJiraKey);
             main.setTitle(subTitle);
-            String mainResult = transferIssue.createWebLink(main);
+            String mainResult = jiraIssue.createWebLink(main);
 
             // subJiraKey에 mainJiraKey 걸기
-            String subIssueKeyOrId = transferIssue.getBaseIssueKeyByJiraKey(subJiraKey);
+            String subIssueKeyOrId = jiraIssue.getBaseIssueKeyByJiraKey(subJiraKey);
             String mainTitle = mainInfo.getJiraProjectName();
 
             RequestWeblinkDTO sub = new RequestWeblinkDTO();
             sub.setIssueIdOrKey(subIssueKeyOrId);
             sub.setJiraKey(mainJiraKey);
             sub.setTitle(mainTitle);
-            String subResult = transferIssue.createWebLink(sub);
+            String subResult = jiraIssue.createWebLink(sub);
 
             if (mainResult != null && subResult != null) {
                 TB_JLL_Entity entity = TB_JLL_JpaRepository.findByParentKeyAndChildKey(mainJiraKey, subJiraKey);

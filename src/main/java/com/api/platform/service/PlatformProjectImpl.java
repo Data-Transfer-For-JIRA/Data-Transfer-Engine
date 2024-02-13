@@ -8,14 +8,14 @@ import com.jira.issue.model.dto.*;
 import com.jira.issue.model.FieldInfo;
 import com.jira.issue.model.FieldInfoCategory;
 import com.jira.issue.model.dto.weblink.RequestWeblinkDTO;
-import com.jira.issue.service.TransferIssueImpl;
+import com.jira.issue.service.JiraIssueImpl;
 import com.jira.project.model.dao.TB_JLL_JpaRepository;
 import com.jira.project.model.dao.TB_JML_JpaRepository;
 import com.jira.project.model.dto.CreateProjectDTO;
 import com.jira.project.model.dto.CreateProjectResponseDTO;
 import com.jira.project.model.entity.TB_JLL_Entity;
 import com.jira.project.model.entity.TB_JML_Entity;
-import com.jira.project.service.TransferProjectImpl;
+import com.jira.project.service.JiraProjectImpl;
 import com.utils.ProjectConfig;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
@@ -44,10 +44,10 @@ public class PlatformProjectImpl implements PlatformProject {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private TransferProjectImpl transferProject;
+    private JiraProjectImpl jiraProject;
 
     @Autowired
-    private TransferIssueImpl transferIssue;
+    private JiraIssueImpl jiraIssue;
 
     @Autowired
     private TB_JIRA_USER_JpaRepository TB_JIRA_USER_JpaRepository;
@@ -75,7 +75,7 @@ public class PlatformProjectImpl implements PlatformProject {
 
         CreateProjectDTO createProjectDTO = new CreateProjectDTO();
 
-        String jiraProjectKey = transferProject.NamingJiraKey();
+        String jiraProjectKey = jiraProject.namingJiraKey();
         String jiraProjectName = "";
 
         // 필수
@@ -126,7 +126,7 @@ public class PlatformProjectImpl implements PlatformProject {
                         result.put("result", "프로젝트 생성 성공");
 
                         try {
-                            transferProject.saveSuccessData(jiraProjectKey, res.getProjectId(), projectCode, projectName, finalJiraProjectName, projectFlag, finalAssignees); // DB 저장
+                            jiraProject.saveSuccessData(jiraProjectKey, res.getProjectId(), projectCode, projectName, finalJiraProjectName, projectFlag, finalAssignees); // DB 저장
                             logger.error("[::platformCreateProject::] DB 저장 완료");
                         } catch (Exception e) {
                             logger.error("[::platformCreateProject::] DB 저장 실패");
@@ -134,7 +134,7 @@ public class PlatformProjectImpl implements PlatformProject {
                         if (finalAssignees != null && !finalAssignees.trim().isEmpty()) {
                             try {
                                 String leader = Arrays.stream(finalAssignees.split(",")).findFirst().orElse(finalAssignees);
-                                transferProject.reassignProjectLeader(res.getProjectKey(), leader);
+                                jiraProject.reassignProjectLeader(res.getProjectKey(), leader);
                                 logger.info("[::platformCreateProject::] 프로젝트 담당자 지정 성공");
                             } catch (Exception e) {
                                 logger.error("[::platformCreateProject::] 프로젝트 담당자 지정 실패");
@@ -191,7 +191,7 @@ public class PlatformProjectImpl implements PlatformProject {
                         result.put("result", "프로젝트 생성 성공");
 
                         try {
-                            transferProject.saveSuccessData(jiraProjectCode, res.getProjectId(), projectCode, projectName, finalJiraProjectName, projectFlag, assignees); // DB 저장
+                            jiraProject.saveSuccessData(jiraProjectCode, res.getProjectId(), projectCode, projectName, finalJiraProjectName, projectFlag, assignees); // DB 저장
                             logger.error("[::platformCreateProject::] DB 저장 완료");
                         } catch (Exception e) {
                             logger.error("[::platformCreateProject::] DB 저장 실패");
@@ -199,7 +199,7 @@ public class PlatformProjectImpl implements PlatformProject {
                         if (assignees != null && !assignees.trim().isEmpty()) {
                             try {
                                 String leader = Arrays.stream(assignees.split(",")).findFirst().orElse(assignees);
-                                transferProject.reassignProjectLeader(res.getProjectKey(), leader);
+                                jiraProject.reassignProjectLeader(res.getProjectKey(), leader);
                                 logger.info("[::platformCreateProject::] 프로젝트 담당자 지정 성공");
                             } catch (Exception e) {
                                 logger.error("[::platformCreateProject::] 프로젝트 담당자 지정 실패");
@@ -234,7 +234,7 @@ public class PlatformProjectImpl implements PlatformProject {
         logger.info("commonDTO: " + commonDTO.toString());
         logger.info("selectedDTO: " + selectedDTO.toString());
 
-        String jiraProjectCode = transferProject.NamingJiraKey();
+        String jiraProjectCode = jiraProject.namingJiraKey();
         String projectFlag = essentialDTO.getProjectFlag();
         String projectName = essentialDTO.getProjectName();
         String projectCode = commonDTO.getProjectCode();
@@ -354,7 +354,7 @@ public class PlatformProjectImpl implements PlatformProject {
 
             // 이슈 생성되었는지 체크 / 이슈 상태를 완료됨으로 변경
             if (responseIssueDTO.getKey() != null) {
-                transferIssue.changeIssueStatus(responseIssueDTO.getKey());
+                jiraIssue.changeIssueStatus(responseIssueDTO.getKey());
                 createInfo.put("result2", "이슈 생성 성공");
             } else {
                 createInfo.put("result2", "이슈 생성 실패");
@@ -416,7 +416,7 @@ public class PlatformProjectImpl implements PlatformProject {
 
         // 담당자 및 부 담당자
         String assignees = setAssignees(commonDTO.getAssignee(), commonDTO.getSubAssignee());
-        List<String> assigneeList = transferIssue.getSeveralAssigneeId(assignees);
+        List<String> assigneeList = jiraIssue.getSeveralAssigneeId(assignees);
 
         if (assigneeList != null) {
             if (assigneeList.size() >= 1) {
@@ -429,8 +429,8 @@ public class PlatformProjectImpl implements PlatformProject {
 
         // 영업대표
         if (!commonDTO.getSalesManager().trim().isEmpty()) {
-            if (transferIssue.getSeveralAssigneeId(commonDTO.getSalesManager()) != null && !transferIssue.getSeveralAssigneeId(commonDTO.getSalesManager()).isEmpty()) {
-                String salesManagerId = transferIssue.getSeveralAssigneeId(commonDTO.getSalesManager()).get(0);
+            if (jiraIssue.getSeveralAssigneeId(commonDTO.getSalesManager()) != null && !jiraIssue.getSeveralAssigneeId(commonDTO.getSalesManager()).isEmpty()) {
+                String salesManagerId = jiraIssue.getSeveralAssigneeId(commonDTO.getSalesManager()).get(0);
                 if (salesManagerId != null) {
                     customBuilder.salesManager(new FieldDTO.User(salesManagerId));
                 }
@@ -550,7 +550,7 @@ public class PlatformProjectImpl implements PlatformProject {
 
         // 기타 정보
         if (!commonDTO.getEtc().trim().isEmpty()) {
-            customBuilder.etc(transferIssue.setDescription(Collections.singletonList(commonDTO.getEtc())));
+            customBuilder.etc(jiraIssue.setDescription(Collections.singletonList(commonDTO.getEtc())));
         }
 
         return customBuilder;
@@ -631,8 +631,8 @@ public class PlatformProjectImpl implements PlatformProject {
                 TB_JML_Entity childInfo = TB_JML_JpaRepository.findByKey(childKey);
 
                 // 지라 기본정보 이슈 키 조회
-                String parentBaseIssueKey = transferIssue.getBaseIssueKeyByJiraKey(parentKey);
-                String childBaseIssueKey = transferIssue.getBaseIssueKeyByJiraKey(childKey);
+                String parentBaseIssueKey = jiraIssue.getBaseIssueKeyByJiraKey(parentKey);
+                String childBaseIssueKey = jiraIssue.getBaseIssueKeyByJiraKey(childKey);
 
                 if( parentBaseIssueKey != null && childBaseIssueKey !=null){ // 양 방향 연결 가능한 경우
 
@@ -641,14 +641,14 @@ public class PlatformProjectImpl implements PlatformProject {
                     parenetWeblink.setJiraKey(childInfo.getKey());
                     parenetWeblink.setTitle(childInfo.getWssProjectName());
 
-                    transferIssue.createWebLink(parenetWeblink);
+                    jiraIssue.createWebLink(parenetWeblink);
 
                     RequestWeblinkDTO childWeblink  = new RequestWeblinkDTO();
                     childWeblink.setIssueIdOrKey(childBaseIssueKey);
                     childWeblink.setJiraKey(parentInfo.getKey());
                     childWeblink.setTitle(parentInfo.getWssProjectName());
 
-                    transferIssue.createWebLink(childWeblink);
+                    jiraIssue.createWebLink(childWeblink);
 
                     TB_JLL_Entity jllEntity = TB_JLL_JpaRepository.findByParentKeyAndChildKey(mainJiraKey, subJiraKey);
                     jllEntity.setLinkCheckFlag(true);

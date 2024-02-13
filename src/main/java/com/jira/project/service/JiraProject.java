@@ -7,7 +7,7 @@ import com.jira.project.model.entity.TB_JML_Entity;
 import java.util.List;
 import java.util.Map;
 
-public interface TransferProject {
+public interface JiraProject {
     /*
     *  JML 테이블에서 키워드를 이용해 지라키, 프로젝트 코드, 프로젝트 이름 검색 기능
     * */
@@ -16,7 +16,7 @@ public interface TransferProject {
     /*
     *  WSS 프로젝트 코드를 이용해 TB_PJT_BASE 테이블의 정보를 조회하여 지라 프로젝트를 만드는 기능
     * */
-    public Map<String, String> CreateProjectFromDB(int personalId,String projectCode) throws Exception;
+    public Map<String, String> createProjectFromDB(int personalId, String projectCode) throws Exception;
 
     /*
     *  만들고자 하는 지라키가 합당한지 판별하는 기능 (JML 테이블 및 지라 서버 조회)

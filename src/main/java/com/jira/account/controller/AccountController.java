@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 
 @RestController
-@RequestMapping("/admin")
+@RequestMapping("/jira/admin")
 public class AccountController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     @Autowired
@@ -22,7 +22,7 @@ public class AccountController {
             value = {"/info/{personalId}"},
             method = {RequestMethod.GET}
     )
-    public AdminInfoDTO GetAdminInfo(@PathVariable int personalId) throws Exception {
+    public AdminInfoDTO getAdminInfo(@PathVariable int personalId) throws Exception {
 
         logger.info("사용자 조회");
 
@@ -34,7 +34,7 @@ public class AccountController {
             value = {"/users"},
             method = {RequestMethod.GET}
     )
-    public Flux<UserInfoDTO> GetCollectUserInfo() throws Exception {
+    public Flux<UserInfoDTO> getCollectUserInfo() throws Exception {
 
         logger.info("사용자 조회");
 

@@ -1,7 +1,7 @@
 package com.jira.project.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.jira.issue.service.TransferIssue;
+import com.jira.issue.service.JiraIssue;
 import com.jira.project.model.dao.TB_JLL_JpaRepository;
 import com.jira.project.model.dao.TB_JML_JpaRepository;
 import com.jira.project.model.dto.CreateProjectResponseDTO;
@@ -25,8 +25,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
-@Service("transferProjcet")
-public class TransferProjectImpl implements TransferProject {
+@Service("jiraProjcet")
+public class JiraProjectImpl implements JiraProject {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -46,7 +46,7 @@ public class TransferProjectImpl implements TransferProject {
     private WebClientUtils webClientUtils;
 
     @Autowired
-    private TransferIssue transferIssue;
+    private JiraIssue jiraIssue;
 
     /*
     *  특정 키워드로 디비에서 지라 프로젝트 목록 조회
@@ -60,7 +60,7 @@ public class TransferProjectImpl implements TransferProject {
 
     @Override
     @Transactional
-    public Map<String, String> CreateProjectFromDB(int personalId,String projectCode) throws Exception{
+    public Map<String, String> createProjectFromDB(int personalId, String projectCode) throws Exception{
         logger.info("프로젝트 생성 시작");
 
         Map<String, String> result = new HashMap<>();
@@ -71,18 +71,18 @@ public class TransferProjectImpl implements TransferProject {
                 logger.info("WSS 프로젝트 조회");
                 String flag = table_info.get().getProjectFlag();
                 String projectName = table_info.get().getProjectName();
-                String projectKey = NamingJiraKey();
+                String projectKey = namingJiraKey();
                 boolean migrateFlag = table_info.get().getMigrateFlag();
                 String assignees = table_info.get().getAssignedEngineer();
                 if (!migrateFlag) {
                     // 프로젝트 정보 Setting
-                    CreateProjectDTO projectInfo = RequiredData(flag,projectName, projectKey);
+                    CreateProjectDTO projectInfo = requiredData(flag,projectName, projectKey);
                     // 프로젝트 생성
                     CreateProjectResponseDTO Response = createJiraProject(personalId, projectInfo);
 
                     saveSuccessData(Response.getProjectKey() , Response.getProjectId(),projectCode,projectName,projectInfo.getName(),flag,assignees); // 템플릿을 통한 생성 방법
                     // 디비 이관 flag 변경
-                    CheckMigrateFlag(projectCode);
+                    checkMigrateFlag(projectCode);
 
                     result.put("이관 성공",projectCode );
                     return result;
@@ -117,7 +117,7 @@ public class TransferProjectImpl implements TransferProject {
 
     }
     // 프로젝트 기본 생성 방법
-    public CreateProjectDTO RequiredData(String flag , String projectName, String projectKey) throws Exception{
+    public CreateProjectDTO requiredData(String flag , String projectName, String projectKey) throws Exception{
         logger.info("JIRA 프로젝트 생성시 필요 데이터 조합");
         CreateProjectDTO projectInfo = new CreateProjectDTO(); // 프로젝트 생성 필수 정보
 
@@ -144,7 +144,7 @@ public class TransferProjectImpl implements TransferProject {
      * 리펙토링 필요 2023 12 02
      * - 중복 제거 하였지만 효율서이 떨어짐
      * */
-    public String NamingJiraKey() throws Exception {
+    public String namingJiraKey() throws Exception {
         logger.info("JIRA 프로젝트 키 생성");
         String jiraKey;
         long count = TB_JML_JpaRepository.count();
@@ -152,11 +152,15 @@ public class TransferProjectImpl implements TransferProject {
             return "ED1";
         } else {
             String recentKey = TB_JML_JpaRepository.findTopByOrderByMigratedDateDesc().getKey();
-            //int num = Integer.parseInt(recentKey.substring(3)); // 개발
-            int num = Integer.parseInt(recentKey.substring(2));
+            //개발
+            int num = Integer.parseInt(recentKey.substring(3));
+            //운영
+            //int num = Integer.parseInt(recentKey.substring(2));
             while (true) {
                 num++;
-                jiraKey = "ED" + num; // 개발
+                //개발
+                jiraKey = "TED" + num;
+                //운영
                 //jiraKey = "ED" + num;
                 if (checkValidationJiraKey(jiraKey)) {
                     return jiraKey;
@@ -191,7 +195,7 @@ public class TransferProjectImpl implements TransferProject {
         save_success_data.setProjectAssignees(projectAssignees);
         TB_JML_JpaRepository.save(save_success_data);
     }
-    public void CheckMigrateFlag(String projectCode){
+    public void checkMigrateFlag(String projectCode){
         logger.info("이관 여부 체크");
         TB_PJT_BASE_Entity entity =  TB_PJT_BASE_JpaRepository.findById(projectCode).orElseThrow(() -> new NoSuchElementException("프로젝트 코드 조회에 실패하였습니다.: " + projectCode));
         entity.setMigrateFlag(true);
@@ -210,7 +214,7 @@ public class TransferProjectImpl implements TransferProject {
             if(Character.isDigit(assignee.charAt(0))) { // 숫자로 시작하면
                 assigneeId = assignee;
             } else if(Character.isLetter(assignee.charAt(0))) {// 문자로 시작하면
-                assigneeId =  transferIssue.getOneAssigneeId(assignee);
+                assigneeId =  jiraIssue.getOneAssigneeId(assignee);
             }
             createProjectDTO.setLeadAccountId(assigneeId);
 

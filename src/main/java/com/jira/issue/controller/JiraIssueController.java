@@ -1,7 +1,7 @@
 package com.jira.issue.controller;
 
 import com.jira.issue.model.dto.TransferIssueDTO;
-import com.jira.issue.service.TransferIssue;
+import com.jira.issue.service.JiraIssue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,11 +11,11 @@ import java.util.Map;
 
 
 @RestController
-@RequestMapping("/api/issue")
-public class TransferIssueController {
+@RequestMapping("/jira/issue")
+public class JiraIssueController {
 
     @Autowired
-    private TransferIssue transferIssue;
+    private JiraIssue jiraIssue;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -30,7 +30,7 @@ public class TransferIssueController {
     )
     public Map<String ,String> TransferIssueData(@RequestBody TransferIssueDTO transferIssueDTO ) throws Exception {
         logger.info("이슈 생성 컨트롤러 진입");
-        return transferIssue.transferIssueData(transferIssueDTO);
+        return jiraIssue.transferIssueData(transferIssueDTO);
     }
 
     @ResponseBody
@@ -40,7 +40,7 @@ public class TransferIssueController {
     )
     public Map<String, String> updateIssueData(@RequestBody TransferIssueDTO transferIssueDTO) throws Exception {
         logger.info("이슈 업데이트 컨트롤러 진입");
-        return transferIssue.updateIssueData(transferIssueDTO);
+        return jiraIssue.updateIssueData(transferIssueDTO);
     }
 
 }

@@ -2,7 +2,7 @@ package com.api.scheduler.migrate.issue.service;
 
 import java.util.Date;
 
-public interface TransferIssueByScheduler {
+public interface JiraIssueByScheduler {
 
     public void createIssueByScheduler() throws Exception;
 

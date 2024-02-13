@@ -1,12 +1,12 @@
 package com.api.scheduler.migrate.project.service;
 
-import com.jira.issue.service.TransferIssue;
+import com.jira.issue.service.JiraIssue;
 import com.jira.project.model.dao.TB_JML_JpaRepository;
 import com.jira.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.jira.project.model.dto.ProjectDTO;
 import com.jira.project.model.entity.TB_JML_Entity;
 import com.jira.project.model.entity.TB_PJT_BASE_Entity;
-import com.jira.project.service.TransferProject;
+import com.jira.project.service.JiraProject;
 import com.utils.SaveLog;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -24,8 +24,8 @@ import java.time.LocalTime;
 import java.util.*;
 
 @AllArgsConstructor
-@Service("transferProjectByScheduler")
-public class TransferProjectBySchedulerImpl implements TransferProjectByScheduler {
+@Service("jiraProjectByScheduler")
+public class JiraProjectBySchedulerImpl implements JiraProjectByScheduler {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -35,10 +35,10 @@ public class TransferProjectBySchedulerImpl implements TransferProjectBySchedule
     private TB_JML_JpaRepository TB_JML_JpaRepository;
 
     @Autowired
-    private TransferProject transferProject;
+    private JiraProject jiraProject;
 
     @Autowired
-    private TransferIssue transferIssue;
+    private JiraIssue jiraIssue;
 
     public void createProject(int project_count) throws Exception{
         String scheduler_resul_fail = null;
@@ -49,7 +49,7 @@ public class TransferProjectBySchedulerImpl implements TransferProjectBySchedule
         // 조회 대상 프로젝트 생성 및 결과 리턴
         for(TB_PJT_BASE_Entity project : page){
             String projectCode = project.getProjectCode();
-            Map<String, String> create_result = transferProject.CreateProjectFromDB(1, projectCode);
+            Map<String, String> create_result = jiraProject.createProjectFromDB(1, projectCode);
 
             // 이관 실패인 경우
             if (create_result.containsKey("이관 실패") && create_result.get("이관 실패").equals(projectCode)) {
@@ -98,9 +98,9 @@ public class TransferProjectBySchedulerImpl implements TransferProjectBySchedule
             Date currentTime = new Date();
             String jiraProjectCode = project.getKey();
             String assignee = project.getProjectAssignees();
-            String assigneeId = transferIssue.getOneAssigneeId(assignee);
+            String assigneeId = jiraIssue.getOneAssigneeId(assignee);
 
-            ProjectDTO result = transferProject.reassignProjectLeader(jiraProjectCode,assigneeId);
+            ProjectDTO result = jiraProject.reassignProjectLeader(jiraProjectCode,assigneeId);
 
             if(result.getId() != null){
                 String leader = result.getLead().getDisplayName();
@@ -133,9 +133,9 @@ public class TransferProjectBySchedulerImpl implements TransferProjectBySchedule
             Date currentTime = new Date();
             String jiraProjectCode = project.getKey();
             String assignee = project.getProjectAssignees();
-            String assigneeId = transferIssue.getOneAssigneeId(assignee);
+            String assigneeId = jiraIssue.getOneAssigneeId(assignee);
 
-            ProjectDTO result = transferProject.reassignProjectLeader(jiraProjectCode,assigneeId);
+            ProjectDTO result = jiraProject.reassignProjectLeader(jiraProjectCode,assigneeId);
 
             if(result.getId() != null){
                 String leader = result.getLead().getDisplayName();

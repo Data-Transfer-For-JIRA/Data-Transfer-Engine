@@ -2,7 +2,7 @@ package com.jira.project.controller;
 
 import com.jira.project.model.entity.TB_JLL_Entity;
 import com.jira.project.model.entity.TB_JML_Entity;
-import com.jira.project.service.TransferProject;
+import com.jira.project.service.JiraProject;
 import com.jira.project.model.dto.CreateBulkResultDTO;
 import com.jira.project.model.dto.ProjcetCodeDTO;
 import com.jira.project.model.dto.ProjectDTO;
@@ -21,11 +21,11 @@ import java.util.Map;
  *  해당 컨트롤러는 디비에 있는데이터를 지라 서버로 이관하기 위한 컨트롤러이다
  * */
 @RestController
-@RequestMapping("/api/project")
-public class TransferProjectController {
+@RequestMapping("/jira/project")
+public class JiraProjectController {
 
     @Autowired
-    private TransferProject transferProject;
+    private JiraProject jiraProject;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -37,7 +37,7 @@ public class TransferProjectController {
     public List<TB_JML_Entity> getJiraProjectListBySearchKeywordOnJML(@RequestParam String searchKeyword) throws Exception{
 
         logger.info("[::TransferProjectController::] 지라에 생성된 프로젝트 목록 키워드로 검색");
-        return transferProject.getJiraProjectListBySearchKeywordOnJML(searchKeyword);
+        return jiraProject.getJiraProjectListBySearchKeywordOnJML(searchKeyword);
 
     }
 
@@ -47,7 +47,7 @@ public class TransferProjectController {
             value = {"/{personalId}/create/bulk"},
             method = {RequestMethod.POST}
     )
-    public CreateBulkResultDTO CreateBulkProjectFrom(@PathVariable int personalId, @RequestBody ProjcetCodeDTO projectCodeDTO ) throws Exception {
+    public CreateBulkResultDTO createBulkProjectFrom(@PathVariable int personalId, @RequestBody ProjcetCodeDTO projectCodeDTO ) throws Exception {
 
         // ProjcetCodeDTO projectCodeDTO = projectCodeDTO[0];
         logger.info("프로젝트 생성");
@@ -60,7 +60,7 @@ public class TransferProjectController {
 
         for(int i=0;i<projectCodeDTO.getProjectCode().size();i++){
             String projectCode = projectCodeDTO.getProjectCode().get(i);
-            result = transferProject.CreateProjectFromDB(personalId, projectCode);
+            result = jiraProject.createProjectFromDB(personalId, projectCode);
 
             // 이관 실패인 경우
             if (result.containsKey("이관 실패") && result.get("이관 실패").equals(projectCode)) {
@@ -105,7 +105,7 @@ public class TransferProjectController {
     )
     public ProjectDTO reassignProjectLeader(@RequestParam String jiraProjectCode, @RequestParam String assignee) throws Exception {
         logger.info("[::TransferProjectController::] 프로젝트 담당자 지정 변경 컨트롤러");
-        return  transferProject.reassignProjectLeader(jiraProjectCode,assignee );
+        return  jiraProject.reassignProjectLeader(jiraProjectCode,assignee );
     }
 
     /*
@@ -116,9 +116,9 @@ public class TransferProjectController {
             value = {"/jira"},
             method = {RequestMethod.GET}
     )
-    public ProjectDTO  getJiraProjectInfoByJiraKey(@RequestParam String jiraKey) throws Exception {
+    public ProjectDTO getJiraProjectInfoByJiraKey(@RequestParam String jiraKey) throws Exception {
         logger.info("[::TransferProjectController::] 지라키로 프로젝트 조회 컨틀롤러");
-        return  transferProject.getJiraProjectInfoByJiraKey(jiraKey);
+        return  jiraProject.getJiraProjectInfoByJiraKey(jiraKey);
     }
 
     /*
@@ -131,7 +131,7 @@ public class TransferProjectController {
     )
     public List<Map<String, String>> deleteJiraProject(@RequestBody List<String> jiraProjectCodes) throws Exception {
         logger.info("[::TransferProjectController::] 지라 프로젝트 삭제");
-        return transferProject.deleteJiraProject(jiraProjectCodes);
+        return jiraProject.deleteJiraProject(jiraProjectCodes);
     }
 
     /*
@@ -144,6 +144,6 @@ public class TransferProjectController {
     )
     public List<TB_JLL_Entity> saveProjectsRelation() throws Exception {
         logger.info("[::TransferProjectController::] 프로젝트 연결관계 디비에 저장하는 API");
-        return  transferProject.saveProjectsRelation();
+        return  jiraProject.saveProjectsRelation();
     }
 }

@@ -10,13 +10,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jira.issue.model.FieldInfo;
 import com.jira.issue.model.FieldInfoCategory;
 import com.jira.issue.model.dao.PJ_PG_SUB_JpaRepository;
-import com.api.issue.model.dto.*;
 import com.jira.issue.model.dto.*;
 import com.jira.issue.model.dto.weblink.CreateWebLinkDTO;
 import com.jira.issue.model.dto.weblink.RequestWeblinkDTO;
 import com.jira.issue.model.dto.weblink.SearchWebLinkDTO;
 import com.jira.issue.model.entity.PJ_PG_SUB_Entity;
-import com.jira.project.model.dao.TB_JLL_JpaRepository;
 import com.jira.project.model.dao.TB_JML_JpaRepository;
 import com.jira.project.model.entity.TB_JML_Entity;
 import com.jira.project.model.entity.TB_PJT_BASE_Entity;
@@ -46,8 +44,8 @@ import java.util.stream.Collectors;
 import static com.jira.issue.model.FieldInfo.ofLabel;
 
 @AllArgsConstructor
-@Service("transferIssue")
-public class TransferIssueImpl implements TransferIssue {
+@Service("jiraIssue")
+public class JiraIssueImpl implements JiraIssue {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -55,9 +53,6 @@ public class TransferIssueImpl implements TransferIssue {
 
     @Autowired
     private TB_JML_JpaRepository TB_JML_JpaRepository;
-
-    @Autowired
-    private TB_JLL_JpaRepository TB_JLL_JpaRepository;
 
     @Autowired
     private PJ_PG_SUB_JpaRepository PJ_PG_SUB_JpaRepository;

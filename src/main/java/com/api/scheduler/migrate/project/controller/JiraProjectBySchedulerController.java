@@ -1,6 +1,6 @@
 package com.api.scheduler.migrate.project.controller;
 
-import com.api.scheduler.migrate.project.service.TransferProjectByScheduler;
+import com.api.scheduler.migrate.project.service.JiraProjectByScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,11 +10,11 @@ import org.springframework.web.bind.annotation.*;
 *  스케줄러를 통해 프로젝트 생성 => 결과 값은 로그백을 이용해 로그파일로 생성
 * */
 @RestController
-@RequestMapping("/scheduler/project")
-public class TransferProjectBySchedulerController {
+@RequestMapping("/jira/scheduler/migrate/project")
+public class JiraProjectBySchedulerController {
 
     @Autowired
-    private TransferProjectByScheduler transferProjectByScheduler;
+    private JiraProjectByScheduler jiraProjectByScheduler;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @ResponseBody
@@ -24,7 +24,7 @@ public class TransferProjectBySchedulerController {
     )
     public void transferProjectByScheduler(@RequestParam int project_count) throws Exception { // 바디로 변경
         logger.info("프로젝트 스케줄러를 통한 생성 컨트롤러 진입");
-        transferProjectByScheduler.createProject(project_count);
+        jiraProjectByScheduler.createProject(project_count);
     }
 
     @ResponseBody
@@ -34,7 +34,7 @@ public class TransferProjectBySchedulerController {
     )
     public void reAssgineProjectByScheduler() throws Exception {
         logger.info("프로젝트 스케줄러를 통한 생성 컨트롤러 진입");
-        transferProjectByScheduler.reAssgineProjectByScheduler();
+        jiraProjectByScheduler.reAssgineProjectByScheduler();
     }
 
     @ResponseBody
@@ -44,7 +44,7 @@ public class TransferProjectBySchedulerController {
     )
     public void reAssgineProjectBySchedulerPeriodically() throws Exception {
         logger.info("프로젝트 스케줄러를 통한 생성 컨트롤러 진입");
-        transferProjectByScheduler.reAssgineProjectBySchedulerPeriodically();
+        jiraProjectByScheduler.reAssgineProjectBySchedulerPeriodically();
     }
 
 }

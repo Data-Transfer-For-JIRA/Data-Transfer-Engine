@@ -9,7 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 import java.util.List;
 import java.util.Map;
 
-public interface TransferIssue {
+public interface JiraIssue {
 
     Map<String ,String> transferIssueData(TransferIssueDTO transferIssueDTO) throws Exception;
 
