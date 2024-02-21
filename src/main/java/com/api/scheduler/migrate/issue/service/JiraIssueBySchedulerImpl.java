@@ -146,62 +146,66 @@ public class JiraIssueBySchedulerImpl implements JiraIssueByScheduler {
 
             String wssAssignee = jiraIssue.getOneAssigneeId(issueData.getWriter());
 
-            String wssContent  = issueData.getIssueContent();
-            Date wssWriteDate  = issueData.getCreationDate();
-
-            String defaultIssueContent = "\n[" + wssWriteDate  + "]\n본 이슈는 WSS에서 이관한 이슈입니다.\n―――――――――――――――――――――――――――――――\n"; // 이슈 생성 시 기본 문구
-            String replacedIssueContent = wssContent.replace("<br>", "\n").replace("&nbsp;", " "); // 이슈 내용 전처리
-            String basicIssueContent = defaultIssueContent + replacedIssueContent; // 이슈 내용
-
-            FieldDTO fieldDTO = new FieldDTO();
-            // 담당자
-            FieldDTO.User user = FieldDTO.User.builder()
-                    .accountId(wssAssignee).build();
-            fieldDTO.setAssignee(user);
-
-            // 프로젝트 아이디
+            String wssProjectId = issueData.getProjectId();
             String wssProjectCode = issueData.getProjectCode();
-            String jiraProjectId = TB_JML_JpaRepository.findByProjectCode(wssProjectCode).getId();
 
-            FieldDTO.Project project = FieldDTO.Project.builder()
-                    .id(jiraProjectId)
-                    .build();
-            fieldDTO.setProject(project);
+            if (checkMigrateIssueFlag(wssProjectId, wssProjectCode)) {
+                String wssContent  = issueData.getIssueContent();
+                Date wssWriteDate  = issueData.getCreationDate();
 
-            // wss 이슈 제목
-            String summary = "["+wssWriteDate+"] WSS 작성이슈";
-            fieldDTO.setSummary(summary);
+                String defaultIssueContent = "\n[" + wssWriteDate  + "]\n본 이슈는 WSS에서 이관한 이슈입니다.\n―――――――――――――――――――――――――――――――\n"; // 이슈 생성 시 기본 문구
+                String replacedIssueContent = wssContent.replace("<br>", "\n").replace("&nbsp;", " "); // 이슈 내용 전처리
+                String basicIssueContent = defaultIssueContent + replacedIssueContent; // 이슈 내용
 
-            // wss 이슈
-            FieldDTO.ContentItem contentItem = FieldDTO.ContentItem.builder()
-                    .type("text")
-                    .text(basicIssueContent)
-                    .build();
-            List<FieldDTO.ContentItem> contentItems = Collections.singletonList(contentItem);
+                FieldDTO fieldDTO = new FieldDTO();
+                // 담당자
+                FieldDTO.User user = FieldDTO.User.builder()
+                        .accountId(wssAssignee).build();
+                fieldDTO.setAssignee(user);
 
-            FieldDTO.Content content = FieldDTO.Content.builder()
-                    .content(contentItems)
-                    .type("paragraph")
-                    .build();
-            List<FieldDTO.Content> contents = Collections.singletonList(content);
+                // 프로젝트 아이디
+                String jiraProjectId = TB_JML_JpaRepository.findByProjectCode(wssProjectCode).getId();
 
-            FieldDTO.Description description = FieldDTO.Description.builder()
-                    .version(1)
-                    .type("doc")
-                    .content(contents)
-                    .build();
-            fieldDTO.setDescription(description);
+                FieldDTO.Project project = FieldDTO.Project.builder()
+                        .id(jiraProjectId)
+                        .build();
+                fieldDTO.setProject(project);
 
-            FieldDTO.Field field =  FieldDTO.Field.builder()
-                    .id("10002")
-                    .build();
-            fieldDTO.setIssuetype(field);
+                // wss 이슈 제목
+                String summary = "["+wssWriteDate+"] WSS 작성이슈";
+                fieldDTO.setSummary(summary);
 
-            CreateBulkIssueFieldsDTO fields = new CreateBulkIssueFieldsDTO();
-            fields.setFields(fieldDTO);
+                // wss 이슈
+                FieldDTO.ContentItem contentItem = FieldDTO.ContentItem.builder()
+                        .type("text")
+                        .text(basicIssueContent)
+                        .build();
+                List<FieldDTO.ContentItem> contentItems = Collections.singletonList(contentItem);
 
-            issueUpdates.add(fields);
+                FieldDTO.Content content = FieldDTO.Content.builder()
+                        .content(contentItems)
+                        .type("paragraph")
+                        .build();
+                List<FieldDTO.Content> contents = Collections.singletonList(content);
 
+                FieldDTO.Description description = FieldDTO.Description.builder()
+                        .version(1)
+                        .type("doc")
+                        .content(contents)
+                        .build();
+                fieldDTO.setDescription(description);
+
+                FieldDTO.Field field =  FieldDTO.Field.builder()
+                        .id("10002")
+                        .build();
+                fieldDTO.setIssuetype(field);
+
+                CreateBulkIssueFieldsDTO fields = new CreateBulkIssueFieldsDTO();
+                fields.setFields(fieldDTO);
+
+                issueUpdates.add(fields);
+                jiraIssue.setMigrateIssueFlag(wssProjectId, wssProjectCode);
+            }
         }
 
         bulkIssueDTO.setIssueUpdates(issueUpdates);
@@ -278,6 +282,7 @@ public class JiraIssueBySchedulerImpl implements JiraIssueByScheduler {
             setLinkCheckFlagTrue(project); // 웹링크 플레그 변경
         }
     }
+
     /*
     *  지라키로 연결되어있는 프로젝트 키 조회 하는 메서드
     * */
@@ -421,6 +426,24 @@ public class JiraIssueBySchedulerImpl implements JiraIssueByScheduler {
             return false;
         }
 
+        return false;
+    }
+
+    /*
+     *  지라 이슈 이관 여부 체크
+     * */
+    @Override
+    public boolean checkMigrateIssueFlag(String projectId, String projectCode) {
+
+        logger.info("[::TransferIssueBySchedulerImpl::] checkMigrateIssueFlag");
+
+        Optional<PJ_PG_SUB_Entity> entity = Optional.ofNullable(PJ_PG_SUB_JpaRepository.findByProjectIdAndProjectCode(projectId, projectCode));
+        if (entity.isPresent()) {
+            PJ_PG_SUB_Entity subEntity = entity.get();
+            if (!subEntity.getIssueMigrateFlag()) {
+                return true;
+            }
+        }
         return false;
     }
 

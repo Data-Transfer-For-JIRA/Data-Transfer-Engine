@@ -37,5 +37,5 @@ public interface JiraIssue {
     * */
     String createWebLink(RequestWeblinkDTO requestWeblinkDTO) throws Exception;
 
-
+    void setMigrateIssueFlag(String projectId, String projectCode);
 }

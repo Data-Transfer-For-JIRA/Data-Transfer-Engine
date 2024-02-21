@@ -153,15 +153,15 @@ public class JiraProjectImpl implements JiraProject {
         } else {
             String recentKey = TB_JML_JpaRepository.findTopByOrderByMigratedDateDesc().getKey();
             //개발
-            int num = Integer.parseInt(recentKey.substring(3));
+            //int num = Integer.parseInt(recentKey.substring(3));
             //운영
-            //int num = Integer.parseInt(recentKey.substring(2));
+            int num = Integer.parseInt(recentKey.substring(2));
             while (true) {
                 num++;
                 //개발
                 jiraKey = "TED" + num;
                 //운영
-                //jiraKey = "ED" + num;
+                jiraKey = "ED" + num;
                 if (checkValidationJiraKey(jiraKey)) {
                     return jiraKey;
                 }

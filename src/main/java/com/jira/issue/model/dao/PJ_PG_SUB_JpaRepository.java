@@ -14,4 +14,7 @@ public interface PJ_PG_SUB_JpaRepository extends JpaRepository<PJ_PG_SUB_Entity,
     List<PJ_PG_SUB_Entity> findAllByProjectCodeOrderByCreationDateDesc(String projectCode);
 
     List<PJ_PG_SUB_Entity> findByCreationDate(Date creationDate);
+
+    // id와 code로 특정 이력 조회
+    PJ_PG_SUB_Entity findByProjectIdAndProjectCode(String projectId, String projectCode);
 }

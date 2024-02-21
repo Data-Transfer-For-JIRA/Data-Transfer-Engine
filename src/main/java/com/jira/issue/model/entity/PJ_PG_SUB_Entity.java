@@ -33,6 +33,9 @@ public class PJ_PG_SUB_Entity {
     @Column(name = "SUB_CO")
     private String issueContent;
 
+    @Column(name = "MI_FLAG")
+    private Boolean issueMigrateFlag;
+
     @Getter
     @Setter
     @EqualsAndHashCode

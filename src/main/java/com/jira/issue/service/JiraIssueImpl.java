@@ -403,6 +403,9 @@ public class JiraIssueImpl implements JiraIssue {
         String wssContents = "";
         for (PJ_PG_SUB_Entity issue : issueList){
 
+            String wssProjectId = issue.getProjectId();
+            String wssProjectCode = issue.getProjectCode();
+
             Date  date = issue.getCreationDate();
             String title = "작성일: " + date +"     작성자: "+issue.getWriter();
             String content = issue.getIssueContent().replace("<br>", "\n").replace("&nbsp;", " ");
@@ -415,6 +418,7 @@ public class JiraIssueImpl implements JiraIssue {
             } else {
                 wssContents += contentItem;
             }
+            setMigrateIssueFlag(wssProjectId, wssProjectCode); // 이슈 이관 플래그 true로 변경
         }
         if (!wssContents.isEmpty()) {
             contentsList.add(wssContents);  // 마지막에 남은 wssContents를 리스트에 추가
@@ -486,11 +490,11 @@ public class JiraIssueImpl implements JiraIssue {
     public boolean checkIssueMigrateFlag(String projectCode) throws Exception{
 
         logger.info("[::TransferIssueImpl::] CheckMigrateFlag");
-        logger.info("::TransferIssueImpl::] projectCode -> " + projectCode);
+        logger.info("[::TransferIssueImpl::] projectCode -> " + projectCode);
         Optional<TB_PJT_BASE_Entity> entity =  TB_PJT_BASE_JpaRepository.findById(projectCode);
-        if(entity.isPresent()){
+        if (entity.isPresent()) {
             TB_PJT_BASE_Entity updatedEntity = entity.get();
-            updatedEntity.setMigrateFlag(true);
+            updatedEntity.setIssueMigrateFlag(true);
             TB_PJT_BASE_JpaRepository.save(updatedEntity);
             return true;
         }
@@ -1101,4 +1105,19 @@ public class JiraIssueImpl implements JiraIssue {
         return result;
     }
 
+    /*
+     *  이관된 이슈를 1로 세팅
+     * */
+    @Override
+    public void setMigrateIssueFlag(String projectId, String projectCode) {
+
+        logger.info("[::JiraIssueImpl::] setMigrateIssueFlag");
+
+        Optional<PJ_PG_SUB_Entity> entity = Optional.ofNullable(PJ_PG_SUB_JpaRepository.findByProjectIdAndProjectCode(projectId, projectCode));
+        if (entity.isPresent()) {
+            PJ_PG_SUB_Entity subEntity = entity.get();
+            subEntity.setIssueMigrateFlag(true);
+            PJ_PG_SUB_JpaRepository.save(subEntity);
+        }
+    }
 }

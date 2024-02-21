@@ -13,4 +13,6 @@ public interface JiraIssueByScheduler {
     void updateIssueByScheduler(int page, int size) throws Exception;
 
     public void updateWebLink(int size) throws Exception;
+
+    boolean checkMigrateIssueFlag(String projectId, String projectCode);
 }
