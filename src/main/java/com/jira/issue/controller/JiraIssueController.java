@@ -28,7 +28,7 @@ public class JiraIssueController {
             value = {""},
             method = {RequestMethod.POST}
     )
-    public Map<String ,String> TransferIssueData(@RequestBody TransferIssueDTO transferIssueDTO ) throws Exception {
+    public Map<String ,String> transferIssueData(@RequestBody TransferIssueDTO transferIssueDTO ) throws Exception {
         logger.info("이슈 생성 컨트롤러 진입");
         return jiraIssue.transferIssueData(transferIssueDTO);
     }
