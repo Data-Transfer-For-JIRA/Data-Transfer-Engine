@@ -121,19 +121,8 @@ public class JiraIssueBySchedulerImpl implements JiraIssueByScheduler {
     public void periodicallyCreateIssueByScheduler() throws Exception{
         logger.info("[::TransferIssueBySchedulerImpl::] periodicallyCreateIssueByScheduler");
         // 오늘 날짜-1에 생성된 이슈가 있는지 조회 있으면 벌크로 생성
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, -1);
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        Date yesterday = cal.getTime();
-        // 스케줄러가 돌기 전날에 생성된 이슈 조회
-        List<PJ_PG_SUB_Entity> createdIssueList = PJ_PG_SUB_JpaRepository.findByCreationDate(yesterday);
-        if(!createdIssueList.isEmpty()){
-            // 벌크로 이슈 생성
-            createBulkIssue(createdIssueList);
-        }
+        List<PJ_PG_SUB_Entity> issueList = PJ_PG_SUB_JpaRepository.findByIssueMigrateFlagIsFalse();
+        createBulkIssue(issueList);
     }
     public ResponseBulkIssueDTO createBulkIssue(List<PJ_PG_SUB_Entity> issueList) throws Exception {
         logger.info("[::TransferIssueBySchedulerImpl::] createBulkIssue");
