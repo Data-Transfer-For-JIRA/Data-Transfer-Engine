@@ -36,7 +36,7 @@ public class JiraIssueBySchedulerController {
     @ResponseBody
     @RequestMapping(
             value = {"/periodically"},
-            method = {RequestMethod.POST}
+            method = {RequestMethod.PUT}
     )
     public void periodicallyTransferIssueByScheduler() throws Exception {
         logger.info("스케줄러로 wss에 생성한 이슈를 지라로 이관하는 컨트롤러 - 12월 28일 기준 이후에 생성된 이슈를 이관해 줌");

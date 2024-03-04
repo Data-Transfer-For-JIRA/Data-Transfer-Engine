@@ -43,6 +43,8 @@ public class BaseDTO {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class CommonDTO { // 선택 (공통)
 
+        private Boolean allocationFlag; // 담당자 배정 프로젝트에 이슈 생성 여부
+
         private String projectCode; // 프로젝트 코드(나중에 할당되는 경우가 존재)
 
         private String assignee; // 담당자(select box)

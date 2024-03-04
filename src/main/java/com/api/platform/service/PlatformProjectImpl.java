@@ -240,10 +240,10 @@ public class PlatformProjectImpl implements PlatformProject {
         String projectCode = commonDTO.getProjectCode();
         String assignee = commonDTO.getAssignee();
         String subAssignee = commonDTO.getSubAssignee();
-
+        String description = commonDTO.getDescription();
         // 담당자 설정
         String assignees = setAssignees(assignee, subAssignee);
-
+        // 프로젝트 생성
         Map<String, String> createInfo = platformCreateProject(jiraProjectCode, projectFlag, projectName, projectCode, assignees);
 
         String createProjectFlag = createInfo.get("result");
@@ -253,6 +253,10 @@ public class PlatformProjectImpl implements PlatformProject {
 
             CreateIssueDTO<?> createIssueDTO;
             if (projectFlag.equals("P")) { // 프로젝트 타입
+
+                if(commonDTO.getAllocationFlag() == true){
+                    createStaffAllocationIssue(description,projectName,projectFlag);
+                }
 
                 ProjectInfoDTO.ProjectInfoDTOBuilder<?, ?> projectBuilder = ProjectInfoDTO.builder();
                 projectBuilder = setCommonFields(projectBuilder, jiraProjectCode, commonDTO);
@@ -283,10 +287,15 @@ public class PlatformProjectImpl implements PlatformProject {
                 ProjectInfoDTO projectInfoDTO = projectBuilder.build();
                 createIssueDTO = new CreateIssueDTO<>(projectInfoDTO);
 
-            } else {
+            }
+            else {
+
+                if(commonDTO.getAllocationFlag() == true){
+                    createStaffAllocationIssue(description,projectName,projectFlag);
+                }
 
                 MaintenanceInfoDTO.MaintenanceInfoDTOBuilder<?, ?> maintenanceBuilder = MaintenanceInfoDTO.builder();
-                maintenanceBuilder = setCommonFields(maintenanceBuilder, jiraProjectCode, commonDTO);
+                maintenanceBuilder = setCommonFields(maintenanceBuilder, jiraProjectCode, commonDTO );
 
                 // 이슈타입
                 setBuilder(
@@ -686,6 +695,98 @@ public class PlatformProjectImpl implements PlatformProject {
 
 
         return returnMessage;
+    }
+
+    private void createStaffAllocationIssue(String description, String projectName, String flag)throws Exception{
+
+        logger.info("[::platformCreateProject::] 인력배정 이슈 생성 시작");
+
+        CreateIssueDTO<?> createIssueDTO;
+        FieldDTO fieldDTO = new FieldDTO();
+
+        // 담당자
+        FieldDTO.User user = FieldDTO.User.builder()
+                .accountId("63e5a5e5614cb4ba5303f921").build(); // 임팀장님 디폴트
+        fieldDTO.setAssignee(user);
+
+        // 프로젝트 아이디
+        String projectCode;
+        String issueTypeCode;
+        if(flag.equals("P")){
+            projectCode = "13583";
+            issueTypeCode = "10685";
+        }else{
+            projectCode = "13584";
+            issueTypeCode = "10688";
+        }
+        FieldDTO.Project project = FieldDTO.Project.builder()
+                .id(projectCode)
+                .build();
+        fieldDTO.setProject(project);
+        
+        // 이슈 유형
+        FieldDTO.Field issueType =  FieldDTO.Field.builder()
+                .id(issueTypeCode)
+                .build();
+        fieldDTO.setIssuetype(issueType);
+
+        // wss 이슈 제목
+        fieldDTO.setSummary(projectName);
+
+        // 설명
+        String desc = description;
+        desc = desc.replace("\t", "@@").replace(" ", "@@");
+
+        Document doc = Jsoup.parse(desc);
+
+        Elements paragraphs = doc.select("p");
+
+        List<FieldDTO.Content> contents = new ArrayList<>();
+        for (Element paragraph : paragraphs) {
+
+            // 연속된 공백을 하나의 공백으로 처리
+            // String text = tag.text();
+
+            // HTML 엔티티를 일반 텍스트로 변환
+            String text = StringEscapeUtils.unescapeHtml4(paragraph.html());
+
+            // @@를 공백 두 칸으로 대체
+            text = text.replace("@@", "  ");
+
+            FieldDTO.ContentItem contentItem = FieldDTO.ContentItem.builder().text(text).type("text").build();
+
+            List<FieldDTO.ContentItem> contentItems = new ArrayList<>();
+            contentItems.add(contentItem);
+
+            FieldDTO.Content content = FieldDTO.Content.builder().type("paragraph").content(contentItems).build();
+            contents.add(content);
+        }
+
+        FieldDTO.Description descriptionObject = FieldDTO.Description.builder().version(1).type("doc").content(contents).build();
+        fieldDTO.setDescription(descriptionObject);
+
+        createIssueDTO = new CreateIssueDTO<>(fieldDTO);
+
+        String endpoint = "/rest/api/3/issue";
+        ResponseIssueDTO responseIssueDTO = null;
+        try {
+            responseIssueDTO = webClientUtils.post(endpoint, createIssueDTO, ResponseIssueDTO.class).block();
+
+            String key = responseIssueDTO.getKey();
+
+            if(!key.isEmpty() || key != null){
+                logger.info("[::platformCreateProject::] 인력배정 이슈 생성 성공");
+            }
+
+        } catch (Exception e) {
+            if (e instanceof WebClientResponseException) {
+                WebClientResponseException wcException = (WebClientResponseException) e;
+                HttpStatus status = wcException.getStatusCode();
+                String body = wcException.getResponseBodyAsString();
+
+                System.out.println("[::PlatformProjectImpl::] 인력 배정 이슈 생성시 오류 발생 -> " + status + " : " + body);
+            }
+        }
     }
 
 }
