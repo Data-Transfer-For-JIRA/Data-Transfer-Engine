@@ -44,10 +44,10 @@ public class JiraProjectController {
 
     @ResponseBody
     @RequestMapping(
-            value = {"/{personalId}/create/bulk"},
+            value = {"/create/bulk"},
             method = {RequestMethod.POST}
     )
-    public CreateBulkResultDTO createBulkProjectFrom(@PathVariable int personalId, @RequestBody ProjcetCodeDTO projectCodeDTO ) throws Exception {
+    public CreateBulkResultDTO createBulkProjectFrom( @RequestBody ProjcetCodeDTO projectCodeDTO ) throws Exception {
 
         // ProjcetCodeDTO projectCodeDTO = projectCodeDTO[0];
         logger.info("프로젝트 생성");
@@ -60,7 +60,7 @@ public class JiraProjectController {
 
         for(int i=0;i<projectCodeDTO.getProjectCode().size();i++){
             String projectCode = projectCodeDTO.getProjectCode().get(i);
-            result = jiraProject.createProjectFromDB(personalId, projectCode);
+            result = jiraProject.createProjectFromDB( projectCode);
 
             // 이관 실패인 경우
             if (result.containsKey("이관 실패") && result.get("이관 실패").equals(projectCode)) {

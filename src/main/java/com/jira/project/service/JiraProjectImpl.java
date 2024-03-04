@@ -60,7 +60,7 @@ public class JiraProjectImpl implements JiraProject {
 
     @Override
     @Transactional
-    public Map<String, String> createProjectFromDB(int personalId, String projectCode) throws Exception{
+    public Map<String, String> createProjectFromDB(String projectCode) throws Exception{
         logger.info("프로젝트 생성 시작");
 
         Map<String, String> result = new HashMap<>();
@@ -78,7 +78,7 @@ public class JiraProjectImpl implements JiraProject {
                     // 프로젝트 정보 Setting
                     CreateProjectDTO projectInfo = requiredData(flag,projectName, projectKey);
                     // 프로젝트 생성
-                    CreateProjectResponseDTO Response = createJiraProject(personalId, projectInfo);
+                    CreateProjectResponseDTO Response = createJiraProject(projectInfo);
 
                     saveSuccessData(Response.getProjectKey() , Response.getProjectId(),projectCode,projectName,projectInfo.getName(),flag,assignees); // 템플릿을 통한 생성 방법
                     // 디비 이관 flag 변경
@@ -106,7 +106,7 @@ public class JiraProjectImpl implements JiraProject {
         return result;
     }
 
-    public CreateProjectResponseDTO createJiraProject(int personalId , CreateProjectDTO createProjectDTO) throws Exception{
+    public CreateProjectResponseDTO createJiraProject( CreateProjectDTO createProjectDTO) throws Exception{
         logger.info("JIRA 프로젝트 생성 시작");
 
         // 템플릿을 통한 생성 방법
