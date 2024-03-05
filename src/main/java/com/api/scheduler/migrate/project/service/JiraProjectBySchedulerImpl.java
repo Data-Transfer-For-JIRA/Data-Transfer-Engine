@@ -50,7 +50,7 @@ public class JiraProjectBySchedulerImpl implements JiraProjectByScheduler {
         // 조회 대상 프로젝트 생성 및 결과 리턴
         for(TB_PJT_BASE_Entity project : page){
             String projectCode = project.getProjectCode();
-            Map<String, String> create_result = jiraProject.createProjectFromDB(1, projectCode);
+            Map<String, String> create_result = jiraProject.createProjectFromDB(projectCode);
 
             // 이관 실패인 경우
             if (create_result.containsKey("이관 실패") && create_result.get("이관 실패").equals(projectCode)) {
