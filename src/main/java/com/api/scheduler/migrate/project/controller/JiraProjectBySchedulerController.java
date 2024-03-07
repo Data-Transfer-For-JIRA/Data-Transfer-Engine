@@ -13,7 +13,7 @@ import java.util.Date;
 *  스케줄러를 통해 프로젝트 생성 => 결과 값은 로그백을 이용해 로그파일로 생성
 * */
 @RestController
-@RequestMapping("/jira/scheduler/migrate/project")
+@RequestMapping("/api/scheduler/migrate/project")
 public class JiraProjectBySchedulerController {
 
     @Autowired
@@ -53,7 +53,7 @@ public class JiraProjectBySchedulerController {
     @ResponseBody
     @RequestMapping(
             value = {"/assignee/date"},
-            method = {RequestMethod.POST}
+            method = {RequestMethod.PUT}
     )
     public void reAssignProjectBySchedulerWithDate(@RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) throws Exception {
         logger.info("프로젝트 스케줄러를 통한 특정 일자 이후 담당자 지정 컨트롤러 진입");
