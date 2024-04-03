@@ -127,12 +127,12 @@ public class JiraProjectImpl implements JiraProject {
         String jiraProjectName;
 
         if (flag.equals("P")) { //프로젝트
-            jiraProjectName = "ED-P_WSS_" + projectName;
+            jiraProjectName = projectConfig.projectHeaderName + projectName;
             projectInfo.setName(jiraProjectName);
             projectInfo.setExistingProjectId(projectConfig.projectTemplate);
 
         } else { // 유지보수
-            jiraProjectName = "ED-M_WSS_" + projectName;
+            jiraProjectName = projectConfig.maintenanceHeaderName + projectName;
             projectInfo.setName(jiraProjectName);
             projectInfo.setExistingProjectId(projectConfig.maintenanceTemplate);
         }
@@ -152,16 +152,15 @@ public class JiraProjectImpl implements JiraProject {
             return "ED1";
         } else {
             String recentKey = TB_JML_JpaRepository.findTopByOrderByMigratedDateDesc().getKey();
-            //개발
-            //int num = Integer.parseInt(recentKey.substring(3));
-            //운영
-            int num = Integer.parseInt(recentKey.substring(2));
+
+            int num = Integer.parseInt(recentKey.substring(projectConfig.projectKeyNum));
+
             while (true) {
                 num++;
                 //개발
-                jiraKey = "TED" + num;
+                jiraKey = projectConfig.keyHeader + num;
                 //운영
-                jiraKey = "ED" + num;
+                //jiraKey = "ED" + num;
                 if (checkValidationJiraKey(jiraKey)) {
                     return jiraKey;
                 }

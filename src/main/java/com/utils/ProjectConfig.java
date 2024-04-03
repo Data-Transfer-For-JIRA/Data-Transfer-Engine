@@ -19,5 +19,16 @@ public class ProjectConfig {
     public String maintenanceTemplate;
     // ======================================================================= //
 
+    @Value("${create.project}")
+    public String projectHeaderName;
+
+    @Value("${create.maintenance}")
+    public String maintenanceHeaderName;
+
+    @Value("${create.key}")
+    public String keyHeader;
+
+    @Value("${create.num}")
+    public int projectKeyNum;
 
 }

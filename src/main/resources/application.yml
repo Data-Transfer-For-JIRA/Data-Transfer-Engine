@@ -22,6 +22,11 @@ logging:
   level:
     org.hibernate.SQL: OFF
 
+create:
+  project: ED-P_WSS_
+  maintenance: ED-M_WSS_
+  key: ED
+  num: 2
 
 jwt:
   secret: cbc4f321d01c9ada7a803427d35a10b9d9743d34dbb723c1e56b88e1d8a7deac
