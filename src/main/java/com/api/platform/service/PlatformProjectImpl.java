@@ -241,6 +241,8 @@ public class PlatformProjectImpl implements PlatformProject {
         String assignee = commonDTO.getAssignee();
         String subAssignee = commonDTO.getSubAssignee();
         String description = commonDTO.getDescription();
+
+        String salesManager = commonDTO.getSalesManager(); // 영업 담당자
         // 담당자 설정
         String assignees = setAssignees(assignee, subAssignee);
         // 프로젝트 생성
@@ -255,7 +257,7 @@ public class PlatformProjectImpl implements PlatformProject {
             if (projectFlag.equals("P")) { // 프로젝트 타입
 
                 if(commonDTO.getAllocationFlag() == true){
-                    createStaffAllocationIssue(description,projectName,projectFlag);
+                    createStaffAllocationIssue(description,projectName,projectFlag,salesManager);
                 }
 
                 ProjectInfoDTO.ProjectInfoDTOBuilder<?, ?> projectBuilder = ProjectInfoDTO.builder();
@@ -291,7 +293,7 @@ public class PlatformProjectImpl implements PlatformProject {
             else {
 
                 if(commonDTO.getAllocationFlag() == true){
-                    createStaffAllocationIssue(description,projectName,projectFlag);
+                    createStaffAllocationIssue(description,projectName,projectFlag,salesManager);
                 }
 
                 MaintenanceInfoDTO.MaintenanceInfoDTOBuilder<?, ?> maintenanceBuilder = MaintenanceInfoDTO.builder();
@@ -697,7 +699,7 @@ public class PlatformProjectImpl implements PlatformProject {
         return returnMessage;
     }
 
-    private void createStaffAllocationIssue(String description, String projectName, String flag)throws Exception{
+    private void createStaffAllocationIssue(String description, String projectName, String flag, String salesManager)throws Exception{
 
         logger.info("[::platformCreateProject::] 인력배정 이슈 생성 시작");
 
@@ -775,6 +777,7 @@ public class PlatformProjectImpl implements PlatformProject {
             String key = responseIssueDTO.getKey();
 
             if(!key.isEmpty() || key != null){
+                jiraIssue.addMentionAndComment(key,salesManager,"인력 배정 보드에 유지보수가 생성되었습니다.");
                 logger.info("[::platformCreateProject::] 인력배정 이슈 생성 성공");
             }
 
@@ -784,7 +787,7 @@ public class PlatformProjectImpl implements PlatformProject {
                 HttpStatus status = wcException.getStatusCode();
                 String body = wcException.getResponseBodyAsString();
 
-                System.out.println("[::PlatformProjectImpl::] 인력 배정 이슈 생성시 오류 발생 -> " + status + " : " + body);
+                logger.error("[::PlatformProjectImpl::] 인력 배정 이슈 생성시 오류 발생 -> " + status + " : " + body);
             }
         }
     }

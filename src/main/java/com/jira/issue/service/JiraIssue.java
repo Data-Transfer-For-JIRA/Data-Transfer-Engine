@@ -38,4 +38,10 @@ public interface JiraIssue {
     String createWebLink(RequestWeblinkDTO requestWeblinkDTO) throws Exception;
 
     void setMigrateIssueFlag(String projectId, String projectCode);
+
+    Boolean addComment(String issueIdOrKey, String contents) throws Exception;
+
+    Boolean addMention(String issueIdOrKey, String targetUser) throws Exception;
+
+    Boolean addMentionAndComment(String issueIdOrKey, String targetUser ,String contents) throws Exception;
 }

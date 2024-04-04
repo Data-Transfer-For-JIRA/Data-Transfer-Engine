@@ -1120,4 +1120,149 @@ public class JiraIssueImpl implements JiraIssue {
             PJ_PG_SUB_JpaRepository.save(subEntity);
         }
     }
+
+    /*
+    *  해당 이슈에 댓글 생성하는 구현체
+    * */
+    @Override
+    public Boolean addComment(String issueIdOrKey, String contents) throws Exception{
+        logger.info("[::JiraIssueImpl::] addComment");
+
+        try {
+            AddCommentDTO addCommentDTO = new AddCommentDTO();
+
+            AddCommentDTO.TextContent textContent = AddCommentDTO.TextContent.builder()
+                    .text(contents)
+                    .type("text")
+                    .build();
+
+            List<AddCommentDTO.TextContent> textContentList = new ArrayList<>();
+            textContentList.add(textContent);
+
+            AddCommentDTO.Content content = AddCommentDTO.Content.builder()
+                    .type("paragraph")
+                    .content(textContentList)
+                    .build();
+
+            List<AddCommentDTO.Content> contentList = new ArrayList<>();
+            contentList.add(content);
+
+            AddCommentDTO.Body body = AddCommentDTO.Body.builder()
+                    .version(Integer.parseInt("1"))
+                    .type("doc")
+                    .content(contentList)
+                    .build();
+
+            addCommentDTO.setBody(body);
+            String endpoint = "/rest/api/3/issue/"+issueIdOrKey+"/comment";
+
+            webClientUtils.post(endpoint, addCommentDTO, String.class).block();
+
+            return true;
+
+        }catch (Exception e){
+            logger.error(e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public Boolean addMention(String issueIdOrKey, String targetUser) throws Exception{
+        try {
+            logger.info("[::JiraIssueImpl::] addMention");
+
+            String endpoint = "/rest/api/3/issue/"+issueIdOrKey+"/comment";
+
+            AddCommentDTO addMention = new AddCommentDTO();
+
+            String userId = getOneAssigneeId(targetUser);
+
+            AddCommentDTO.Attrs attrs = new AddCommentDTO.Attrs();
+            attrs.setId(userId);
+
+            AddCommentDTO.TextContent mentionContent = AddCommentDTO.TextContent.builder()
+                    .attrs(attrs)
+                    .type("mention")
+                    .build();
+
+            List<AddCommentDTO.TextContent> textContentList = new ArrayList<>();
+            textContentList.add(mentionContent);
+
+            AddCommentDTO.Content content = AddCommentDTO.Content.builder()
+                    .type("paragraph")
+                    .content(textContentList)
+                    .build();
+
+            List<AddCommentDTO.Content> contentList = new ArrayList<>();
+            contentList.add(content);
+
+            AddCommentDTO.Body body = AddCommentDTO.Body.builder()
+                    .version(Integer.parseInt("1"))
+                    .type("doc")
+                    .content(contentList)
+                    .build();
+
+            addMention.setBody(body);
+
+            webClientUtils.post(endpoint, addMention, String.class).block();
+
+            return true;
+        }catch (Exception e){
+            logger.error(e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public Boolean addMentionAndComment(String issueIdOrKey, String targetUser ,String contents) throws Exception{
+        try {
+            logger.info("[::JiraIssueImpl::] addMentionAndComment");
+
+            String endpoint = "/rest/api/3/issue/"+issueIdOrKey+"/comment";
+
+            AddCommentDTO addMentionAndComment = new AddCommentDTO();
+
+            String userId = getOneAssigneeId(targetUser);
+
+            AddCommentDTO.Attrs attrs = new AddCommentDTO.Attrs();
+            attrs.setId(userId);
+
+            AddCommentDTO.TextContent mentionContent = AddCommentDTO.TextContent.builder()
+                    .attrs(attrs)
+                    .type("mention")
+                    .build();
+
+            AddCommentDTO.TextContent textContent = AddCommentDTO.TextContent.builder()
+                    .text(contents)
+                    .type("text")
+                    .build();
+
+            List<AddCommentDTO.TextContent> textContentList = new ArrayList<>();
+            textContentList.add(mentionContent);
+            textContentList.add(textContent);
+
+            AddCommentDTO.Content content = AddCommentDTO.Content.builder()
+                    .type("paragraph")
+                    .content(textContentList)
+                    .build();
+
+            List<AddCommentDTO.Content> contentList = new ArrayList<>();
+            contentList.add(content);
+
+            AddCommentDTO.Body body = AddCommentDTO.Body.builder()
+                    .version(Integer.parseInt("1"))
+                    .type("doc")
+                    .content(contentList)
+                    .build();
+
+            addMentionAndComment.setBody(body);
+
+            webClientUtils.post(endpoint, addMentionAndComment, String.class).block();
+
+            return true;
+        }catch (Exception e){
+            logger.error(e.getMessage());
+            return false;
+        }
+    }
 }
