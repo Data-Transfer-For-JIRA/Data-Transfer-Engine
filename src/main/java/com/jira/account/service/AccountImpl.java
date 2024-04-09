@@ -87,12 +87,23 @@ public class AccountImpl implements Account {
 
         response.doOnNext(userInfo -> {
 
-            TB_JIRA_USER_Entity userEntity = new TB_JIRA_USER_Entity();
+            TB_JIRA_USER_Entity existUser = TB_JIRA_USER_JpaRepository.findByAccountId(userInfo.getAccountId());
 
-            userEntity.setAccountId(userInfo.getAccountId());
-            userEntity.setEmailAddress(userInfo.getEmailAddress());
-            userEntity.setDisplayName(userInfo.getDisplayName());
-            TB_JIRA_USER_JpaRepository.save(userEntity);
+            if(existUser != null){ // 정보 조회시 있으면 업데이트
+
+                existUser.setAccountId(userInfo.getAccountId());
+                existUser.setEmailAddress(userInfo.getEmailAddress());
+                existUser.setDisplayName(userInfo.getDisplayName());
+                TB_JIRA_USER_JpaRepository.save(existUser);
+
+            }else{ // 없으면 추가
+
+                TB_JIRA_USER_Entity userEntity = new TB_JIRA_USER_Entity();
+                userEntity.setAccountId(userInfo.getAccountId());
+                userEntity.setEmailAddress(userInfo.getEmailAddress());
+                userEntity.setDisplayName(userInfo.getDisplayName());
+                TB_JIRA_USER_JpaRepository.save(userEntity);
+            }
 
         }).subscribe();
 
