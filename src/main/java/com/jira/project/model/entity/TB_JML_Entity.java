@@ -48,6 +48,9 @@ public class TB_JML_Entity {
     @Column(name = "JI_U_FLAG")
     private Boolean updateIssueFlag;
 
+    @Column(name = "JP_LEADER")
+    private String jiraProjectLeader;
+
     @PrePersist
     public void prePersist() {
         LocalDateTime now = LocalDateTime.now();
