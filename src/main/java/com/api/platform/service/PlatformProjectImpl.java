@@ -236,7 +236,7 @@ public class PlatformProjectImpl implements PlatformProject {
 
         String jiraProjectCode = jiraProject.namingJiraKey();
         String projectFlag = essentialDTO.getProjectFlag();
-        String projectName = essentialDTO.getProjectName();
+        String projectName = essentialDTO.getProjectName().trim();
         String projectCode = commonDTO.getProjectCode();
         String assignee = commonDTO.getAssignee();
         String subAssignee = commonDTO.getSubAssignee();
@@ -262,6 +262,9 @@ public class PlatformProjectImpl implements PlatformProject {
 
                 ProjectInfoDTO.ProjectInfoDTOBuilder<?, ?> projectBuilder = ProjectInfoDTO.builder();
                 projectBuilder = setCommonFields(projectBuilder, jiraProjectCode, commonDTO);
+
+                // 제목
+                setBuilder("[P] " + projectName, projectBuilder::summary);
 
                 // 이슈타입
                 setBuilder(
@@ -298,6 +301,9 @@ public class PlatformProjectImpl implements PlatformProject {
 
                 MaintenanceInfoDTO.MaintenanceInfoDTOBuilder<?, ?> maintenanceBuilder = MaintenanceInfoDTO.builder();
                 maintenanceBuilder = setCommonFields(maintenanceBuilder, jiraProjectCode, commonDTO );
+
+                // 제목
+                setBuilder("[M] " + projectName, maintenanceBuilder::summary);
 
                 // 이슈타입
                 setBuilder(
@@ -420,10 +426,6 @@ public class PlatformProjectImpl implements PlatformProject {
 
         // 프로젝트
         customBuilder.project(new FieldDTO.Project(jiraProjectCode, null));
-
-        // 제목
-        String summary = "기본 정보";
-        customBuilder.summary(summary);
 
         // 담당자 및 부 담당자
         String assignees = setAssignees(commonDTO.getAssignee(), commonDTO.getSubAssignee());
