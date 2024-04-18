@@ -52,6 +52,14 @@ dependencies {
 	//json
 	implementation 'org.json:json:20210307'
 
+	// csv
+	implementation 'com.opencsv:opencsv:4.6'
+
+	// 엑셀
+	implementation 'org.apache.poi:poi-ooxml:4.0.0'								// Excel다운
+	implementation 'org.apache.poi:poi:4.0.0'									// Excel 다운
+	implementation 'commons-io:commons-io:2.0.1'
+	
 	// Spring Security
 	//implementation 'org.springframework.boot:spring-boot-starter-security'
 
