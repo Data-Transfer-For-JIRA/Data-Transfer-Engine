@@ -32,4 +32,6 @@ public interface PlatformProject {
     <T, R> void setBuilder(Supplier<T> supplier, Function<T, R> function, Consumer<R> consumer);
 
     ReturnMessage platformWeblink(String mainJiraKey, String subJiraKey) throws Exception;
+
+    void upDateProjectInfo( BaseDTO baseDTO) throws Exception;
 }

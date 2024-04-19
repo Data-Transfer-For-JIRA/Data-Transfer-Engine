@@ -61,5 +61,15 @@ public class PlatformController {
 
         return ReturnMessageList;
     }
+
+    @ResponseBody
+    @RequestMapping(
+            value = {"/update"},
+            method = {RequestMethod.PUT}
+    )
+    public void upDateProjectInfo(@RequestBody BaseDTO baseDTO) throws Exception {
+        logger.info("[::PlatformController::] 플랫폼을 프로젝트 업데이트");
+        platformProject.upDateProjectInfo(baseDTO);
+    }
     
 }

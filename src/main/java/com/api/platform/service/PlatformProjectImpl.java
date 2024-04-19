@@ -399,6 +399,30 @@ public class PlatformProjectImpl implements PlatformProject {
         return assignees;
     }
 
+    @Override
+    @Transactional
+    public void upDateProjectInfo(BaseDTO baseDTO) throws Exception {
+        // 프로젝트 정보 업데이트
+        CreateProjectDTO 업데이트_정보 = new CreateProjectDTO();
+        // 프로젝트 이름
+        String 프로젝트_이름 = baseDTO.getEssential().getProjectName();
+        // 담당자
+        String 담당자_이름 =baseDTO.getCommon().getAssignee();
+
+        if(담당자_이름 != null && !담당자_이름.isEmpty()){
+            TB_JIRA_USER_Entity user = (TB_JIRA_USER_Entity) TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(담당자_이름);
+            String 계정_정보 = user.getAccountId();
+            업데이트_정보.setLeadAccountId(계정_정보);
+        }
+
+        업데이트_정보.setName(프로젝트_이름);
+
+        jiraProject.updateProjectInfo(업데이트_정보);
+
+        // 기본 정보 이슈 업데이트
+
+    }
+
     /*
     public <T> boolean hasValue(T dto) {
 
