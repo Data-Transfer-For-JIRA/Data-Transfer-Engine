@@ -9,6 +9,8 @@ import com.utils.WebClientUtils;
 import com.utils.전자문서직원;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +33,7 @@ public class AccountImpl implements Account {
     @Autowired
     private 전자문서직원 전자문서직원;
 
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     public AdminInfoDTO getAdminInfo(int personalId){
 
         Optional<TB_ADMIN_Entity> search_result = TB_ADMIN_JpaRepository.findById(personalId);
@@ -111,6 +114,20 @@ public class AccountImpl implements Account {
 
 
         return response;
+    }
+
+    @Override
+    public String getUserNameByJiraAccountId(String accountId){
+        logger.info("[::AccountImpl::] 사용자 이름 아이디로 조회"+accountId);
+        TB_JIRA_USER_Entity 유저정보 = TB_JIRA_USER_JpaRepository.findByAccountId(accountId);
+        String 이름 = 유저정보.getDisplayName();
+
+        if(이름.contains("(")){
+            int startIndex = 이름.indexOf("(");
+            return 이름.substring(0, startIndex).trim(); // 대부분 모든 사람의 이름 뒤에 영어 이름이 붙어 나옴
+        }else{
+            return 이름; // epage dev 케이스
+        }
     }
 
 

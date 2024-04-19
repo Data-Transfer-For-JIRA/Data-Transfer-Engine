@@ -1,6 +1,7 @@
 package com.jira.project.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.jira.account.service.Account;
 import com.jira.issue.service.JiraIssue;
 import com.jira.project.model.dao.TB_JLL_JpaRepository;
 import com.jira.project.model.dao.TB_JML_JpaRepository;
@@ -47,6 +48,9 @@ public class JiraProjectImpl implements JiraProject {
 
     @Autowired
     private JiraIssue jiraIssue;
+
+    @Autowired
+    private Account account;
 
     /*
     *  특정 키워드로 디비에서 지라 프로젝트 목록 조회
@@ -310,6 +314,51 @@ public class JiraProjectImpl implements JiraProject {
         }
 
         return resultList;
+    }
+
+    @Override
+    @Transactional
+    public ProjectDTO updateProjectInfo(CreateProjectDTO createProjectDTO) throws Exception{
+
+        logger.info("[::TransferProjectImpl::] 지라 프로젝트 업데이트");
+
+        String endpoint = "/rest/api/3/project/"+createProjectDTO.getKey();
+
+        CreateProjectDTO 업데이트_데이터 = new CreateProjectDTO();
+            
+            // 프로젝트 이름 수정
+        if(createProjectDTO.getName() != null && !createProjectDTO.getName().isEmpty()){
+            업데이트_데이터.setName(createProjectDTO.getName());
+        }
+
+            // 담당자 수정
+        if(createProjectDTO.getLeadAccountId() !=  null && !createProjectDTO.getLeadAccountId().isEmpty()){
+            업데이트_데이터.setLeadAccountId(createProjectDTO.getLeadAccountId());
+        }
+
+        ProjectDTO  결과 = webClientUtils.put(endpoint,업데이트_데이터, ProjectDTO.class).block();
+
+        if(결과.getKey() != null){ // JML 테이블 업데이트
+            String 이름;
+
+            TB_JML_Entity 업데이트_대상 = TB_JML_JpaRepository.findByKey(결과.getKey());
+            업데이트_대상.setJiraProjectName(결과.getName());
+
+            String 담당자_이름 = 결과.getLead().getDisplayName();
+
+            if(담당자_이름.contains("(")){
+                int startIndex = 담당자_이름.indexOf("(");
+                이름= 담당자_이름.substring(0, startIndex).trim();
+            }else{
+                이름 = 담당자_이름; // epage dev 케이스
+            }
+
+            업데이트_대상.setJiraProjectLeader(이름);
+
+            TB_JML_JpaRepository.save(업데이트_대상);
+        }
+
+        return 결과;
     }
 
 }

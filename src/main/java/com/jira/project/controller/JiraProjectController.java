@@ -1,5 +1,6 @@
 package com.jira.project.controller;
 
+import com.jira.project.model.dto.CreateProjectDTO;
 import com.jira.project.model.entity.TB_JLL_Entity;
 import com.jira.project.model.entity.TB_JML_Entity;
 import com.jira.project.service.JiraProject;
@@ -145,5 +146,19 @@ public class JiraProjectController {
     public List<TB_JLL_Entity> saveProjectsRelation() throws Exception {
         logger.info("[::TransferProjectController::] 프로젝트 연결관계 디비에 저장하는 API");
         return  jiraProject.saveProjectsRelation();
+    }
+
+    /*
+    *  프로젝트 정보 업데이트 // 키, 이름, 담당자
+    * */
+    @ResponseBody
+    @RequestMapping(
+            value={"/update"},
+            method={RequestMethod.PUT}
+    )
+    public ProjectDTO updateProjectInfo(@RequestBody CreateProjectDTO createProjectDTO) throws Exception{
+
+        logger.info("[::TransferProjectController::] 지라에 생성된 프로젝트 정보 업데이트");
+        return jiraProject.updateProjectInfo(createProjectDTO);
     }
 }

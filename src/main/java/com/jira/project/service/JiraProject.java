@@ -1,5 +1,6 @@
 package com.jira.project.service;
 
+import com.jira.project.model.dto.CreateProjectDTO;
 import com.jira.project.model.dto.ProjectDTO;
 import com.jira.project.model.entity.TB_JLL_Entity;
 import com.jira.project.model.entity.TB_JML_Entity;
@@ -42,5 +43,7 @@ public interface JiraProject {
     *  TB_PJT_BASE 테이블에서 WSS의 프로젝트 관계를 디비에 저장하는 기능(1회 수행 하는 기능)
     * */
     List<TB_JLL_Entity> saveProjectsRelation() throws Exception;
+
+    ProjectDTO  updateProjectInfo(CreateProjectDTO createProjectDTO) throws Exception;
 
 }
