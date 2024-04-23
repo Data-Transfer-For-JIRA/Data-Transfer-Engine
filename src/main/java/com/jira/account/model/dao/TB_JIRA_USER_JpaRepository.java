@@ -1,6 +1,6 @@
-package com.jira.account.dao;
+package com.jira.account.model.dao;
 
-import com.jira.account.entity.TB_JIRA_USER_Entity;
+import com.jira.account.model.entity.TB_JIRA_USER_Entity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

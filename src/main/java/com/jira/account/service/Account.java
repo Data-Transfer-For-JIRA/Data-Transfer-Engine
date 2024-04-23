@@ -1,7 +1,7 @@
 package com.jira.account.service;
 
-import com.jira.account.dto.AdminInfoDTO;
-import com.jira.account.dto.UserInfoDTO;
+import com.jira.account.model.dto.AdminInfoDTO;
+import com.jira.account.model.dto.UserInfoDTO;
 import reactor.core.publisher.Flux;
 
 

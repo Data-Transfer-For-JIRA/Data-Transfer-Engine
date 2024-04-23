@@ -1,7 +1,7 @@
 package com.api.platform.service;
 
-import com.jira.account.dao.TB_JIRA_USER_JpaRepository;
-import com.jira.account.entity.TB_JIRA_USER_Entity;
+import com.jira.account.model.dao.TB_JIRA_USER_JpaRepository;
+import com.jira.account.model.entity.TB_JIRA_USER_Entity;
 import com.api.platform.dto.BaseDTO;
 import com.api.platform.dto.ReturnMessage;
 import com.jira.issue.model.dto.*;

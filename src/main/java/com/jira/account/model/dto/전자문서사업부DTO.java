@@ -1,4 +1,4 @@
-package com.jira.account.dto;
+package com.jira.account.model.dto;
 
 import lombok.*;
 

@@ -1,7 +1,7 @@
 package com.jira.account.controller;
 
-import com.jira.account.dto.AdminInfoDTO;
-import com.jira.account.dto.UserInfoDTO;
+import com.jira.account.model.dto.AdminInfoDTO;
+import com.jira.account.model.dto.UserInfoDTO;
 import com.jira.account.service.Account;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

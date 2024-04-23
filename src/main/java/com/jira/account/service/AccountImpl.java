@@ -1,13 +1,15 @@
 package com.jira.account.service;
 
-import com.jira.account.dao.TB_JIRA_USER_JpaRepository;
-import com.jira.account.dto.AdminInfoDTO;
-import com.jira.account.dto.UserInfoDTO;
-import com.jira.account.entity.TB_ADMIN_Entity;
-import com.jira.account.entity.TB_JIRA_USER_Entity;
+import com.jira.account.model.TeamInfo;
+import com.jira.account.model.dao.TB_JIRA_USER_JpaRepository;
+import com.jira.account.model.dto.AdminInfoDTO;
+import com.jira.account.model.dto.UserInfoDTO;
+import com.jira.account.model.entity.TB_ADMIN_Entity;
+import com.jira.account.model.entity.TB_JIRA_USER_Entity;
 import com.utils.WebClientUtils;
-import com.utils.전자문서직원;
+import com.utils.마크애니직원;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,13 +27,13 @@ import java.util.Optional;
 public class AccountImpl implements Account {
 
     @Autowired
-    private com.jira.account.dao.TB_ADMIN_JpaRepository TB_ADMIN_JpaRepository;
+    private com.jira.account.model.dao.TB_ADMIN_JpaRepository TB_ADMIN_JpaRepository;
 
     @Autowired
     private TB_JIRA_USER_JpaRepository TB_JIRA_USER_JpaRepository;
 
     @Autowired
-    private 전자문서직원 전자문서직원;
+    private 마크애니직원 마크애니직원;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     public AdminInfoDTO getAdminInfo(int personalId){
@@ -62,9 +64,9 @@ public class AccountImpl implements Account {
     @Transactional
     public  Flux<UserInfoDTO> getCollectUserInfo() {
 
-        System.out.println(전자문서직원.직원);
+        System.out.println(마크애니직원.getEmployee());
 
-        List<String> markany = 전자문서직원.직원;
+        List<String> markany = 마크애니직원.getEmployee();
 
         AdminInfoDTO info = getAdminInfo(1);
 
@@ -80,10 +82,7 @@ public class AccountImpl implements Account {
                 .buffer(bufferSize)
                 .flatMapSequential(Flux::fromIterable) // 각각의 버퍼를 순차적으로 처리
                 .filter(userInfo -> {
-                    String name = userInfo.getDisplayName();
-                    if (name.contains("(")) {
-                        name = name.substring(0, name.indexOf("(")).trim();
-                    }
+                    String name = 이름_추출(userInfo.getDisplayName());
                     return markany.contains(name);
                 });
 
@@ -92,21 +91,26 @@ public class AccountImpl implements Account {
 
             TB_JIRA_USER_Entity existUser = TB_JIRA_USER_JpaRepository.findByAccountId(userInfo.getAccountId());
 
+            Optional<TeamInfo> 팀정보 = Optional.ofNullable(TeamInfo.findInfoByName(이름_추출(existUser.getDisplayName())));
+            String 팀 = 팀정보.map(TeamInfo::getTeam).orElse(null);
+            String 파트 = 팀정보.map(TeamInfo::getPart).orElse(null);
+
             if(existUser != null){ // 정보 조회시 있으면 업데이트
                 existUser.setDisplayName(userInfo.getDisplayName());
                 existUser.setAccountId(userInfo.getAccountId());
                 existUser.setEmailAddress(userInfo.getEmailAddress());
-                existUser.setDisplayName(userInfo.getDisplayName());
-                existUser.setTeam(userInfo.getTeamName());
-                existUser.setPart(userInfo.getPart());
+                existUser.setTeam(팀);
+                existUser.setPart(파트);
                 TB_JIRA_USER_JpaRepository.save(existUser);
 
             }else{ // 없으면 추가
 
                 TB_JIRA_USER_Entity userEntity = new TB_JIRA_USER_Entity();
+                userEntity.setDisplayName(userInfo.getDisplayName());
                 userEntity.setAccountId(userInfo.getAccountId());
                 userEntity.setEmailAddress(userInfo.getEmailAddress());
-                userEntity.setDisplayName(userInfo.getDisplayName());
+                userEntity.setTeam(팀);
+                userEntity.setPart(파트);
                 TB_JIRA_USER_JpaRepository.save(userEntity);
             }
 
@@ -130,6 +134,13 @@ public class AccountImpl implements Account {
         }
     }
 
+    public String 이름_추출(String displayName) {
 
+        if (displayName.contains("(")) {
+            String name = displayName.substring(0, displayName.indexOf("(")).trim();
+            return  name;
+        }
 
+        return StringUtils.EMPTY;
+    }
 }

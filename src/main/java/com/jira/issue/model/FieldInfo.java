@@ -41,11 +41,10 @@ public enum FieldInfo {
     JIRA_THREE_STEP(FieldInfoCategory.BARCODE_TYPE, "3단", "10200"), // 3단
 
     // 팀
-    EDOC_PIO_TEAM1(FieldInfoCategory.TEAM, "전자문서_PIO 1팀", "958ac74d-b505-42bd-951d-d33cd54a4db8"), // 전자문서_PIO 1팀
-    EDOC_PIO_TEAM2(FieldInfoCategory.TEAM, "전자문서_PIO 2팀", "563a40c8-3310-4acf-995f-c5e912d662f8"), // 전자문서_PIO 2팀
-    EDOC_PIO_TEAM2_PART1(FieldInfoCategory.TEAM, "전자문서_PIO 2팀 1파트", "6949b496-8918-4bdc-81a7-fb71193e8a4b"), // 전자문서_PIO 2팀 1파트
-    EDOC_PIO_TEAM2_PART2(FieldInfoCategory.TEAM, "전자문서_PIO 2팀 2파트", "f866aef7-eed7-4c50-9aea-be7ce383c10c"), // 전자문서_PIO 2팀 2파트
-    EDOC_PIO_TEAM2_PART3(FieldInfoCategory.TEAM, "전자문서_PIO 2팀 3파트", "dad204ef-b2e1-444e-accc-850560ea6550"), // 전자문서_PIO 2팀 3파트
+    AIT_TEAM(FieldInfoCategory.TEAM, "기술본부 응용정보기술센터", "43364a3b-a84f-4fbf-9ce3-cfaa869b5654"), // 기술본부 응용정보기술센터
+    AIT_TEAM_PART1(FieldInfoCategory.TEAM, "기술본부 응용정보기술센터 1파트", "6949b496-8918-4bdc-81a7-fb71193e8a4b"), // 기술본부 응용정보기술센터 1파트
+    AIT_TEAM_PART2(FieldInfoCategory.TEAM, "기술본부 응용정보기술센터 2파트", "f866aef7-eed7-4c50-9aea-be7ce383c10c"), // 기술본부 응용정보기술센터 2파트
+    AIT_TEAM_PART3(FieldInfoCategory.TEAM, "기술본부 응용정보기술센터 3파트", "dad204ef-b2e1-444e-accc-850560ea6550"), // 기술본부 응용정보기술센터 3파트
 
     // 파트
     PART_0(FieldInfoCategory.PART, "0", "10210"), // 0파트

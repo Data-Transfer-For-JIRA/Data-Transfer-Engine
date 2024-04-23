@@ -1,4 +1,4 @@
-package com.jira.account.entity;
+package com.jira.account.model.entity;
 
 import lombok.*;
 import javax.persistence.*;

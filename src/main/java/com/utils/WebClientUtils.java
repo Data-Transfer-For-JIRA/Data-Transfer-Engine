@@ -1,6 +1,6 @@
 package com.utils;
 
-import com.jira.account.dto.AdminInfoDTO;
+import com.jira.account.model.dto.AdminInfoDTO;
 import com.jira.account.service.Account;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;

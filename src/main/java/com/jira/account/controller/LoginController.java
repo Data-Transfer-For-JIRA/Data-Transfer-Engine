@@ -2,7 +2,7 @@ package com.jira.account.controller;
 
 //import com.account.dto.AdminInfoDTO;
 //import com.account.dto.JwtToken;
-import com.jira.account.dto.LoginDTO;
+import com.jira.account.model.dto.LoginDTO;
 //import com.account.service.Login;
 //import com.account.service.LoginImpl;
 import org.slf4j.Logger;
