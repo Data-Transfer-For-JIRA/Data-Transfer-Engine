@@ -1,4 +1,4 @@
-package com.jira.issue.model.dto;
+package com.jira.issue.model.dto.search;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,7 +12,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class MaintenanceInfoDTO extends CustomFieldDTO {
+public class SearchMaintenanceInfoDTO extends SearchCustomFieldDTO{
 
     // 유지보수 기본 정보 필드
     // 유지보수 명

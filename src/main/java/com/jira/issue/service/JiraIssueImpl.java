@@ -11,6 +11,14 @@ import com.jira.issue.model.FieldInfo;
 import com.jira.issue.model.FieldInfoCategory;
 import com.jira.issue.model.dao.PJ_PG_SUB_JpaRepository;
 import com.jira.issue.model.dto.*;
+import com.jira.issue.model.dto.comment.AddCommentDTO;
+import com.jira.issue.model.dto.create.CreateIssueDTO;
+import com.jira.issue.model.dto.create.CustomFieldDTO;
+import com.jira.issue.model.dto.create.MaintenanceInfoDTO;
+import com.jira.issue.model.dto.create.ProjectInfoDTO;
+import com.jira.issue.model.dto.search.SearchIssueDTO;
+import com.jira.issue.model.dto.search.SearchMaintenanceInfoDTO;
+import com.jira.issue.model.dto.search.SearchProjectInfoDTO;
 import com.jira.issue.model.dto.weblink.CreateWebLinkDTO;
 import com.jira.issue.model.dto.weblink.RequestWeblinkDTO;
 import com.jira.issue.model.dto.weblink.SearchWebLinkDTO;
@@ -1263,6 +1271,39 @@ public class JiraIssueImpl implements JiraIssue {
         }catch (Exception e){
             logger.error(e.getMessage());
             return false;
+        }
+    }
+
+    /*
+     *  유지보수_기본정보 이슈 조회
+     * */
+    @Override
+    public SearchIssueDTO<SearchMaintenanceInfoDTO> getMaintenanceIssue(String issueKey) throws Exception {
+        try {
+            String endpoint = "/rest/api/3/issue/" + issueKey;
+            SearchIssueDTO<SearchMaintenanceInfoDTO> 조회결과 =  webClientUtils.get(endpoint,new ParameterizedTypeReference<SearchIssueDTO<SearchMaintenanceInfoDTO>>() {}).block();
+
+            return 조회결과;
+
+        } catch (Exception e) {
+            logger.error("유지보수 기본정보 이슈 조회 에러 발생");
+            throw new Exception(e.getMessage());
+        }
+    }
+
+    /*
+     *  프로젝트_기본정보 이슈 조회
+     * */
+    @Override
+    public SearchIssueDTO<SearchProjectInfoDTO> getProjectIssue(String issueKey) throws Exception{
+        try {
+            String endpoint = "/rest/api/3/issue/"+issueKey;
+            SearchIssueDTO<SearchProjectInfoDTO> 조회결과 =  webClientUtils.get(endpoint,new ParameterizedTypeReference<SearchIssueDTO<SearchProjectInfoDTO>>() {}).block();
+
+            return 조회결과;
+        }catch (Exception e){
+            logger.error("유지보수 기본정보 이슈 조회 에러 발생");
+            throw new Exception(e.getMessage());
         }
     }
 }

@@ -1,6 +1,9 @@
 package com.jira.issue.service;
 
 import com.jira.issue.model.dto.TransferIssueDTO;
+import com.jira.issue.model.dto.search.SearchIssueDTO;
+import com.jira.issue.model.dto.search.SearchMaintenanceInfoDTO;
+import com.jira.issue.model.dto.search.SearchProjectInfoDTO;
 import com.jira.issue.model.dto.weblink.RequestWeblinkDTO;
 import com.jira.issue.model.dto.weblink.SearchWebLinkDTO;
 import com.jira.project.model.entity.TB_JML_Entity;
@@ -44,4 +47,15 @@ public interface JiraIssue {
     Boolean addMention(String issueIdOrKey, String targetUser) throws Exception;
 
     Boolean addMentionAndComment(String issueIdOrKey, String targetUser ,String contents) throws Exception;
+
+    /*
+    *  유지보수_기본정보 이슈 조회
+    * */
+    SearchIssueDTO<SearchMaintenanceInfoDTO> getMaintenanceIssue(String issueKey) throws Exception;
+    /*
+     *  프로젝트_기본정보 이슈 조회
+     * */
+    SearchIssueDTO<SearchProjectInfoDTO> getProjectIssue(String issueKey) throws Exception;
+
+
 }

@@ -1,11 +1,13 @@
-package com.jira.issue.model.dto;
+package com.jira.issue.model.dto.create;
 
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.jira.issue.model.dto.FieldDTO;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.io.IOException;
 import java.util.List;
 
 @Getter

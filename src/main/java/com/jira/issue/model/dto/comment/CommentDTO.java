@@ -1,4 +1,4 @@
-package com.jira.issue.model.dto;
+package com.jira.issue.model.dto.comment;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;

@@ -55,6 +55,11 @@ public class FieldDTO {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class User {
         String accountId;
+        String displayName;
+        public User(String accountId) {
+            this.accountId = accountId;
+            this.displayName = null; // 또는 적절한 기본값 설정
+        }
     }
 
     @Getter
@@ -126,6 +131,10 @@ public class FieldDTO {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Field {
         private String id;
+        private String value;
+        public Field(String id) {
+            this.id = id;
+            this.value = null;
+        }
     }
-
 }
