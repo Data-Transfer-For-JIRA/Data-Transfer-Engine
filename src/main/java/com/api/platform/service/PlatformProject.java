@@ -2,7 +2,7 @@ package com.api.platform.service;
 
 import com.api.platform.dto.BaseDTO;
 import com.api.platform.dto.ReturnMessage;
-import com.jira.issue.model.dto.CustomFieldDTO;
+import com.jira.issue.model.dto.create.CustomFieldDTO;
 import com.jira.issue.model.dto.FieldDTO;
 
 import java.util.List;
