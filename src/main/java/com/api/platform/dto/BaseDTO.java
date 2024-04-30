@@ -105,7 +105,7 @@ public class BaseDTO {
         private String projectProgressStep; // 프로젝트 진행 단계(select box)
 
         // 유지보수
-        private String contractStatus; // 계약 여부(check box) [계약: 1, 계약 x: 0]
+        private String contractStatus; // 계약 여부(check box)
 
         private String maintenanceStartDate; // 유지보수 시작일(calendar)
 

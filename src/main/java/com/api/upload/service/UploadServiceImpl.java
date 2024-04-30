@@ -1,5 +1,7 @@
 package com.api.upload.service;
 
+import com.api.platform.dto.BaseDTO;
+import com.api.platform.service.PlatformProjectImpl;
 import com.api.upload.dto.MaintenanceDTO;
 import com.jira.issue.service.JiraIssue;
 import com.jira.project.model.dao.TB_JML_JpaRepository;
@@ -32,7 +34,13 @@ public class UploadServiceImpl implements UploadService {
 
     @Autowired
     JiraIssue jiraIssue;
+
+    @Autowired
+    PlatformProjectImpl platformProject;
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    private final DateTimeFormatter 목표_포맷 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Override
     public String uploadMaintenanceDate(String fileName, String filePath) throws Exception {
@@ -56,7 +64,30 @@ public class UploadServiceImpl implements UploadService {
             if (!StringUtils.isEmpty(이슈키)) {
                 logger.info("[:: UploadServiceImpl ::] 엑셀파일 -> 이슈키 : " + 이슈키 + " - " + 행_데이터);
 
-                // TODO: 기본 정보 이슈 업데이트
+                // 기본 정보 이슈 업데이트
+                BaseDTO.EssentialDTO essentialDTO = BaseDTO.EssentialDTO.builder()
+                        .projectFlag("M")
+                        .build();
+
+                BaseDTO.CommonDTO commonDTO = BaseDTO.CommonDTO.builder()
+                        .client(행_데이터.get발주자())
+                        .contractor(행_데이터.get계약자())
+                        .salesManager(행_데이터.get영업담당())
+                        .build();
+
+                BaseDTO.SelectedDTO selectedDTO = BaseDTO.SelectedDTO.builder()
+                        .contractStatus(checkContract(행_데이터.get계약시작(), 행_데이터.get계약종료()))
+                        .maintenanceStartDate(행_데이터.get계약시작())
+                        .maintenanceEndDate(행_데이터.get계약종료())
+                        .build();
+
+                BaseDTO baseDTO = BaseDTO.builder()
+                        .essential(essentialDTO)
+                        .common(commonDTO)
+                        .selected(selectedDTO)
+                        .build();
+
+                platformProject.updateBaseIssue(이슈키, baseDTO);
 
                 메시지 = "[" + 프로젝트_코드 + "]" + " : " +  프로젝트명 + " - 프로젝트 업데이트를 완료하였습니다.";
                 SaveLog.SchedulerResult("updateByExcel\\SUCCESS", 메시지, new Date());
@@ -139,7 +170,6 @@ public class UploadServiceImpl implements UploadService {
 
     private String formatDate(String 변환할_날짜) {
 
-        DateTimeFormatter 목표_포맷 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         DateTimeFormatter[] 변환_포맷들 = {
                 DateTimeFormatter.ofPattern("yyyy-MM-dd"),
                 DateTimeFormatter.ofPattern("dd-MM월-yyyy").withLocale(Locale.KOREAN),
@@ -156,5 +186,19 @@ public class UploadServiceImpl implements UploadService {
 
         logger.warn("[ :: UploadServiceImpl :: ] formatDate -> 날짜 포맷팅 안된 경우 발생");
         return "";
+    }
+
+    private String checkContract(String 시작, String 종료) {
+
+        String 계약여부 = "";
+        LocalDate 계약시작 = LocalDate.parse(시작, 목표_포맷);
+        LocalDate 계약종료 = LocalDate.parse(종료, 목표_포맷);
+        LocalDate 오늘 = LocalDate.now();
+
+        if (!오늘.isBefore(계약시작) && !오늘.isAfter(계약종료)) {
+            계약여부 = "계약";
+        }
+
+        return 계약여부;
     }
 }

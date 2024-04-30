@@ -1,12 +1,15 @@
 package com.api.platform.service;
 
-import com.jira.account.model.dao.TB_JIRA_USER_JpaRepository;
-import com.jira.account.model.entity.TB_JIRA_USER_Entity;
 import com.api.platform.dto.BaseDTO;
 import com.api.platform.dto.ReturnMessage;
-import com.jira.issue.model.dto.*;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jira.account.model.dao.TB_JIRA_USER_JpaRepository;
+import com.jira.account.model.entity.TB_JIRA_USER_Entity;
 import com.jira.issue.model.FieldInfo;
 import com.jira.issue.model.FieldInfoCategory;
+import com.jira.issue.model.dto.FieldDTO;
+import com.jira.issue.model.dto.ResponseIssueDTO;
 import com.jira.issue.model.dto.create.CreateIssueDTO;
 import com.jira.issue.model.dto.create.CustomFieldDTO;
 import com.jira.issue.model.dto.create.MaintenanceInfoDTO;
@@ -24,6 +27,7 @@ import com.utils.ProjectConfig;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -304,7 +308,7 @@ public class PlatformProjectImpl implements PlatformProject {
                 }
 
                 MaintenanceInfoDTO.MaintenanceInfoDTOBuilder<?, ?> maintenanceBuilder = MaintenanceInfoDTO.builder();
-                maintenanceBuilder = setCommonFields(maintenanceBuilder, jiraProjectCode, commonDTO );
+                maintenanceBuilder = setCommonFields(maintenanceBuilder, jiraProjectCode, commonDTO);
 
                 // 제목
                 setBuilder("[M] " + projectName, maintenanceBuilder::summary);
@@ -427,6 +431,148 @@ public class PlatformProjectImpl implements PlatformProject {
 
     }
 
+    @Override
+    public Map<String, String> updateBaseIssue(String issueKey, BaseDTO baseDTO) throws Exception {
+
+        logger.info("[ :: PlatformProjectImpl :: ] updateBaseIssue -> " + issueKey);
+
+        Map<String, String> result = new HashMap<>();
+
+        CreateIssueDTO<?> updateIssueDTO = setIssueDTO(StringUtils.EMPTY, baseDTO);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        String jsonRequestBody = objectMapper.writeValueAsString(updateIssueDTO);
+        logger.info("[ :: PlatformProjectImpl :: ] updateIssueDTO -> " + jsonRequestBody);
+
+        // 이슈 업데이트
+        if (issueKey != null) {
+            String endpoint = "/rest/api/3/issue/" + issueKey;
+            Optional<Boolean> response = webClientUtils.executePut(endpoint, updateIssueDTO);
+            if (response.isPresent()) {
+                if (response.get()) {
+                    result.put("jiraIssueKey", issueKey);
+                    result.put("result", "이슈 업데이트 성공");
+
+                    return result;
+                }
+            }
+        }
+
+        result.put("jiraIssueKey", issueKey);
+        result.put("result", "이슈 업데이트 실패");
+
+        return result;
+    }
+
+    public CreateIssueDTO setIssueDTO(String jiraProjectCode, BaseDTO baseDTO) throws Exception {
+
+        BaseDTO.EssentialDTO essentialDTO = baseDTO.getEssential();
+        BaseDTO.CommonDTO commonDTO = baseDTO.getCommon();
+        BaseDTO.SelectedDTO selectedDTO = baseDTO.getSelected();
+
+        String projectName = Optional.ofNullable(essentialDTO.getProjectName())
+                .map(String::trim)
+                .orElse(null);
+
+        CreateIssueDTO<?> issueDTO = null;
+        if (StringUtils.equals(essentialDTO.getProjectFlag(), "P")) {
+
+            ProjectInfoDTO.ProjectInfoDTOBuilder<?, ?> projectBuilder = ProjectInfoDTO.builder();
+            projectBuilder = setCommonFields(projectBuilder, jiraProjectCode, commonDTO);
+
+            // 제목
+            if (projectName != null) {
+                setBuilder("[P] " + projectName, projectBuilder::summary);
+            }
+
+            // 이슈타입
+            setBuilder(
+                    () -> FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "프로젝트 기본 정보"),
+                    fieldInfo -> new FieldDTO.Field(fieldInfo.getId()),
+                    projectBuilder::issuetype
+            );
+
+            // 프로젝트 코드
+            setBuilder(commonDTO.getProjectCode(), projectBuilder::projectCode);
+
+            // 프로젝트 이름
+            setBuilder(projectName, projectBuilder::projectName);
+
+            // 프로젝트 배정일
+            setBuilder(selectedDTO::getProjectAssignmentDate, projectBuilder::projectAssignmentDate);
+
+            // 프로젝트 진행 단계
+            setBuilder(
+                    () -> FieldInfo.ofLabel(FieldInfoCategory.PROJECT_PROGRESS_STEP, selectedDTO.getProjectProgressStep()),
+                    fieldInfo -> new FieldDTO.Field(fieldInfo.getId()),
+                    projectBuilder::projectProgressStep
+            );
+
+            ProjectInfoDTO projectInfoDTO = projectBuilder.build();
+            issueDTO = new CreateIssueDTO<>(projectInfoDTO);
+
+        }
+        else {
+
+            MaintenanceInfoDTO.MaintenanceInfoDTOBuilder<?, ?> maintenanceBuilder = MaintenanceInfoDTO.builder();
+            maintenanceBuilder = setCommonFields(maintenanceBuilder, jiraProjectCode, commonDTO);
+
+            // 제목
+            if (projectName != null) {
+                setBuilder("[M] " + projectName, maintenanceBuilder::summary);
+            }
+
+            // 이슈타입
+            setBuilder(
+                    () -> FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "유지보수 기본 정보"),
+                    fieldInfo -> new FieldDTO.Field(fieldInfo.getId()),
+                    maintenanceBuilder::issuetype
+            );
+
+            // 프로젝트 코드
+            setBuilder(commonDTO.getProjectCode(), maintenanceBuilder::maintenanceCode);
+
+            // 프로젝트 이름
+            setBuilder(projectName, maintenanceBuilder::maintenanceName);
+
+            // 계약 여부
+            setBuilder(
+                    () -> FieldInfo.ofLabel(FieldInfoCategory.CONTRACT_STATUS, selectedDTO.getContractStatus()),
+                    fieldInfo -> new FieldDTO.Field(fieldInfo.getId()),
+                    maintenanceBuilder::contractStatus
+            );
+
+            // 유지보수 시작일
+            setBuilder(selectedDTO::getMaintenanceStartDate, maintenanceBuilder::maintenanceStartDate);
+
+            // 유지보수 종료일
+            setBuilder(selectedDTO::getMaintenanceEndDate, maintenanceBuilder::maintenanceEndDate);
+
+            // 점검 방법
+            setBuilder(
+                    () -> FieldInfo.ofLabel(FieldInfoCategory.INSPECTION_METHOD, selectedDTO.getInspectionMethod()),
+                    fieldInfo -> new FieldDTO.Field(fieldInfo.getId()),
+                    maintenanceBuilder::inspectionMethod
+            );
+
+            // 점검 방법 기타
+            setBuilder(selectedDTO::getInspectionMethodEtc, maintenanceBuilder::inspectionMethodEtc);
+
+            // 점검 주기
+            setBuilder(
+                    () -> FieldInfo.ofLabel(FieldInfoCategory.INSPECTION_CYCLE, selectedDTO.getInspectionCycle()),
+                    fieldInfo -> new FieldDTO.Field(fieldInfo.getId()),
+                    maintenanceBuilder::inspectionCycle
+            );
+
+            MaintenanceInfoDTO maintenanceInfoDTO = maintenanceBuilder.build();
+            issueDTO = new CreateIssueDTO<>(maintenanceInfoDTO);
+        }
+
+        return issueDTO;
+    }
+
     /*
     public <T> boolean hasValue(T dto) {
 
@@ -453,30 +599,32 @@ public class PlatformProjectImpl implements PlatformProject {
     public <B extends CustomFieldDTO.CustomFieldDTOBuilder<?, ?>> B setCommonFields(B customBuilder, String jiraProjectCode, BaseDTO.CommonDTO commonDTO) throws Exception {
 
         // 프로젝트
-        customBuilder.project(new FieldDTO.Project(jiraProjectCode, null));
-
-        // 담당자 및 부 담당자
-        String assignees = setAssignees(commonDTO.getAssignee(), commonDTO.getSubAssignee());
-        List<String> assigneeList = jiraIssue.getSeveralAssigneeId(assignees);
-
-        if (assigneeList != null) {
-            if (assigneeList.size() >= 1) {
-                customBuilder.assignee(new FieldDTO.User(assigneeList.get(0)));
-            }
-            if (assigneeList.size() == 2) {
-                customBuilder.subAssignee(new FieldDTO.User(assigneeList.get(1)));
-            }
+        if (org.springframework.util.StringUtils.hasText(jiraProjectCode)) {
+            logger.info("프로젝트 코드: " + jiraProjectCode);
+            customBuilder.project(new FieldDTO.Project(jiraProjectCode, null));
         }
+
+        // 담당자
+        String 담당자 = getAccountId(commonDTO.getAssignee());
+        setBuilder(
+                () -> 담당자,
+                accountId -> new FieldDTO.User(accountId),
+                customBuilder::assignee
+        );
+
+        // 부 담당자
+        setBuilder(
+                () -> getAccountId(commonDTO.getSubAssignee()),
+                accountId -> new FieldDTO.User(accountId),
+                customBuilder::subAssignee
+        );
 
         // 영업대표
-        if (!commonDTO.getSalesManager().trim().isEmpty()) {
-            if (jiraIssue.getSeveralAssigneeId(commonDTO.getSalesManager()) != null && !jiraIssue.getSeveralAssigneeId(commonDTO.getSalesManager()).isEmpty()) {
-                String salesManagerId = jiraIssue.getSeveralAssigneeId(commonDTO.getSalesManager()).get(0);
-                if (salesManagerId != null) {
-                    customBuilder.salesManager(new FieldDTO.User(salesManagerId));
-                }
-            }
-        }
+        setBuilder(
+                () -> getAccountId(commonDTO.getSalesManager()),
+                accountId -> new FieldDTO.User(accountId),
+                customBuilder::salesManager
+        );
 
         // 계약사
         setBuilder(commonDTO::getContractor, customBuilder::contractor);
@@ -522,22 +670,22 @@ public class PlatformProjectImpl implements PlatformProject {
         );
 
         // 팀, 파트
-        if (assigneeList != null && !assigneeList.isEmpty()) {
-            TB_JIRA_USER_Entity userEntity = TB_JIRA_USER_JpaRepository.findByAccountId(assigneeList.get(0));
+        if (담당자 != null) {
+            Optional<TB_JIRA_USER_Entity> userEntity = Optional.ofNullable(TB_JIRA_USER_JpaRepository.findByAccountId(담당자));
 
-            if (userEntity != null) {
+            userEntity.ifPresent(사용자_정보 -> {
                 setBuilder(
-                        () -> FieldInfo.ofLabel(FieldInfoCategory.TEAM, userEntity.getTeam()),
+                        () -> FieldInfo.ofLabel(FieldInfoCategory.TEAM, 사용자_정보.getTeam()),
                         fieldInfo -> fieldInfo.getId(),
                         customBuilder::team
                 );
 
                 setBuilder(
-                        () -> FieldInfo.ofLabel(FieldInfoCategory.PART, userEntity.getPart()),
+                        () -> FieldInfo.ofLabel(FieldInfoCategory.PART, 사용자_정보.getPart()),
                         fieldInfo -> new FieldDTO.Field(fieldInfo.getId()),
                         customBuilder::part
                 );
-            }
+            });
         }
 
         // 멀티 OS
@@ -555,7 +703,11 @@ public class PlatformProjectImpl implements PlatformProject {
         );
 
         // 설명
-        if (!commonDTO.getDescription().trim().isEmpty()) {
+        String 설명 = Optional.ofNullable(commonDTO.getDescription())
+                .map(String::trim)
+                .orElse(StringUtils.EMPTY);
+
+        if (!StringUtils.isEmpty(설명)) {
 
             String desc = commonDTO.getDescription();
             desc = desc.replace("\t", "@@").replace(" ", "@@");
@@ -590,7 +742,11 @@ public class PlatformProjectImpl implements PlatformProject {
         }
 
         // 기타 정보
-        if (!commonDTO.getEtc().trim().isEmpty()) {
+        String 기타 = Optional.ofNullable(commonDTO.getEtc())
+                .map(String::trim)
+                .orElse(StringUtils.EMPTY);
+
+        if (!StringUtils.isEmpty(기타)) {
             customBuilder.etc(jiraIssue.setDescription(Collections.singletonList(commonDTO.getEtc())));
         }
 
@@ -824,6 +980,22 @@ public class PlatformProjectImpl implements PlatformProject {
                 logger.error("[::PlatformProjectImpl::] 인력 배정 이슈 생성시 오류 발생 -> " + status + " : " + body);
             }
         }
+    }
+
+    private String getAccountId(String 사용자) {
+
+        String 계정_아이디 = null;
+        List<TB_JIRA_USER_Entity> userEntities = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(사용자);
+        if (userEntities != null && !userEntities.isEmpty()) {
+            계정_아이디 = userEntities.get(0).getAccountId();
+            //logger.info("계정 아이디: " + 계정_아이디);
+        }
+
+        /*String 계정_아이디 = Optional.ofNullable((TB_JIRA_USER_Entity) TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(사용자))
+                .map(계정정보 -> 계정정보.getAccountId())
+                .orElse(null);*/
+
+        return 계정_아이디;
     }
 
 }
