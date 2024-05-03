@@ -985,15 +985,22 @@ public class PlatformProjectImpl implements PlatformProject {
     private String getAccountId(String 사용자) {
 
         String 계정_아이디 = null;
-        List<TB_JIRA_USER_Entity> userEntities = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(사용자);
-        if (userEntities != null && !userEntities.isEmpty()) {
-            계정_아이디 = userEntities.get(0).getAccountId();
-            //logger.info("계정 아이디: " + 계정_아이디);
-        }
 
-        /*String 계정_아이디 = Optional.ofNullable((TB_JIRA_USER_Entity) TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(사용자))
-                .map(계정정보 -> 계정정보.getAccountId())
-                .orElse(null);*/
+        if (사용자 != null && !사용자.isEmpty()) {
+            List<TB_JIRA_USER_Entity> userEntities = TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(사용자);
+
+            if (!userEntities.isEmpty()) {
+                계정_아이디 = userEntities.get(0).getAccountId();
+
+            }
+        }
+        // 담당자 없을 경우 세팅하지 않도록 제거
+        /*else {
+            TB_JIRA_USER_Entity adminEntity = TB_JIRA_USER_JpaRepository.findByDisplayName("epage div");
+            계정_아이디 = adminEntity.getAccountId();
+        }*/
+
+        logger.info("[ :: PlatformProjectImpl :: ] getAccountId -> 사용자: " + 사용자 + " - " + "계정 아이디: " + 계정_아이디);
 
         return 계정_아이디;
     }

@@ -162,7 +162,7 @@ public class UploadServiceImpl implements UploadService {
     }
 
     private String getStringCellValue(Cell cell) {
-        if (cell == null || StringUtils.equals("[1]!표1[[#This Row],[담당]]", cell.toString()) || StringUtils.equals("#N/A", cell.toString())) {
+        if (cell == null || StringUtils.equals("#VALUE!", cell.toString()) || StringUtils.equals("#N/A", cell.toString())) {
             return ""; // 셀이 없는 경우 빈 문자열 반환
         }
         return cell.toString().trim();
@@ -195,8 +195,10 @@ public class UploadServiceImpl implements UploadService {
         LocalDate 계약종료 = LocalDate.parse(종료, 목표_포맷);
         LocalDate 오늘 = LocalDate.now();
 
-        if (!오늘.isBefore(계약시작) && !오늘.isAfter(계약종료)) {
+        if (!오늘.isAfter(계약종료)) {
             계약여부 = "계약";
+        } else {
+            계약여부 = "미계약";
         }
 
         return 계약여부;
