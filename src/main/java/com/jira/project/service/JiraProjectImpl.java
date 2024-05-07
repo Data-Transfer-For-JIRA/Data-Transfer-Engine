@@ -305,7 +305,10 @@ public class JiraProjectImpl implements JiraProject {
 
             if (response.isPresent()) {
                 resultMap.put("result", "프로젝트 삭제 성공");
-                TB_JML_JpaRepository.delete(TB_JML_JpaRepository.findByKey(jiraProjectCode));
+                TB_JML_Entity isInDB = TB_JML_JpaRepository.findByKey(jiraProjectCode);
+                if(isInDB != null){
+                    TB_JML_JpaRepository.delete(isInDB);
+                }
             } else {
                 resultMap.put("result", "프로젝스 삭제 실패 또는 이미 삭제된 프로젝트");
             }
