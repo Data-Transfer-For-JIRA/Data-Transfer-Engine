@@ -5,14 +5,12 @@ import com.jira.account.service.Account;
 import com.jira.issue.service.JiraIssue;
 import com.jira.project.model.dao.TB_JLL_JpaRepository;
 import com.jira.project.model.dao.TB_JML_JpaRepository;
-import com.jira.project.model.dto.CreateProjectResponseDTO;
-
-import com.jira.project.model.dto.ProjectDTO;
-import com.jira.project.model.entity.TB_JML_Entity;
-import com.jira.project.model.entity.TB_JLL_Entity;
-import com.jira.project.model.entity.TB_PJT_BASE_Entity;
-
 import com.jira.project.model.dto.CreateProjectDTO;
+import com.jira.project.model.dto.CreateProjectResponseDTO;
+import com.jira.project.model.dto.ProjectDTO;
+import com.jira.project.model.entity.TB_JLL_Entity;
+import com.jira.project.model.entity.TB_JML_Entity;
+import com.jira.project.model.entity.TB_PJT_BASE_Entity;
 import com.utils.ProjectConfig;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
@@ -299,15 +297,29 @@ public class JiraProjectImpl implements JiraProject {
         for (String jiraProjectCode : jiraProjectCodes) {
             String endpoint = baseEndpoint + jiraProjectCode;
 
-            Optional<Boolean> response = webClientUtils.executeDelete(endpoint);
             Map<String, String> resultMap = new HashMap<>();
             resultMap.put("jiraProjectCode", jiraProjectCode);
 
-            if (response.isPresent()) {
-                resultMap.put("result", "프로젝트 삭제 성공");
-                TB_JML_JpaRepository.delete(TB_JML_JpaRepository.findByKey(jiraProjectCode));
+            // 지라에서 삭제
+            try {
+                Optional<Boolean> response = webClientUtils.executeDelete(endpoint);
+
+                if (response.isPresent()) {
+                    resultMap.put("result1", "[지라] 프로젝트 삭제 성공");
+                } else {
+                    resultMap.put("result1", "[지라] 존재하지 않는 프로젝트 또는 이미 삭제된 프로젝트");
+                }
+            } catch (Exception e) {
+                resultMap.put("result1", "[지라] 존재하지 않는 프로젝트 또는 이미 삭제된 프로젝트");
+            }
+
+            // DB에서 삭제
+            Optional<TB_JML_Entity> jmlEntity = Optional.ofNullable(TB_JML_JpaRepository.findByKey(jiraProjectCode));
+            if (jmlEntity.isPresent()) {
+                TB_JML_JpaRepository.delete(jmlEntity.get());
+                resultMap.put("result2", "[DB] 프로젝트 삭제 성공");
             } else {
-                resultMap.put("result", "프로젝스 삭제 실패 또는 이미 삭제된 프로젝트");
+                resultMap.put("result2", "[DB] 존재하지 않는 프로젝트 또는 이미 삭제된 프로젝트");
             }
 
             resultList.add(resultMap);
