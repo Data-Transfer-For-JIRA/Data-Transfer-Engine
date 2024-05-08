@@ -6,8 +6,8 @@ public enum DeleteProject {
 
     public String isALL() {
         if (this == ALL) {
-            return "true";
+            return "false";
         }
-        return "false";
+        return "true";
     }
 }
