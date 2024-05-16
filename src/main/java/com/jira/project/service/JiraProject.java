@@ -1,5 +1,6 @@
 package com.jira.project.service;
 
+import com.jira.project.model.DeleteProject;
 import com.jira.project.model.dto.CreateProjectDTO;
 import com.jira.project.model.dto.ProjectDTO;
 import com.jira.project.model.entity.TB_JLL_Entity;
@@ -37,7 +38,7 @@ public interface JiraProject {
     /*
     *  지라 프로젝트키 리스트를 이용해 지라 프로젝트 삭제하는 기능(테스트로 생성한 지라 프로젝트 사용하기 위한 용도)
     * */
-    List<Map<String, String>> deleteJiraProject(List<String> jiraProjectCodes);
+    List<Map<String, String>> deleteJiraProject(DeleteProject deleteProject, List<String> jiraProjectCodes);
 
     /*
     *  TB_PJT_BASE 테이블에서 WSS의 프로젝트 관계를 디비에 저장하는 기능(1회 수행 하는 기능)

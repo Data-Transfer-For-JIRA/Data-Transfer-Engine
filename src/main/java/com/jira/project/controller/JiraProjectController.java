@@ -1,5 +1,6 @@
 package com.jira.project.controller;
 
+import com.jira.project.model.DeleteProject;
 import com.jira.project.model.dto.CreateProjectDTO;
 import com.jira.project.model.entity.TB_JLL_Entity;
 import com.jira.project.model.entity.TB_JML_Entity;
@@ -130,9 +131,9 @@ public class JiraProjectController {
             value = {"/delete"},
             method = {RequestMethod.DELETE}
     )
-    public List<Map<String, String>> deleteJiraProject(@RequestBody List<String> jiraProjectCodes) throws Exception {
+    public List<Map<String, String>> deleteJiraProject(@RequestParam(defaultValue = "TRASH") DeleteProject deleteProject, @RequestBody List<String> jiraProjectCodes) throws Exception {
         logger.info("[::TransferProjectController::] 지라 프로젝트 삭제");
-        return jiraProject.deleteJiraProject(jiraProjectCodes);
+        return jiraProject.deleteJiraProject(deleteProject, jiraProjectCodes);
     }
 
     /*

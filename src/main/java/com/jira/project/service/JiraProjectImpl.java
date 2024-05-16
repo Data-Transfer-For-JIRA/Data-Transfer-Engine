@@ -3,6 +3,7 @@ package com.jira.project.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jira.account.service.Account;
 import com.jira.issue.service.JiraIssue;
+import com.jira.project.model.DeleteProject;
 import com.jira.project.model.dao.TB_JLL_JpaRepository;
 import com.jira.project.model.dao.TB_JML_JpaRepository;
 import com.jira.project.model.dto.CreateProjectDTO;
@@ -287,15 +288,16 @@ public class JiraProjectImpl implements JiraProject {
     }
 
     @Override
-    public List<Map<String, String>> deleteJiraProject(List<String> jiraProjectCodes) {
+    public List<Map<String, String>> deleteJiraProject(DeleteProject deleteProject, List<String> jiraProjectCodes) {
 
         logger.info("[::TransferProjectImpl::] 지라 프로젝트 삭제");
 
+        String opt = deleteProject.isALL();
         List<Map<String, String>> resultList = new ArrayList<>();
 
         String baseEndpoint = "/rest/api/3/project/";
         for (String jiraProjectCode : jiraProjectCodes) {
-            String endpoint = baseEndpoint + jiraProjectCode;
+            String endpoint = baseEndpoint + jiraProjectCode + "?enableUndo=" + opt;
 
             Map<String, String> resultMap = new HashMap<>();
             resultMap.put("jiraProjectCode", jiraProjectCode);
