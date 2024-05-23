@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jira.account.model.dao.TB_JIRA_USER_JpaRepository;
 import com.jira.account.model.entity.TB_JIRA_USER_Entity;
+import com.jira.account.service.AccountImpl;
 import com.jira.issue.model.FieldInfo;
 import com.jira.issue.model.FieldInfoCategory;
 import com.jira.issue.model.dto.FieldDTO;
@@ -14,12 +15,16 @@ import com.jira.issue.model.dto.create.CreateIssueDTO;
 import com.jira.issue.model.dto.create.CustomFieldDTO;
 import com.jira.issue.model.dto.create.MaintenanceInfoDTO;
 import com.jira.issue.model.dto.create.ProjectInfoDTO;
+import com.jira.issue.model.dto.search.SearchIssueDTO;
+import com.jira.issue.model.dto.search.SearchMaintenanceInfoDTO;
+import com.jira.issue.model.dto.search.SearchProjectInfoDTO;
 import com.jira.issue.model.dto.weblink.RequestWeblinkDTO;
 import com.jira.issue.service.JiraIssueImpl;
 import com.jira.project.model.dao.TB_JLL_JpaRepository;
 import com.jira.project.model.dao.TB_JML_JpaRepository;
 import com.jira.project.model.dto.CreateProjectDTO;
 import com.jira.project.model.dto.CreateProjectResponseDTO;
+import com.jira.project.model.dto.ProjectDTO;
 import com.jira.project.model.entity.TB_JLL_Entity;
 import com.jira.project.model.entity.TB_JML_Entity;
 import com.jira.project.service.JiraProjectImpl;
@@ -56,6 +61,9 @@ public class PlatformProjectImpl implements PlatformProject {
 
     @Autowired
     private JiraIssueImpl jiraIssue;
+
+    @Autowired
+    private AccountImpl account;
 
     @Autowired
     private TB_JIRA_USER_JpaRepository TB_JIRA_USER_JpaRepository;
@@ -164,6 +172,62 @@ public class PlatformProjectImpl implements PlatformProject {
             result.put("result", "프로젝트 생성 실패");
             return result;
         }
+    }
+
+    /*
+    *  플랫폼으로 수정하기위해 프로젝트 데이터 조회
+    * */
+    @Override
+    public BaseDTO platformGetProject(String projectType, String jiraKey) throws Exception {
+        // 지라 프로젝트 정보 조회
+        String 기본정보이슈_키;
+
+        String 이슈_유형_키;
+
+        BaseDTO 기본정보_이슈 = new BaseDTO();
+
+        ProjectDTO 프로젝트 = jiraProject.getJiraProjectInfoByJiraKey(jiraKey); // 지라에서 조회한 프로젝트
+
+        String 프로젝트_담당자 = 프로젝트.getLead().getDisplayName();
+
+
+        // 기본정보 이슈 조회
+        if( projectType.equals("M")){
+            이슈_유형_키 = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "유지보수 기본 정보").getId();
+
+            기본정보이슈_키 = jiraIssue.getBaseIssueKey(jiraKey,이슈_유형_키); // 해당 프로젝트 기본정보 이슈키 조회
+            SearchIssueDTO<SearchMaintenanceInfoDTO> 유지보수_기본정보이슈 = jiraIssue.getMaintenanceIssue(기본정보이슈_키);
+
+            /*String 프로젝트_이름 = 유지보수_기본정보이슈.getFields().getMaintenanceName();
+            String 유지보수_코드 = 유지보수_기본정보이슈.getFields().getMaintenanceCode();
+            String 영업_대표 = 유지보수_기본정보이슈.getFields().getSalesManager().getDisplayName();
+
+            // 필수 항목: 프로젝트 이름, 타입
+            BaseDTO.EssentialDTO 필수항목 = BaseDTO.EssentialDTO.builder()
+                    .projectFlag("M")
+                    .projectName(프로젝트_이름)
+                    .build();
+            기본정보_이슈.setEssential(필수항목);
+
+            // 선택 항목:
+            BaseDTO.CommonDTO 선택항목 = BaseDTO.CommonDTO.builder()
+                    .projectCode(유지보수_코드)
+                    .assignee(프로젝트_담당자)
+                    .salesManager(영업_대표)
+                    .build();
+            기본정보_이슈.setCommon(선택항목);
+
+            기본정보_이슈.setSelected();*/
+
+
+        }else{
+            이슈_유형_키 = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "프로젝트 기본 정보").getId();
+
+            기본정보이슈_키 = jiraIssue.getBaseIssueKey(jiraKey,이슈_유형_키);
+            SearchIssueDTO<SearchProjectInfoDTO> 프로젝트_기본정보 = jiraIssue.getProjectIssue(기본정보이슈_키);
+        }
+
+        return null;
     }
 
     @Override

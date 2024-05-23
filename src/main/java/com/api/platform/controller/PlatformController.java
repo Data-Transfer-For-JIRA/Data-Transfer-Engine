@@ -33,6 +33,16 @@ public class PlatformController {
 
     @ResponseBody
     @RequestMapping(
+            value = {"/project"},
+            method = {RequestMethod.GET}
+    )
+    public BaseDTO platformGetProject(@RequestParam String projectType,@RequestParam String jiraKey) throws Exception {
+        logger.info("[::PlatformController::] 프로젝트 정보 상세 조회");
+        return platformProject.platformGetProject(projectType, jiraKey);
+    }
+
+    @ResponseBody
+    @RequestMapping(
             value = {"/service"},
             method = {RequestMethod.POST}
     )
