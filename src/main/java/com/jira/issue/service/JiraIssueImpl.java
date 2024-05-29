@@ -1,16 +1,18 @@
 package com.jira.issue.service;
 
 
-import com.jira.account.model.dao.TB_JIRA_USER_JpaRepository;
-import com.jira.account.model.entity.TB_JIRA_USER_Entity;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jira.account.model.dao.TB_JIRA_USER_JpaRepository;
+import com.jira.account.model.entity.TB_JIRA_USER_Entity;
 import com.jira.issue.model.FieldInfo;
 import com.jira.issue.model.FieldInfoCategory;
 import com.jira.issue.model.dao.PJ_PG_SUB_JpaRepository;
-import com.jira.issue.model.dto.*;
+import com.jira.issue.model.dto.FieldDTO;
+import com.jira.issue.model.dto.ResponseIssueDTO;
+import com.jira.issue.model.dto.TransferIssueDTO;
+import com.jira.issue.model.dto.TransitionDTO;
 import com.jira.issue.model.dto.comment.AddCommentDTO;
 import com.jira.issue.model.dto.create.CreateIssueDTO;
 import com.jira.issue.model.dto.create.CustomFieldDTO;
@@ -33,7 +35,6 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
