@@ -8,6 +8,7 @@ import com.jira.account.model.dao.TB_JIRA_USER_JpaRepository;
 import com.jira.account.model.entity.TB_JIRA_USER_Entity;
 import com.jira.issue.model.FieldInfo;
 import com.jira.issue.model.FieldInfoCategory;
+import com.jira.issue.model.dao.BACKUP_BASEINFO_M_JpaRepository;
 import com.jira.issue.model.dao.PJ_PG_SUB_JpaRepository;
 import com.jira.issue.model.dto.FieldDTO;
 import com.jira.issue.model.dto.ResponseIssueDTO;
@@ -25,6 +26,7 @@ import com.jira.issue.model.dto.weblink.CreateWebLinkDTO;
 import com.jira.issue.model.dto.weblink.RequestWeblinkDTO;
 import com.jira.issue.model.dto.weblink.SearchWebLinkDTO;
 import com.jira.issue.model.entity.PJ_PG_SUB_Entity;
+import com.jira.issue.model.entity.backup.BACKUP_BASEINFO_M_Entity;
 import com.jira.project.model.dao.TB_JML_JpaRepository;
 import com.jira.project.model.entity.TB_JML_Entity;
 import com.jira.project.model.entity.TB_PJT_BASE_Entity;
@@ -48,6 +50,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.jira.issue.model.FieldInfo.ofLabel;
@@ -71,6 +76,9 @@ public class JiraIssueImpl implements JiraIssue {
 
     @Autowired
     private com.jira.project.model.dao.TB_PJT_BASE_JpaRepository TB_PJT_BASE_JpaRepository;
+
+    @Autowired
+    private BACKUP_BASEINFO_M_JpaRepository BACKUP_BASEINFO_M_JpaRepository;
 
     @Transactional
     @Override
@@ -1084,6 +1092,19 @@ public class JiraIssueImpl implements JiraIssue {
 
         return result;
     }
+    @Override
+    public List<SearchWebLinkDTO> getWebLinkByJiraIssueKey(String jiraIssueKey) throws Exception{
+        logger.info("[::TransferIssueImpl::] 웹링크 조회 대상 키 -> " + jiraIssueKey);
+
+        String endpoint = "/rest/api/3/issue/"+jiraIssueKey+"/remotelink";
+        ParameterizedTypeReference<List<SearchWebLinkDTO>> typeRef = new ParameterizedTypeReference<List<SearchWebLinkDTO>>() {};
+        /*
+         * ParameterizedTypeReference는 Spring Framework에서 제공하는 클래스로, 런타임 시점에 제네릭 타입 정보를 유지할 수 있게 해주는 역할을 함
+         * */
+        List<SearchWebLinkDTO>  result =  webClientUtils.get(endpoint, typeRef).block();
+
+        return result;
+    }
     /*
     *  이슈에(이슈키) 프로젝트(프로젝트키) 연결
     * */
@@ -1307,4 +1328,144 @@ public class JiraIssueImpl implements JiraIssue {
             throw new Exception(e.getMessage());
         }
     }
+
+    /*
+    *  기본정보 이슈 저장
+    * */
+    @Override
+    @Transactional
+    public String 기본정보이슈_저장(String 지라_키,String 프로젝트_유형) throws Exception{
+        logger.info("유지보수 기본정보 이슈 저장 시작");
+        if(프로젝트_유형.equals("M")){
+            SearchIssueDTO<SearchMaintenanceInfoDTO> 조회결과 = getMaintenanceIssue(지라_키);
+
+
+            if (조회결과 == null || 조회결과.getFields() == null) {
+                throw new Exception("유효한 조회 결과가 없습니다.");
+            }
+            String 이슈_키 = 값_널체크(() ->  조회결과.getKey());
+            String 프로젝트_키 = 값_널체크(() -> 조회결과.getFields().getProject().getKey());
+            String 유지보수_명 = 값_널체크(() -> 조회결과.getFields().getMaintenanceName());
+            String 담당자_정 = 담당자_이름_편집하기(값_널체크(() -> 조회결과.getFields().getAssignee().getDisplayName()));
+            String 담당자_부 = 담당자_이름_편집하기(값_널체크(() -> 조회결과.getFields().getSubAssignee().getDisplayName()));
+            String 영업_대표 = 담당자_이름_편집하기(값_널체크(() -> 조회결과.getFields().getSalesManager().getDisplayName()));
+            String 계약사 = 값_널체크(() -> 조회결과.getFields().getContractor());
+            String 고객사 = 값_널체크(() -> 조회결과.getFields().getClient());
+            String 바코드_타입 = 값_널체크(() -> 조회결과.getFields().getBarcodeType().getValue());
+            String 멀티_OS_지원여부 = 값_널체크(() -> 조회결과.getFields().getMultiOsSupport().get(0).getValue());
+
+            String 연관된_프로젝트_키 =연관된_프로젝트_키_가져오기( getWebLinkByJiraIssueKey(이슈_키) );
+
+            String 제품정보1 = 제품정보_변환(조회결과.getFields().getProductInfo1());
+            String 제품정보2 = 제품정보_변환(조회결과.getFields().getProductInfo2());
+            String 제품정보3 = 제품정보_변환(조회결과.getFields().getProductInfo3());
+            String 제품정보4 = 제품정보_변환(조회결과.getFields().getProductInfo4());
+            String 제품정보5 = 제품정보_변환(조회결과.getFields().getProductInfo5());
+
+            String 계약_여부 = 조회결과.getFields().getContractStatus().getValue() ;
+
+            LocalDateTime  유지보수_시작일 = null;
+            if( 값_널체크(() -> 조회결과.getFields().getMaintenanceStartDate()) != null){
+                유지보수_시작일 = LocalDateTime.parse(값_널체크(() -> 조회결과.getFields().getMaintenanceStartDate())+"T00:00:00");
+            }
+            LocalDateTime  유지보수_종료일 = null;
+            if( 값_널체크(() -> 조회결과.getFields().getMaintenanceEndDate()) != null){
+                유지보수_종료일 = LocalDateTime.parse(값_널체크(() -> 조회결과.getFields().getMaintenanceEndDate())+"T00:00:00");
+            }
+            String 점검_주기 = 값_널체크(() -> 조회결과.getFields().getInspectionCycle().getValue());
+            String 점검_방법 = 값_널체크(() -> 조회결과.getFields().getInspectionMethod().getValue());
+            String 프린터_지원_범위 =  값_널체크(() -> 조회결과.getFields().getPrinterSupportRange().getValue());
+
+            BACKUP_BASEINFO_M_Entity 저장할_데이터 =  BACKUP_BASEINFO_M_Entity.builder()
+                    .지라_프로젝트_키(프로젝트_키)
+                    .유지보수_명(유지보수_명)
+                    .담당자_정(담당자_정)
+                    .담당자_부(담당자_부)
+                    .영업_대표(영업_대표)
+                    .계약사(계약사)
+                    .고객사(고객사)
+                    .바코드_타입(바코드_타입)
+                    .멀티_OS_지원여부(멀티_OS_지원여부)
+                    .연관된_프로젝트_키(연관된_프로젝트_키)
+                    .제품_정보1(제품정보1)
+                    .제품_정보2(제품정보2)
+                    .제품_정보3(제품정보3)
+                    .제품_정보4(제품정보4)
+                    .제품_정보5(제품정보5)
+                    .계약_여부(계약_여부)
+                    .유지보수_시작일(유지보수_시작일)
+                    .유지보수_종료일(유지보수_종료일)
+                    .점검_주기(점검_주기)
+                    .점검_방법(점검_방법)
+                    .프린터_지원_범위(프린터_지원_범위)
+                    .build();
+
+            BACKUP_BASEINFO_M_JpaRepository.save(저장할_데이터);
+
+        }else{
+            SearchIssueDTO<SearchProjectInfoDTO> 조회결과 =getProjectIssue(지라_키);
+        }
+
+        return null;
+    }
+
+    private String 담당자_이름_편집하기(String 지라에서준_이름){
+        String 담당자_이름;
+        if(지라에서준_이름.contains("(")){
+            int startIndex = 지라에서준_이름.indexOf("(");
+            담당자_이름 = 지라에서준_이름.substring(0, startIndex).trim(); // 대부분 모든 사람의 이름 뒤에 영어 이름이 붙어 나옴
+        }else{
+            담당자_이름 = 지라에서준_이름; // epage dev 케이스
+        }
+
+        return 담당자_이름;
+    }
+
+    private String 연관된_프로젝트_키_가져오기(List<SearchWebLinkDTO> 웹링크_조회_결과) {
+        if (웹링크_조회_결과.size() > 0) {
+            StringBuilder 프로젝트_키_빌더 = new StringBuilder();
+
+            for (SearchWebLinkDTO 웹_링크 : 웹링크_조회_결과) {
+                String url = 웹_링크.getObject().getUrl();
+                String pattern = "projects/([A-Z0-9]+)/board";
+                Pattern compiledPattern = Pattern.compile(pattern);
+                Matcher matcher = compiledPattern.matcher(url);
+
+                // 매칭 여부 확인
+                if (matcher.find()) {
+                    String 이슈_키 = matcher.group(1);
+                    프로젝트_키_빌더.append(이슈_키).append(",");
+                } else {
+                    // 매칭되지 않은 경우 처리
+                    logger.info("웹링크 매칭되지 않은 URL {}", url);
+                }
+            }
+
+            // 마지막 쉼표와 공백 제거
+            if (프로젝트_키_빌더.length() > 0) {
+                프로젝트_키_빌더.setLength(프로젝트_키_빌더.length() - 1);
+            }
+
+            return 프로젝트_키_빌더.toString();
+        } else {
+            return null;
+        }
+    }
+    private String 제품정보_변환(List<FieldDTO.Field> 제품정보) {
+        if (제품정보 == null) {
+            return null;
+        }
+        return 제품정보.stream()
+                .map(FieldDTO.Field::getValue)
+                .collect(Collectors.joining(" "));
+    }
+
+    public static <T> T 값_널체크(Supplier<T> supplier) {
+        try {
+            return supplier.get();
+        } catch (NullPointerException e) {
+            return null;
+        }
+    }
+
 }

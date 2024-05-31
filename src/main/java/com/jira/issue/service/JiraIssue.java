@@ -35,6 +35,8 @@ public interface JiraIssue {
     *  프로젝트에 걸린 웹링크 조회
     */
     List<SearchWebLinkDTO> getWebLinkByJiraKey(String jiraKey) throws Exception;
+    List<SearchWebLinkDTO> getWebLinkByJiraIssueKey(String jiraKey) throws Exception;
+
     /*
     *  지라 프로젝트 대상이슈에키와 프로젝트 키로 걸기
     * */
@@ -57,5 +59,5 @@ public interface JiraIssue {
      * */
     SearchIssueDTO<SearchProjectInfoDTO> getProjectIssue(String issueKey) throws Exception;
 
-
+    String 기본정보이슈_저장(String 지라_키,String 프로젝트_유형) throws Exception;
 }

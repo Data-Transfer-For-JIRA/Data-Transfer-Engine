@@ -4,12 +4,14 @@ import com.jira.issue.model.dto.TransferIssueDTO;
 import com.jira.issue.model.dto.search.SearchIssueDTO;
 import com.jira.issue.model.dto.search.SearchMaintenanceInfoDTO;
 import com.jira.issue.model.dto.search.SearchProjectInfoDTO;
+import com.jira.issue.model.dto.weblink.SearchWebLinkDTO;
 import com.jira.issue.service.JiraIssue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 
@@ -69,6 +71,29 @@ public class JiraIssueController {
     public SearchIssueDTO<SearchProjectInfoDTO> getProjectIssue(@RequestParam String issueKey) throws Exception{
         logger.info(":: JiraIssueController :: getProjectIssue");
         return jiraIssue.getProjectIssue(issueKey);
+    }
+
+    @ResponseBody
+    @RequestMapping(
+            value = {"/baseissue"},
+            method = {RequestMethod.PUT}
+    )
+    public String 기본정보이슈_저장(@RequestParam String jiraKey, @RequestParam String projectType) throws Exception {
+        logger.info("기본정보 이슈 저장 컨트롤러 진입");
+        return jiraIssue.기본정보이슈_저장(jiraKey,projectType);
+    }
+
+    /*
+    *  웹링크 조회 API
+    * */
+    @ResponseBody
+    @RequestMapping(
+            value = {"/weblink"},
+            method = {RequestMethod.GET}
+    )
+    public List<SearchWebLinkDTO> getWebLinks(@RequestParam String issueKey) throws Exception{
+        logger.info(":: JiraIssueController :: getWebLinks 웹링크 조회");
+        return jiraIssue.getWebLinkByJiraIssueKey(issueKey);
     }
 
 }

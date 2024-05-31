@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
-@Service("jiraProjcet")
+@Service("jiraProject")
 public class JiraProjectImpl implements JiraProject {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
