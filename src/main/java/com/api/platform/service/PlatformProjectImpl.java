@@ -36,6 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -328,7 +329,7 @@ public class PlatformProjectImpl implements PlatformProject {
             CreateIssueDTO<?> createIssueDTO;
             if (projectFlag.equals("P")) { // 프로젝트 타입
 
-                if(commonDTO.getAllocationFlag() == true){
+                if(commonDTO.getAllocationFlag()){
                     createStaffAllocationIssue(description,projectName,projectFlag,salesManager);
                 }
 
@@ -367,7 +368,7 @@ public class PlatformProjectImpl implements PlatformProject {
             }
             else {
 
-                if(commonDTO.getAllocationFlag() == true){
+                if(commonDTO.getAllocationFlag()){
                     createStaffAllocationIssue(description,projectName,projectFlag,salesManager);
                 }
 
@@ -773,33 +774,17 @@ public class PlatformProjectImpl implements PlatformProject {
 
         if (!StringUtils.isEmpty(설명)) {
 
-            String desc = commonDTO.getDescription();
-            desc = desc.replace("\t", "@@").replace(" ", "@@");
+            설명 = processHtml(설명);
+            String text = replaceText(removeHtmlTags(Jsoup.clean(설명, Whitelist.basic())), "&nbsp;", " ");
 
-            Document doc = Jsoup.parse(desc);
+            FieldDTO.ContentItem contentItem = FieldDTO.ContentItem.builder().text(text).type("text").build();
 
-            Elements paragraphs  = doc.select("p");
+            List<FieldDTO.ContentItem> contentItems = new ArrayList<>();
+            contentItems.add(contentItem);
 
+            FieldDTO.Content content = FieldDTO.Content.builder().type("paragraph").content(contentItems).build();
             List<FieldDTO.Content> contents = new ArrayList<>();
-            for (Element paragraph : paragraphs ) {
-
-                // 연속된 공백을 하나의 공백으로 처리
-                // String text = tag.text();
-
-                // HTML 엔티티를 일반 텍스트로 변환
-                String text = StringEscapeUtils.unescapeHtml4(paragraph.html());
-
-                // @@를 공백 두 칸으로 대체
-                text = text.replace("@@", "  ");
-
-                FieldDTO.ContentItem contentItem = FieldDTO.ContentItem.builder().text(text).type("text").build();
-
-                List<FieldDTO.ContentItem> contentItems = new ArrayList<>();
-                contentItems.add(contentItem);
-
-                FieldDTO.Content content = FieldDTO.Content.builder().type("paragraph").content(contentItems).build();
-                contents.add(content);
-            }
+            contents.add(content);
 
             FieldDTO.Description description = FieldDTO.Description.builder().version(1).type("doc").content(contents).build();
             customBuilder.description(description);
@@ -815,6 +800,76 @@ public class PlatformProjectImpl implements PlatformProject {
         }
 
         return customBuilder;
+    }
+
+    public static String removeHtmlTags(String value) {
+        String rtnVal = org.apache.commons.text.StringEscapeUtils.unescapeHtml4(value);
+        // unescapeHtml : <p><h3 class="kkk">테스트</p> 케이스
+
+        // https://www.baeldung.com/java-remove-html-tags
+        rtnVal = rtnVal.replaceAll("<[^>]*>", "");
+        //  태그제거 : 테스트 케이스
+
+        // bullet 문자열
+        rtnVal = rtnVal.replace("•", "__BULLET__");
+
+        rtnVal = org.apache.commons.text.StringEscapeUtils.escapeHtml4(rtnVal);
+        // escapeHtml : 테스트&nbsp;케이스
+
+        // bullet 문자열 처리
+        rtnVal = rtnVal.replace("__BULLET__", "•");
+
+        return rtnVal;
+    }
+
+    public static String replaceText(String text, String originTxt, String replaceTxt) {
+        return text.replaceAll(originTxt, replaceTxt);
+    }
+
+    public static String processHtml(String html) {
+        Document doc = Jsoup.parse(html);
+
+        // ol 태그 처리
+        Elements olElements = doc.select("ol");
+        for (Element ol : olElements) {
+            processOlElement(ol);
+        }
+
+        // ul 태그 처리
+        Elements ulElements = doc.select("ul");
+        for (Element ul : ulElements) {
+            processUlElement(ul);
+        }
+
+        return doc.body().html();
+    }
+
+    public static void processOlElement(Element ol) {
+        int counter = 1;
+        char indentCounter = 'a';
+
+        Elements liElements = ol.children();
+        for (Element li : liElements) {
+            if (li.hasClass("ql-indent-1")) {
+                li.prepend("&nbsp;&nbsp;" + indentCounter++ + ". ");
+            } else {
+                li.prepend(counter++ + ". ");
+                indentCounter = 'a'; // 새 li 만나면 초기화
+            }
+        }
+    }
+
+    public static void processUlElement(Element ul) {
+        char bullet = '•';
+
+        Elements liElements = ul.children();
+        for (Element li : liElements) {
+            if (li.hasClass("ql-indent-1")) {
+                li.prepend("&nbsp;&nbsp;" + bullet + " ");
+            } else {
+                li.prepend(bullet + " ");
+            }
+        }
     }
 
     @Override
