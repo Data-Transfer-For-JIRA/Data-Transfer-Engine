@@ -8,13 +8,12 @@ import com.jira.issue.model.dto.FieldDTO.Project;
 import com.jira.issue.model.dto.FieldDTO.User;
 import com.jira.issue.model.dto.search.SearchCustomFieldDTO.Team;
 import lombok.*;
-import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 
 @Getter
 @Setter
-@SuperBuilder
+@Builder
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor

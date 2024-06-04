@@ -36,9 +36,9 @@ public class PlatformController {
             value = {"/project"},
             method = {RequestMethod.GET}
     )
-    public BaseDTO platformGetProject(@RequestParam String projectType,@RequestParam String jiraKey) throws Exception {
+    public BaseDTO platformGetProject(@RequestParam String projectFlag,@RequestParam String jiraKey) throws Exception {
         logger.info("[::PlatformController::] 프로젝트 정보 상세 조회");
-        return platformProject.platformGetProject(projectType, jiraKey);
+        return platformProject.platformGetProject(projectFlag, jiraKey);
     }
 
     @ResponseBody
@@ -78,7 +78,7 @@ public class PlatformController {
             method = {RequestMethod.PUT}
     )
     public void upDateProjectInfo(@RequestBody BaseDTO baseDTO) throws Exception {
-        logger.info("[::PlatformController::] 플랫폼을 프로젝트 업데이트");
+        logger.info("[::PlatformController::] 플랫폼 프로젝트 업데이트");
         platformProject.upDateProjectInfo(baseDTO);
     }
     

@@ -10,6 +10,7 @@ import com.jira.account.service.AccountImpl;
 import com.jira.issue.model.FieldInfo;
 import com.jira.issue.model.FieldInfoCategory;
 import com.jira.issue.model.dto.FieldDTO;
+import com.jira.issue.model.dto.FieldDTO.User;
 import com.jira.issue.model.dto.ResponseIssueDTO;
 import com.jira.issue.model.dto.create.CreateIssueDTO;
 import com.jira.issue.model.dto.create.CustomFieldDTO;
@@ -179,56 +180,253 @@ public class PlatformProjectImpl implements PlatformProject {
     *  플랫폼으로 수정하기위해 프로젝트 데이터 조회
     * */
     @Override
-    public BaseDTO platformGetProject(String projectType, String jiraKey) throws Exception {
+    public BaseDTO platformGetProject(String projectFlag, String jiraKey) throws Exception {
+
         // 지라 프로젝트 정보 조회
-        String 기본정보이슈_키;
+        String 기본정보_이슈키;
 
-        String 이슈_유형_키;
-
-        BaseDTO 기본정보_이슈 = new BaseDTO();
+        String 이슈유형키;
 
         ProjectDTO 프로젝트 = jiraProject.getJiraProjectInfoByJiraKey(jiraKey); // 지라에서 조회한 프로젝트
 
-        String 프로젝트_담당자 = 프로젝트.getLead().getDisplayName();
+        BaseDTO 기본정보_이슈 = new BaseDTO();
+        BaseDTO.EssentialDTO.EssentialDTOBuilder 필수데이터빌더 = BaseDTO.EssentialDTO.builder();;
+        BaseDTO.CommonDTO.CommonDTOBuilder 공통데이터빌더 = BaseDTO.CommonDTO.builder();;
+        BaseDTO.SelectedDTO.SelectedDTOBuilder 선택데이터빌더 = BaseDTO.SelectedDTO.builder();;
 
+        // 기본 정보 이슈 조회
+        if (StringUtils.equals(projectFlag, "M")) {
+            이슈유형키 = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "유지보수 기본 정보").getId();
 
-        // 기본정보 이슈 조회
-        if( projectType.equals("M")){
-            이슈_유형_키 = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "유지보수 기본 정보").getId();
+            기본정보_이슈키 = jiraIssue.getBaseIssueKey(jiraKey, 이슈유형키); // 해당 프로젝트의 기본 정보 이슈키 조회
+            SearchIssueDTO<SearchMaintenanceInfoDTO> 유지보수_기본정보이슈 = jiraIssue.getMaintenanceIssue(기본정보_이슈키);
 
-            기본정보이슈_키 = jiraIssue.getBaseIssueKey(jiraKey,이슈_유형_키); // 해당 프로젝트 기본정보 이슈키 조회
-            SearchIssueDTO<SearchMaintenanceInfoDTO> 유지보수_기본정보이슈 = jiraIssue.getMaintenanceIssue(기본정보이슈_키);
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+            String jsonRequestBody = objectMapper.writeValueAsString(유지보수_기본정보이슈);
+            logger.info("json: " + jsonRequestBody);
+            SearchMaintenanceInfoDTO 유지보수_기본정보 = 유지보수_기본정보이슈.getFields();
+            logger.info("유지보수 기본 정보: " + 유지보수_기본정보);
 
-            /*String 프로젝트_이름 = 유지보수_기본정보이슈.getFields().getMaintenanceName();
-            String 유지보수_코드 = 유지보수_기본정보이슈.getFields().getMaintenanceCode();
-            String 영업_대표 = 유지보수_기본정보이슈.getFields().getSalesManager().getDisplayName();
+            // 프로젝트 정보 매핑
 
-            // 필수 항목: 프로젝트 이름, 타입
-            BaseDTO.EssentialDTO 필수항목 = BaseDTO.EssentialDTO.builder()
-                    .projectFlag("M")
-                    .projectName(프로젝트_이름)
-                    .build();
-            기본정보_이슈.setEssential(필수항목);
+            // 필수 데이터
+            setBuilder(projectFlag, 필수데이터빌더::projectFlag);
+            setBuilder(유지보수_기본정보.getMaintenanceName(), 필수데이터빌더::projectName);
 
-            // 선택 항목:
-            BaseDTO.CommonDTO 선택항목 = BaseDTO.CommonDTO.builder()
-                    .projectCode(유지보수_코드)
-                    .assignee(프로젝트_담당자)
-                    .salesManager(영업_대표)
-                    .build();
-            기본정보_이슈.setCommon(선택항목);
+            // 공통 데이터
+            setBuilder(유지보수_기본정보.getMaintenanceCode(), 공통데이터빌더::projectCode);
+            setBuilder(사용자_추출(유지보수_기본정보.getAssignee()), 공통데이터빌더::assignee);
+            setBuilder(사용자_추출(유지보수_기본정보.getSubAssignee()), 공통데이터빌더::subAssignee);
+            setBuilder(사용자_추출(유지보수_기본정보.getSalesManager()), 공통데이터빌더::salesManager);
+            setBuilder(유지보수_기본정보.getContractor(), 공통데이터빌더::contractor);
+            setBuilder(유지보수_기본정보.getClient(), 공통데이터빌더::client);
 
-            기본정보_이슈.setSelected();*/
+            setBuilder(
+                    () -> 유지보수_기본정보.getBarcodeType(),
+                    바코드타입 -> 바코드타입.getValue(),
+                    공통데이터빌더::barcodeType
+            );
 
+            setBuilder(
+                    () -> 유지보수_기본정보.getPrinterSupportRange(),
+                    프린터지원 -> 프린터지원.getValue(),
+                    공통데이터빌더::printerSupportRange
+            );
 
-        }else{
-            이슈_유형_키 = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "프로젝트 기본 정보").getId();
+            setBuilder(
+                    유지보수_기본정보::getProductInfo1,
+                    기본정보 -> {
+                        List<String> 제품정보 = new ArrayList<>();
+                        for (FieldDTO.Field 제품 : 기본정보) {
+                            제품정보.add(제품.getValue());
+                        }
+                        return 제품정보;
+                    },
+                    공통데이터빌더::productInfo1
+            );
 
-            기본정보이슈_키 = jiraIssue.getBaseIssueKey(jiraKey,이슈_유형_키);
-            SearchIssueDTO<SearchProjectInfoDTO> 프로젝트_기본정보 = jiraIssue.getProjectIssue(기본정보이슈_키);
+            setBuilder(
+                    유지보수_기본정보::getProductInfo2,
+                    기본정보 -> {
+                        List<String> 제품정보 = new ArrayList<>();
+                        for (FieldDTO.Field 제품 : 기본정보) {
+                            제품정보.add(제품.getValue());
+                        }
+                        return 제품정보;
+                    },
+                    공통데이터빌더::productInfo2
+            );
+
+            setBuilder(
+                    유지보수_기본정보::getProductInfo3,
+                    기본정보 -> {
+                        List<String> 제품정보 = new ArrayList<>();
+                        for (FieldDTO.Field 제품 : 기본정보) {
+                            제품정보.add(제품.getValue());
+                        }
+                        return 제품정보;
+                    },
+                    공통데이터빌더::productInfo3
+            );
+
+            setBuilder(
+                    유지보수_기본정보::getProductInfo4,
+                    기본정보 -> {
+                        List<String> 제품정보 = new ArrayList<>();
+                        for (FieldDTO.Field 제품 : 기본정보) {
+                            제품정보.add(제품.getValue());
+                        }
+                        return 제품정보;
+                    },
+                    공통데이터빌더::productInfo4
+            );
+
+            setBuilder(
+                    유지보수_기본정보::getProductInfo5,
+                    기본정보 -> {
+                        List<String> 제품정보 = new ArrayList<>();
+                        for (FieldDTO.Field 제품 : 기본정보) {
+                            제품정보.add(제품.getValue());
+                        }
+                        return 제품정보;
+                    },
+                    공통데이터빌더::productInfo5
+            );
+
+            // 선택 데이터
+            setBuilder(
+                    유지보수_기본정보::getContractStatus,
+                    FieldDTO.Field::getValue,
+                    선택데이터빌더::contractStatus
+            );
+
+            setBuilder(유지보수_기본정보::getMaintenanceStartDate, 선택데이터빌더::maintenanceStartDate);
+            setBuilder(유지보수_기본정보::getMaintenanceEndDate, 선택데이터빌더::maintenanceEndDate);
+
+            setBuilder(
+                    유지보수_기본정보::getInspectionMethod,
+                    FieldDTO.Field::getValue,
+                    선택데이터빌더::inspectionMethod
+            );
+
+            setBuilder(유지보수_기본정보::getInspectionMethodEtc, 선택데이터빌더::inspectionMethodEtc);
+
+            setBuilder(
+                    유지보수_기본정보::getInspectionCycle,
+                    FieldDTO.Field::getValue,
+                    선택데이터빌더::inspectionCycle
+            );
+
+        } else {
+            이슈유형키 = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "프로젝트 기본 정보").getId();
+
+            기본정보_이슈키 = jiraIssue.getBaseIssueKey(jiraKey, 이슈유형키);
+            SearchIssueDTO<SearchProjectInfoDTO> 프로젝트_기본정보이슈 = jiraIssue.getProjectIssue(기본정보_이슈키);
+            SearchProjectInfoDTO 프로젝트_기본정보 = 프로젝트_기본정보이슈.getFields();
+            logger.info("프로젝트 기본 정보: " + 프로젝트_기본정보);
+
+            // 프로젝트 정보 매핑
+
+            // 필수 데이터
+            setBuilder(projectFlag, 필수데이터빌더::projectFlag);
+            setBuilder(프로젝트_기본정보.getProjectName(), 필수데이터빌더::projectName);
+
+            // 공통 데이터
+            setBuilder(프로젝트_기본정보.getProjectCode(), 공통데이터빌더::projectCode);
+            setBuilder(사용자_추출(프로젝트_기본정보.getAssignee()), 공통데이터빌더::assignee);
+            setBuilder(사용자_추출(프로젝트_기본정보.getSubAssignee()), 공통데이터빌더::subAssignee);
+            setBuilder(사용자_추출(프로젝트_기본정보.getSalesManager()), 공통데이터빌더::salesManager);
+            setBuilder(프로젝트_기본정보.getContractor(), 공통데이터빌더::contractor);
+            setBuilder(프로젝트_기본정보.getClient(), 공통데이터빌더::client);
+
+            setBuilder(
+                    () -> 프로젝트_기본정보.getBarcodeType(),
+                    바코드타입 -> 바코드타입.getValue(),
+                    공통데이터빌더::barcodeType
+            );
+
+            setBuilder(
+                    () -> 프로젝트_기본정보.getPrinterSupportRange(),
+                    프린터지원 -> 프린터지원.getValue(),
+                    공통데이터빌더::printerSupportRange
+            );
+
+            setBuilder(
+                    프로젝트_기본정보::getProductInfo1,
+                    기본정보 -> {
+                        List<String> 제품정보 = new ArrayList<>();
+                        for (FieldDTO.Field 제품 : 기본정보) {
+                            제품정보.add(제품.getValue());
+                        }
+                        return 제품정보;
+                    },
+                    공통데이터빌더::productInfo1
+            );
+
+            setBuilder(
+                    프로젝트_기본정보::getProductInfo2,
+                    기본정보 -> {
+                        List<String> 제품정보 = new ArrayList<>();
+                        for (FieldDTO.Field 제품 : 기본정보) {
+                            제품정보.add(제품.getValue());
+                        }
+                        return 제품정보;
+                    },
+                    공통데이터빌더::productInfo2
+            );
+
+            setBuilder(
+                    프로젝트_기본정보::getProductInfo3,
+                    기본정보 -> {
+                        List<String> 제품정보 = new ArrayList<>();
+                        for (FieldDTO.Field 제품 : 기본정보) {
+                            제품정보.add(제품.getValue());
+                        }
+                        return 제품정보;
+                    },
+                    공통데이터빌더::productInfo3
+            );
+
+            setBuilder(
+                    프로젝트_기본정보::getProductInfo4,
+                    기본정보 -> {
+                        List<String> 제품정보 = new ArrayList<>();
+                        for (FieldDTO.Field 제품 : 기본정보) {
+                            제품정보.add(제품.getValue());
+                        }
+                        return 제품정보;
+                    },
+                    공통데이터빌더::productInfo4
+            );
+
+            setBuilder(
+                    프로젝트_기본정보::getProductInfo5,
+                    기본정보 -> {
+                        List<String> 제품정보 = new ArrayList<>();
+                        for (FieldDTO.Field 제품 : 기본정보) {
+                            제품정보.add(제품.getValue());
+                        }
+                        return 제품정보;
+                    },
+                    공통데이터빌더::productInfo5
+            );
+
+            // 선택 데이터
+            setBuilder(프로젝트_기본정보::getProjectAssignmentDate, 선택데이터빌더::projectAssignmentDate);
+
+            setBuilder(
+                    프로젝트_기본정보::getProjectProgressStep,
+                    FieldDTO.Field::getValue,
+                    선택데이터빌더::projectProgressStep
+            );
         }
 
-        return null;
+        기본정보_이슈.setEssential(필수데이터빌더.build());
+        기본정보_이슈.setCommon(공통데이터빌더.build());
+        기본정보_이슈.setSelected(선택데이터빌더.build());
+
+        return 기본정보_이슈;
     }
 
     @Override
@@ -1110,6 +1308,14 @@ public class PlatformProjectImpl implements PlatformProject {
         logger.info("[ :: PlatformProjectImpl :: ] getAccountId -> 사용자: " + 사용자 + " - " + "계정 아이디: " + 계정_아이디);
 
         return 계정_아이디;
+    }
+
+    private String 사용자_추출(User 사용자) {
+
+        return Optional.ofNullable(사용자)
+                .map(이름 -> 이름.getDisplayName())
+                .map(account::이름_추출)
+                .orElse(null);
     }
 
 }

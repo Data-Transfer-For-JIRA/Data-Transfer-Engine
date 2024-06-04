@@ -15,7 +15,7 @@ public interface PlatformProject {
 
     Map<String, String> platformCreateProject(BaseDTO baseDTO) throws Exception;
 
-    BaseDTO platformGetProject(String projectType, String jiraKey) throws Exception;
+    BaseDTO platformGetProject(String projectFlag, String jiraKey) throws Exception;
 
     Map<String, String> platformCreateProject(String jiraProjectCode, String projectFlag, String projectName, String projectCode, String assignees) throws Exception;
 
