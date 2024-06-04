@@ -1041,24 +1041,11 @@ public class PlatformProjectImpl implements PlatformProject {
         fieldDTO.setSummary(projectName);
 
         // 설명
-        String desc = description;
-        desc = desc.replace("\t", "@@").replace(" ", "@@");
+        String 설명 = description;
+        if (!StringUtils.isEmpty(설명)) {
 
-        Document doc = Jsoup.parse(desc);
-
-        Elements paragraphs = doc.select("p");
-
-        List<FieldDTO.Content> contents = new ArrayList<>();
-        for (Element paragraph : paragraphs) {
-
-            // 연속된 공백을 하나의 공백으로 처리
-            // String text = tag.text();
-
-            // HTML 엔티티를 일반 텍스트로 변환
-            String text = StringEscapeUtils.unescapeHtml4(paragraph.html());
-
-            // @@를 공백 두 칸으로 대체
-            text = text.replace("@@", "  ");
+            설명 = processHtml(설명);
+            String text = replaceText(removeHtmlTags(Jsoup.clean(설명, Whitelist.basic())), "&nbsp;", " ");
 
             FieldDTO.ContentItem contentItem = FieldDTO.ContentItem.builder().text(text).type("text").build();
 
@@ -1066,11 +1053,12 @@ public class PlatformProjectImpl implements PlatformProject {
             contentItems.add(contentItem);
 
             FieldDTO.Content content = FieldDTO.Content.builder().type("paragraph").content(contentItems).build();
+            List<FieldDTO.Content> contents = new ArrayList<>();
             contents.add(content);
-        }
 
-        FieldDTO.Description descriptionObject = FieldDTO.Description.builder().version(1).type("doc").content(contents).build();
-        fieldDTO.setDescription(descriptionObject);
+            FieldDTO.Description descriptionObject = FieldDTO.Description.builder().version(1).type("doc").content(contents).build();
+            fieldDTO.setDescription(descriptionObject);
+        }
 
         createIssueDTO = new CreateIssueDTO<>(fieldDTO);
 
