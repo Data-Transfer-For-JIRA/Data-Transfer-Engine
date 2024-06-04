@@ -59,5 +59,5 @@ public interface JiraIssue {
      * */
     SearchIssueDTO<SearchProjectInfoDTO> getProjectIssue(String issueKey) throws Exception;
 
-    String 기본정보이슈_저장(String 지라_키,String 프로젝트_유형) throws Exception;
+    Boolean 기본정보이슈_저장(String 지라_키,String 프로젝트_유형) throws Exception;
 }

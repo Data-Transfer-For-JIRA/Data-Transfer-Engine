@@ -78,7 +78,7 @@ public class JiraIssueController {
             value = {"/baseissue"},
             method = {RequestMethod.PUT}
     )
-    public String 기본정보이슈_저장(@RequestParam String jiraKey, @RequestParam String projectType) throws Exception {
+    public Boolean 기본정보이슈_저장(@RequestParam String jiraKey, @RequestParam String projectType) throws Exception {
         logger.info("기본정보 이슈 저장 컨트롤러 진입");
         return jiraIssue.기본정보이슈_저장(jiraKey,projectType);
     }

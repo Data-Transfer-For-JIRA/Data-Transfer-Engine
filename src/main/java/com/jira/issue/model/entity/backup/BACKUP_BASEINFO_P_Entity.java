@@ -4,6 +4,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Getter
 @Setter
@@ -63,7 +64,7 @@ public class BACKUP_BASEINFO_P_Entity {
     ///////////////////////공통//////////////////////////////
 
     @Column(name = "PROJECT_ASSIGNMENT_DATE")
-    private LocalDateTime 프로젝트_배정일;
+    private Date 프로젝트_배정일;
 
     @Column(name = "PROJECT_PROGRESS_STEP")
     private String 프로젝트_진행_단계;
@@ -76,7 +77,8 @@ public class BACKUP_BASEINFO_P_Entity {
     @Column(name = "UPDATE_DATE")
     private LocalDateTime 업데이트_시간;
 
-    @PreUpdate
+    @PrePersist // 처음 저장
+    @PreUpdate // 업데이트
     public void preUpdate() {
         this.업데이트_시간 = LocalDateTime.now();
     }

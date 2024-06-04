@@ -4,6 +4,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Getter
 @Setter
@@ -67,10 +68,10 @@ public class BACKUP_BASEINFO_M_Entity {
     private String 계약_여부;
 
     @Column(name = "START_DATE")
-    private LocalDateTime 유지보수_시작일;
+    private Date 유지보수_시작일;
 
     @Column(name = "END_DATE")
-    private LocalDateTime 유지보수_종료일;
+    private Date 유지보수_종료일;
 
     @Column(name = "INSPECTION_METHOD")
     private String 점검_방법;
