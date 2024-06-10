@@ -32,7 +32,6 @@ import com.jira.project.service.JiraProjectImpl;
 import com.utils.ProjectConfig;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -194,6 +193,10 @@ public class PlatformProjectImpl implements PlatformProject {
         BaseDTO.CommonDTO.CommonDTOBuilder 공통데이터빌더 = BaseDTO.CommonDTO.builder();;
         BaseDTO.SelectedDTO.SelectedDTOBuilder 선택데이터빌더 = BaseDTO.SelectedDTO.builder();;
 
+        // json 변환
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
         // 기본 정보 이슈 조회
         if (StringUtils.equals(projectFlag, "M")) {
             이슈유형키 = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "유지보수 기본 정보").getId();
@@ -201,8 +204,6 @@ public class PlatformProjectImpl implements PlatformProject {
             기본정보_이슈키 = jiraIssue.getBaseIssueKey(jiraKey, 이슈유형키); // 해당 프로젝트의 기본 정보 이슈키 조회
             SearchIssueDTO<SearchMaintenanceInfoDTO> 유지보수_기본정보이슈 = jiraIssue.getMaintenanceIssue(기본정보_이슈키);
 
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
             String jsonRequestBody = objectMapper.writeValueAsString(유지보수_기본정보이슈);
             logger.info("json: " + jsonRequestBody);
             SearchMaintenanceInfoDTO 유지보수_기본정보 = 유지보수_기본정보이슈.getFields();
@@ -233,6 +234,8 @@ public class PlatformProjectImpl implements PlatformProject {
                     프린터지원 -> 프린터지원.getValue(),
                     공통데이터빌더::printerSupportRange
             );
+
+            setBuilder(objectMapper.writeValueAsString(유지보수_기본정보.getDescription()), 공통데이터빌더::description);
 
             setBuilder(
                     유지보수_기본정보::getProductInfo1,
@@ -351,6 +354,8 @@ public class PlatformProjectImpl implements PlatformProject {
                     프린터지원 -> 프린터지원.getValue(),
                     공통데이터빌더::printerSupportRange
             );
+
+            setBuilder(objectMapper.writeValueAsString(프로젝트_기본정보.getDescription()), 공통데이터빌더::description);
 
             setBuilder(
                     프로젝트_기본정보::getProductInfo1,

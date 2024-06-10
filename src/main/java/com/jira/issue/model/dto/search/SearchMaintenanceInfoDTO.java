@@ -29,7 +29,7 @@ public class SearchMaintenanceInfoDTO {
 
     private String summary;
 
-    private Description description;
+    private Object description;
 
     private User assignee;
 
