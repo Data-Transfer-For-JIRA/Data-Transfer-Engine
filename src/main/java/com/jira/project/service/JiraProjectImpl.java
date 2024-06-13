@@ -9,6 +9,7 @@ import com.jira.project.model.dao.TB_JML_JpaRepository;
 import com.jira.project.model.dto.CreateProjectDTO;
 import com.jira.project.model.dto.CreateProjectResponseDTO;
 import com.jira.project.model.dto.ProjectDTO;
+import com.jira.project.model.dto.ProjectListDTO;
 import com.jira.project.model.entity.TB_JLL_Entity;
 import com.jira.project.model.entity.TB_JML_Entity;
 import com.jira.project.model.entity.TB_PJT_BASE_Entity;
@@ -375,4 +376,45 @@ public class JiraProjectImpl implements JiraProject {
         return 결과;
     }
 
+    @Override
+    public List<String> getJiraProject() throws Exception {
+
+        try {
+            int startAt = 0;
+            int 최대_검색수 = 50;
+            boolean isLast = false;
+
+            List<String> 프로젝트_목록 = new ArrayList<>();
+
+            while(!isLast) {
+                String endpoint = "/rest/api/3/project/search?maxResults=" + 최대_검색수 + "&startAt=" + startAt;
+                ProjectListDTO 프로젝트_데이터
+                        = webClientUtils.get(endpoint, ProjectListDTO.class).block();
+
+                if (프로젝트_데이터 == null) {
+                    logger.error("프로젝트 목록이 null 입니다.");
+                } else if (프로젝트_데이터.getValues() == null || 프로젝트_데이터.getValues().size() == 0) {
+                    logger.info("클라우드 프로젝트 목록이 없습니다.");
+                    return 프로젝트_목록;
+                }
+
+                for (ProjectListDTO.Project 프로젝트 : 프로젝트_데이터.getValues()) {
+                    프로젝트_목록.add(프로젝트.getName());
+                }
+
+                if (프로젝트_데이터.getTotal() == 프로젝트_목록.size()) {
+                    isLast = true;
+                } else {
+                    startAt += 최대_검색수;
+                }
+            }
+
+            return 프로젝트_목록;
+
+        } catch (Exception e) {
+            logger.error("프로젝트 목록 조회 중 에러 발생");
+        }
+
+        return null;
+    }
 }

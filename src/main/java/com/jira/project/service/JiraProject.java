@@ -47,4 +47,6 @@ public interface JiraProject {
 
     ProjectDTO  updateProjectInfo(CreateProjectDTO createProjectDTO) throws Exception;
 
+    List<String> getJiraProject() throws Exception;
+
 }

@@ -134,6 +134,17 @@ public class PlatformProjectImpl implements PlatformProject {
 
         result.put("jiraProjectCode", jiraProjectKey);
         result.put("jiraProjectName", finalJiraProjectName);
+
+        List<String> 프로젝트_목록 = jiraProject.getJiraProject();
+        boolean 중복_프로젝트명_확인 =  프로젝트_목록.stream()
+                .anyMatch(이름 -> 이름.equalsIgnoreCase(finalJiraProjectName));
+
+        if (중복_프로젝트명_확인) {
+            logger.error("프로젝트명 중복");
+            result.put("result", "프로젝트 생성 실패 (프로젝트명 중복)");
+            return result;
+        }
+
         try {
 
             logger.info("[::platformCreateProject::] dto 확인 " + createProjectDTO);
@@ -144,7 +155,7 @@ public class PlatformProjectImpl implements PlatformProject {
 
                         try {
                             jiraProject.saveSuccessData(jiraProjectKey, res.getProjectId(), projectCode, projectName, finalJiraProjectName, projectFlag, finalAssignees); // DB 저장
-                            logger.error("[::platformCreateProject::] DB 저장 완료");
+                            logger.info("[::platformCreateProject::] DB 저장 완료");
                         } catch (Exception e) {
                             logger.error("[::platformCreateProject::] DB 저장 실패");
                         }
@@ -458,6 +469,17 @@ public class PlatformProjectImpl implements PlatformProject {
 
         result.put("jiraProjectCode", jiraProjectCode);
         result.put("jiraProjectName", finalJiraProjectName);
+
+        List<String> 프로젝트_목록 = jiraProject.getJiraProject();
+        boolean 중복_프로젝트명_확인 =  프로젝트_목록.stream()
+                .anyMatch(이름 -> 이름.equalsIgnoreCase(finalJiraProjectName));
+
+        if (중복_프로젝트명_확인) {
+            logger.error("프로젝트명 중복");
+            result.put("result", "프로젝트 생성 실패 (프로젝트명 중복)");
+            return result;
+        }
+
         try {
 
             logger.info("[::platformCreateProject::] dto 확인 " + createProjectDTO.toString());
@@ -468,7 +490,7 @@ public class PlatformProjectImpl implements PlatformProject {
 
                         try {
                             jiraProject.saveSuccessData(jiraProjectCode, res.getProjectId(), projectCode, projectName, finalJiraProjectName, projectFlag, assignees); // DB 저장
-                            logger.error("[::platformCreateProject::] DB 저장 완료");
+                            logger.info("[::platformCreateProject::] DB 저장 완료");
                         } catch (Exception e) {
                             logger.error("[::platformCreateProject::] DB 저장 실패");
                         }
@@ -507,8 +529,9 @@ public class PlatformProjectImpl implements PlatformProject {
         BaseDTO.CommonDTO commonDTO = baseDTO.getCommon();
         BaseDTO.SelectedDTO selectedDTO = baseDTO.getSelected();
 
-        logger.info("commonDTO: " + commonDTO.toString());
-        logger.info("selectedDTO: " + selectedDTO.toString());
+        ObjectMapper objectMapper = new ObjectMapper();
+        String 입력_데이터 = objectMapper.writeValueAsString(baseDTO);
+        logger.info("[ :: PlatformProjectImpl :: platformService :: ] 입력 데이터: " + 입력_데이터);
 
         String jiraProjectCode = jiraProject.namingJiraKey();
         String projectFlag = essentialDTO.getProjectFlag();

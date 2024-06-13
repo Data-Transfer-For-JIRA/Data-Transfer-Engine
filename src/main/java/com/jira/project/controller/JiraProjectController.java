@@ -162,4 +162,16 @@ public class JiraProjectController {
         logger.info("[::TransferProjectController::] 지라에 생성된 프로젝트 정보 업데이트");
         return jiraProject.updateProjectInfo(createProjectDTO);
     }
+
+    @ResponseBody
+    @RequestMapping(
+            value={"/list"},
+            method={RequestMethod.GET}
+    )
+    public List<String> getJiraProject() throws Exception{
+
+        logger.info("[::JiraProjectController::] 지라에 생성된 프로젝트 정보 조회");
+        return jiraProject.getJiraProject();
+    }
+
 }
