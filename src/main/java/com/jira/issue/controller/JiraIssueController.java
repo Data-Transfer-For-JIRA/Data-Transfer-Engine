@@ -4,6 +4,7 @@ import com.jira.issue.model.dto.TransferIssueDTO;
 import com.jira.issue.model.dto.search.SearchIssueDTO;
 import com.jira.issue.model.dto.search.SearchMaintenanceInfoDTO;
 import com.jira.issue.model.dto.search.SearchProjectInfoDTO;
+import com.jira.issue.model.dto.search.SearchRenderdIssue;
 import com.jira.issue.model.dto.weblink.SearchWebLinkDTO;
 import com.jira.issue.service.JiraIssue;
 import org.slf4j.Logger;
@@ -24,6 +25,18 @@ public class JiraIssueController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    /*
+    * 이슈 조회
+    * */
+    @ResponseBody
+    @RequestMapping(
+            value = {""},
+            method = {RequestMethod.GET}
+    )
+    public SearchRenderdIssue 이슈조회_컨트롤러(@RequestParam String 이슈_키 ) throws Exception {
+        logger.info("이슈 조회 컨트롤러 진입");
+        return jiraIssue.이슈_조회(이슈_키);
+    }
 
     /*
      * 해당 프로젝트에 이슈 생성

@@ -4,6 +4,7 @@ import com.jira.issue.model.dto.TransferIssueDTO;
 import com.jira.issue.model.dto.search.SearchIssueDTO;
 import com.jira.issue.model.dto.search.SearchMaintenanceInfoDTO;
 import com.jira.issue.model.dto.search.SearchProjectInfoDTO;
+import com.jira.issue.model.dto.search.SearchRenderdIssue;
 import com.jira.issue.model.dto.weblink.RequestWeblinkDTO;
 import com.jira.issue.model.dto.weblink.SearchWebLinkDTO;
 import com.jira.project.model.entity.TB_JML_Entity;
@@ -60,4 +61,10 @@ public interface JiraIssue {
     SearchIssueDTO<SearchProjectInfoDTO> getProjectIssue(String issueKey) throws Exception;
 
     Boolean 기본정보이슈_저장(String 지라_키,String 프로젝트_유형) throws Exception;
+
+    /*
+    *  이슈 조회
+    * */
+    SearchRenderdIssue 이슈_조회(String 이슈_키) throws Exception;
+
 }

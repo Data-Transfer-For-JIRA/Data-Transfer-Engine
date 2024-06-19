@@ -3,6 +3,7 @@ package com.jira.issue.service;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jira.account.model.dao.TB_JIRA_USER_JpaRepository;
 import com.jira.account.model.entity.TB_JIRA_USER_Entity;
@@ -23,6 +24,7 @@ import com.jira.issue.model.dto.create.ProjectInfoDTO;
 import com.jira.issue.model.dto.search.SearchIssueDTO;
 import com.jira.issue.model.dto.search.SearchMaintenanceInfoDTO;
 import com.jira.issue.model.dto.search.SearchProjectInfoDTO;
+import com.jira.issue.model.dto.search.SearchRenderdIssue;
 import com.jira.issue.model.dto.weblink.CreateWebLinkDTO;
 import com.jira.issue.model.dto.weblink.RequestWeblinkDTO;
 import com.jira.issue.model.dto.weblink.SearchWebLinkDTO;
@@ -1550,20 +1552,19 @@ public class JiraIssueImpl implements JiraIssue {
 
         BACKUP_BASEINFO_P_JpaRepository.save(저장할_데이터);
     }
-    private String 제품정보_변환(List<FieldDTO.Field> 제품정보) {
-        if (제품정보 == null) {
-            return null;
-        }
-        return 제품정보.stream()
-                .map(FieldDTO.Field::getValue)
-                .collect(Collectors.joining(" "));
-    }
-
-    public static <T> T 값_널체크(Supplier<T> supplier) {
+    @Override
+    public SearchRenderdIssue 이슈_조회(String 이슈_키)throws Exception{
         try {
-            return supplier.get();
-        } catch (NullPointerException e) {
-            return null;
+            String endpoint = "/rest/api/3/issue/" + 이슈_키+"?expand=renderedFields";
+            SearchRenderdIssue 조회결과 =  webClientUtils.get(endpoint,new ParameterizedTypeReference<SearchRenderdIssue>() {}).block();
+
+            JsonNode 테스트 = ConvertHtmlToADF.converter(조회결과.getRenderedFields().getDescription());
+
+            return 조회결과;
+
+        } catch (Exception e) {
+            logger.error("유지보수 기본정보 이슈 조회 에러 발생");
+            throw new Exception(e.getMessage());
         }
     }
 
