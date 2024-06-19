@@ -1348,71 +1348,8 @@ public class JiraIssueImpl implements JiraIssue {
                 if (조회결과 == null || 조회결과.getFields() == null) {
                     throw new Exception("유효한 조회 결과가 없습니다.");
                 }
-                String 이슈_키 = 값_널체크(() ->  조회결과.getKey());
-                String 프로젝트_키 = 값_널체크(() -> 조회결과.getFields().getProject().getKey());
-                String 유지보수_명 = 값_널체크(() -> 조회결과.getFields().getMaintenanceName());
-                String 담당자_정 = 담당자_이름_편집하기(값_널체크(() -> 조회결과.getFields().getAssignee().getDisplayName()));
-                String 담당자_부 = 담당자_이름_편집하기(값_널체크(() -> 조회결과.getFields().getSubAssignee().getDisplayName()));
-                String 영업_대표 = 담당자_이름_편집하기(값_널체크(() -> 조회결과.getFields().getSalesManager().getDisplayName()));
-                String 계약사 = 값_널체크(() -> 조회결과.getFields().getContractor());
-                String 고객사 = 값_널체크(() -> 조회결과.getFields().getClient());
-                String 바코드_타입 = 값_널체크(() -> 조회결과.getFields().getBarcodeType().getValue());
-                String 멀티_OS_지원여부 = 값_널체크(() -> 조회결과.getFields().getMultiOsSupport().get(0).getValue());
+                유지보수_기본정보이슈_저장(조회결과);
 
-                String 연관된_프로젝트_키 =연관된_프로젝트_키_가져오기( getWebLinkByJiraIssueKey(이슈_키) );
-
-                String 제품정보1 = 제품정보_변환(조회결과.getFields().getProductInfo1());
-                String 제품정보2 = 제품정보_변환(조회결과.getFields().getProductInfo2());
-                String 제품정보3 = 제품정보_변환(조회결과.getFields().getProductInfo3());
-                String 제품정보4 = 제품정보_변환(조회결과.getFields().getProductInfo4());
-                String 제품정보5 = 제품정보_변환(조회결과.getFields().getProductInfo5());
-
-                String 계약_여부 = 조회결과.getFields().getContractStatus().getValue() ;
-
-
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-
-                Date 유지보수_시작일 = null;
-                String 지라_유지보수_시작일 = 값_널체크(() -> 조회결과.getFields().getMaintenanceStartDate());
-                if (지라_유지보수_시작일 != null) {
-                    유지보수_시작일 = dateFormat.parse(지라_유지보수_시작일);
-                }
-
-                Date  유지보수_종료일 = null;
-                String 지라_유지보수_종료일 = 값_널체크(() -> 조회결과.getFields().getMaintenanceEndDate());
-                if(지라_유지보수_종료일 != null){
-                    유지보수_종료일 = dateFormat.parse(지라_유지보수_시작일);
-                }
-
-                String 점검_주기 = 값_널체크(() -> 조회결과.getFields().getInspectionCycle().getValue());
-                String 점검_방법 = 값_널체크(() -> 조회결과.getFields().getInspectionMethod().getValue());
-                String 프린터_지원_범위 =  값_널체크(() -> 조회결과.getFields().getPrinterSupportRange().getValue());
-
-                BACKUP_BASEINFO_M_Entity 저장할_데이터 =  BACKUP_BASEINFO_M_Entity.builder()
-                        .지라_프로젝트_키(프로젝트_키)
-                        .유지보수_명(유지보수_명)
-                        .담당자_정(담당자_정)
-                        .담당자_부(담당자_부)
-                        .영업_대표(영업_대표)
-                        .계약사(계약사)
-                        .고객사(고객사)
-                        .바코드_타입(바코드_타입)
-                        .멀티_OS_지원여부(멀티_OS_지원여부)
-                        .연관된_프로젝트_키(연관된_프로젝트_키)
-                        .제품_정보1(제품정보1)
-                        .제품_정보2(제품정보2)
-                        .제품_정보3(제품정보3)
-                        .제품_정보4(제품정보4)
-                        .제품_정보5(제품정보5)
-                        .계약_여부(계약_여부)
-                        .유지보수_시작일(유지보수_시작일)
-                        .유지보수_종료일(유지보수_종료일)
-                        .점검_주기(점검_주기)
-                        .점검_방법(점검_방법)
-                        .프린터_지원_범위(프린터_지원_범위)
-                        .build();
-
-                BACKUP_BASEINFO_M_JpaRepository.save(저장할_데이터);
                 return true;
             }
             else{
@@ -1421,58 +1358,7 @@ public class JiraIssueImpl implements JiraIssue {
                 if (조회결과 == null || 조회결과.getFields() == null) {
                     throw new Exception("유효한 조회 결과가 없습니다.");
                 }
-                String 이슈_키 = 값_널체크(() ->  조회결과.getKey());
-                String 프로젝트_키 = 값_널체크(() -> 조회결과.getFields().getProject().getKey());
-                String 프로젝트_명 = 값_널체크(() -> 조회결과.getFields().getProjectName());
-                String 담당자_정 = 담당자_이름_편집하기(값_널체크(() -> 조회결과.getFields().getAssignee().getDisplayName()));
-                String 담당자_부 = 담당자_이름_편집하기(값_널체크(() -> 조회결과.getFields().getSubAssignee().getDisplayName()));
-                String 영업_대표 = 담당자_이름_편집하기(값_널체크(() -> 조회결과.getFields().getSalesManager().getDisplayName()));
-                String 계약사 = 값_널체크(() -> 조회결과.getFields().getContractor());
-                String 고객사 = 값_널체크(() -> 조회결과.getFields().getClient());
-                String 바코드_타입 = 값_널체크(() -> 조회결과.getFields().getBarcodeType().getValue());
-                String 멀티_OS_지원여부 = 값_널체크(() -> 조회결과.getFields().getMultiOsSupport().get(0).getValue());
-
-                String 연관된_프로젝트_키 =연관된_프로젝트_키_가져오기( getWebLinkByJiraIssueKey(이슈_키) );
-
-                String 제품정보1 = 제품정보_변환(조회결과.getFields().getProductInfo1());
-                String 제품정보2 = 제품정보_변환(조회결과.getFields().getProductInfo2());
-                String 제품정보3 = 제품정보_변환(조회결과.getFields().getProductInfo3());
-                String 제품정보4 = 제품정보_변환(조회결과.getFields().getProductInfo4());
-                String 제품정보5 = 제품정보_변환(조회결과.getFields().getProductInfo5());
-
-                Date 프로젝트_배정일 = null;
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                String 지라_프로젝트_배정일 = 값_널체크(() -> 조회결과.getFields().getProjectAssignmentDate());
-                if (지라_프로젝트_배정일 != null) {
-                    프로젝트_배정일 = dateFormat.parse(지라_프로젝트_배정일);
-                }
-
-                String 프로젝트_진행_단계 = 값_널체크(() -> 조회결과.getFields().getProjectProgressStep().getValue());
-
-                String 프린터_지원_범위 = 값_널체크(() -> 조회결과.getFields().getPrinterSupportRange().getValue());
-
-                BACKUP_BASEINFO_P_Entity 저장할_데이터 =  BACKUP_BASEINFO_P_Entity.builder()
-                        .지라_프로젝트_키(프로젝트_키)
-                        .프로젝트_명(프로젝트_명)
-                        .담당자_정(담당자_정)
-                        .담당자_부(담당자_부)
-                        .영업_대표(영업_대표)
-                        .계약사(계약사)
-                        .고객사(고객사)
-                        .바코드_타입(바코드_타입)
-                        .멀티_OS_지원여부(멀티_OS_지원여부)
-                        .연관된_프로젝트_키(연관된_프로젝트_키)
-                        .제품_정보1(제품정보1)
-                        .제품_정보2(제품정보2)
-                        .제품_정보3(제품정보3)
-                        .제품_정보4(제품정보4)
-                        .제품_정보5(제품정보5)
-                        .프로젝트_배정일(프로젝트_배정일)
-                        .프로젝트_진행_단계(프로젝트_진행_단계)
-                        .프린터_지원_범위(프린터_지원_범위)
-                        .build();
-
-                BACKUP_BASEINFO_P_JpaRepository.save(저장할_데이터);
+                프로젝트_기본정보이슈_저장(조회결과);
                 return true;
             }
         }catch (Exception e){
@@ -1525,6 +1411,144 @@ public class JiraIssueImpl implements JiraIssue {
         } else {
             return null;
         }
+    }
+    private String 제품정보_변환(List<FieldDTO.Field> 제품정보) {
+        if (제품정보 == null) {
+            return null;
+        }
+        return 제품정보.stream()
+                .map(FieldDTO.Field::getValue)
+                .collect(Collectors.joining(" "));
+    }
+
+    public static <T> T 값_널체크(Supplier<T> supplier) {
+        try {
+            return supplier.get();
+        } catch (NullPointerException e) {
+            return null;
+        }
+    }
+
+    private void 유지보수_기본정보이슈_저장( SearchIssueDTO<SearchMaintenanceInfoDTO>  조회결과) throws Exception {
+        String 이슈_키 = 값_널체크(() ->  조회결과.getKey());
+        String 프로젝트_키 = 값_널체크(() -> 조회결과.getFields().getProject().getKey());
+        String 유지보수_명 = 값_널체크(() -> 조회결과.getFields().getMaintenanceName());
+        String 담당자_정 = 담당자_이름_편집하기(값_널체크(() -> 조회결과.getFields().getAssignee().getDisplayName()));
+        String 담당자_부 = 담당자_이름_편집하기(값_널체크(() -> 조회결과.getFields().getSubAssignee().getDisplayName()));
+        String 영업_대표 = 담당자_이름_편집하기(값_널체크(() -> 조회결과.getFields().getSalesManager().getDisplayName()));
+        String 계약사 = 값_널체크(() -> 조회결과.getFields().getContractor());
+        String 고객사 = 값_널체크(() -> 조회결과.getFields().getClient());
+        String 바코드_타입 = 값_널체크(() -> 조회결과.getFields().getBarcodeType().getValue());
+        String 멀티_OS_지원여부 = 값_널체크(() -> 조회결과.getFields().getMultiOsSupport().get(0).getValue());
+
+        String 연관된_프로젝트_키 =연관된_프로젝트_키_가져오기( getWebLinkByJiraIssueKey(이슈_키) );
+
+        String 제품정보1 = 제품정보_변환(조회결과.getFields().getProductInfo1());
+        String 제품정보2 = 제품정보_변환(조회결과.getFields().getProductInfo2());
+        String 제품정보3 = 제품정보_변환(조회결과.getFields().getProductInfo3());
+        String 제품정보4 = 제품정보_변환(조회결과.getFields().getProductInfo4());
+        String 제품정보5 = 제품정보_변환(조회결과.getFields().getProductInfo5());
+
+        String 계약_여부 = 조회결과.getFields().getContractStatus().getValue() ;
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+        Date 유지보수_시작일 = null;
+        String 지라_유지보수_시작일 = 값_널체크(() -> 조회결과.getFields().getMaintenanceStartDate());
+        if (지라_유지보수_시작일 != null) {
+            유지보수_시작일 = dateFormat.parse(지라_유지보수_시작일);
+        }
+
+        Date  유지보수_종료일 = null;
+        String 지라_유지보수_종료일 = 값_널체크(() -> 조회결과.getFields().getMaintenanceEndDate());
+        if(지라_유지보수_종료일 != null){
+            유지보수_종료일 = dateFormat.parse(지라_유지보수_종료일);
+        }
+
+        String 점검_주기 = 값_널체크(() -> 조회결과.getFields().getInspectionCycle().getValue());
+        String 점검_방법 = 값_널체크(() -> 조회결과.getFields().getInspectionMethod().getValue());
+        String 프린터_지원_범위 =  값_널체크(() -> 조회결과.getFields().getPrinterSupportRange().getValue());
+
+        BACKUP_BASEINFO_M_Entity 저장할_데이터 =  BACKUP_BASEINFO_M_Entity.builder()
+                .지라_프로젝트_키(프로젝트_키)
+                .유지보수_명(유지보수_명)
+                .담당자_정(담당자_정)
+                .담당자_부(담당자_부)
+                .영업_대표(영업_대표)
+                .계약사(계약사)
+                .고객사(고객사)
+                .바코드_타입(바코드_타입)
+                .멀티_OS_지원여부(멀티_OS_지원여부)
+                .연관된_프로젝트_키(연관된_프로젝트_키)
+                .제품_정보1(제품정보1)
+                .제품_정보2(제품정보2)
+                .제품_정보3(제품정보3)
+                .제품_정보4(제품정보4)
+                .제품_정보5(제품정보5)
+                .계약_여부(계약_여부)
+                .유지보수_시작일(유지보수_시작일)
+                .유지보수_종료일(유지보수_종료일)
+                .점검_주기(점검_주기)
+                .점검_방법(점검_방법)
+                .프린터_지원_범위(프린터_지원_범위)
+                .build();
+
+        BACKUP_BASEINFO_M_JpaRepository.save(저장할_데이터);
+    }
+
+    private void 프로젝트_기본정보이슈_저장(SearchIssueDTO<SearchProjectInfoDTO> 조회결과) throws Exception{
+        String 이슈_키 = 값_널체크(() ->  조회결과.getKey());
+        String 프로젝트_키 = 값_널체크(() -> 조회결과.getFields().getProject().getKey());
+        String 프로젝트_명 = 값_널체크(() -> 조회결과.getFields().getProjectName());
+        String 담당자_정 = 담당자_이름_편집하기(값_널체크(() -> 조회결과.getFields().getAssignee().getDisplayName()));
+        String 담당자_부 = 담당자_이름_편집하기(값_널체크(() -> 조회결과.getFields().getSubAssignee().getDisplayName()));
+        String 영업_대표 = 담당자_이름_편집하기(값_널체크(() -> 조회결과.getFields().getSalesManager().getDisplayName()));
+        String 계약사 = 값_널체크(() -> 조회결과.getFields().getContractor());
+        String 고객사 = 값_널체크(() -> 조회결과.getFields().getClient());
+        String 바코드_타입 = 값_널체크(() -> 조회결과.getFields().getBarcodeType().getValue());
+        String 멀티_OS_지원여부 = 값_널체크(() -> 조회결과.getFields().getMultiOsSupport().get(0).getValue());
+
+        String 연관된_프로젝트_키 =연관된_프로젝트_키_가져오기( getWebLinkByJiraIssueKey(이슈_키) );
+
+        String 제품정보1 = 제품정보_변환(조회결과.getFields().getProductInfo1());
+        String 제품정보2 = 제품정보_변환(조회결과.getFields().getProductInfo2());
+        String 제품정보3 = 제품정보_변환(조회결과.getFields().getProductInfo3());
+        String 제품정보4 = 제품정보_변환(조회결과.getFields().getProductInfo4());
+        String 제품정보5 = 제품정보_변환(조회결과.getFields().getProductInfo5());
+
+        Date 프로젝트_배정일 = null;
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String 지라_프로젝트_배정일 = 값_널체크(() -> 조회결과.getFields().getProjectAssignmentDate());
+        if (지라_프로젝트_배정일 != null) {
+            프로젝트_배정일 = dateFormat.parse(지라_프로젝트_배정일);
+        }
+
+        String 프로젝트_진행_단계 = 값_널체크(() -> 조회결과.getFields().getProjectProgressStep().getValue());
+
+        String 프린터_지원_범위 = 값_널체크(() -> 조회결과.getFields().getPrinterSupportRange().getValue());
+
+        BACKUP_BASEINFO_P_Entity 저장할_데이터 =  BACKUP_BASEINFO_P_Entity.builder()
+                .지라_프로젝트_키(프로젝트_키)
+                .프로젝트_명(프로젝트_명)
+                .담당자_정(담당자_정)
+                .담당자_부(담당자_부)
+                .영업_대표(영업_대표)
+                .계약사(계약사)
+                .고객사(고객사)
+                .바코드_타입(바코드_타입)
+                .멀티_OS_지원여부(멀티_OS_지원여부)
+                .연관된_프로젝트_키(연관된_프로젝트_키)
+                .제품_정보1(제품정보1)
+                .제품_정보2(제품정보2)
+                .제품_정보3(제품정보3)
+                .제품_정보4(제품정보4)
+                .제품_정보5(제품정보5)
+                .프로젝트_배정일(프로젝트_배정일)
+                .프로젝트_진행_단계(프로젝트_진행_단계)
+                .프린터_지원_범위(프린터_지원_범위)
+                .build();
+
+        BACKUP_BASEINFO_P_JpaRepository.save(저장할_데이터);
     }
     private String 제품정보_변환(List<FieldDTO.Field> 제품정보) {
         if (제품정보 == null) {
