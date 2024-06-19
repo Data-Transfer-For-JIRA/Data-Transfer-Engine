@@ -34,6 +34,7 @@ import com.jira.issue.model.entity.backup.BACKUP_BASEINFO_P_Entity;
 import com.jira.project.model.dao.TB_JML_JpaRepository;
 import com.jira.project.model.entity.TB_JML_Entity;
 import com.jira.project.model.entity.TB_PJT_BASE_Entity;
+import com.utils.ConvertHtmlToADF;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
 import org.json.JSONArray;

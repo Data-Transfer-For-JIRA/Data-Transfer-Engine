@@ -76,6 +76,16 @@ dependencies {
 
 	// StringEscapeUtils
 	implementation 'org.apache.commons:commons-lang3:3.12.0'
+
+	//jira html 컨버터
+	// https://mvnrepository.com/artifact/com.atlassian.renderer/atlassian-renderer
+	implementation 'net.sourceforge.htmlunit:htmlunit:2.37.0'
+	implementation 'log4j:log4j:1.2.17'
+	implementation files('libs/atlassian-renderer-9.0.3.jar')
+	implementation files('libs/adf-builder-java-html-0.37.0.jar')
+	implementation files('libs/adf-builder-java-0.37.0.jar')
+	implementation files('libs/adf-builder-java-jackson2-0.37.0.jar')
+
 }
 
 tasks.named('test') {
