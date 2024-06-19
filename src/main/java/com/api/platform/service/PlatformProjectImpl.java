@@ -706,7 +706,7 @@ public class PlatformProjectImpl implements PlatformProject {
         // 프로젝트 이름
         String 프로젝트_이름 = baseDTO.getEssential().getProjectName();
         // 담당자
-        String 담당자_이름 =baseDTO.getCommon().getAssignee();
+        String 담당자_이름 = baseDTO.getCommon().getAssignee();
 
         if(담당자_이름 != null && !담당자_이름.isEmpty()){
             TB_JIRA_USER_Entity user = (TB_JIRA_USER_Entity) TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(담당자_이름);
@@ -718,7 +718,7 @@ public class PlatformProjectImpl implements PlatformProject {
 
         jiraProject.updateProjectInfo(업데이트_정보);
 
-        // 기본 정보 이슈 업데이트
+        // TODO: 기본 정보 이슈 업데이트
 
     }
 
@@ -863,28 +863,6 @@ public class PlatformProjectImpl implements PlatformProject {
 
         return issueDTO;
     }
-
-    /*
-    public <T> boolean hasValue(T dto) {
-
-        for (Field field : dto.getClass().getDeclaredFields()) {
-            field.setAccessible(true);
-
-            try {
-                Object value = field.get(dto);
-                logger.info("value: " + value);
-
-                if (value instanceof String && !((String) value).trim().isEmpty()) {
-                    return true;
-                }
-
-            } catch (Exception e) {
-                return false;
-            }
-        }
-        return false;
-    }
-    */
 
     @Override
     public <B extends CustomFieldDTO.CustomFieldDTOBuilder<?, ?>> B setCommonFields(B customBuilder, String jiraProjectCode, BaseDTO.CommonDTO commonDTO) throws Exception {
