@@ -3,6 +3,7 @@ package com.api.platform.service;
 import com.api.platform.dto.BaseDTO;
 import com.api.platform.dto.ReturnMessage;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jira.account.model.dao.TB_JIRA_USER_JpaRepository;
 import com.jira.account.model.entity.TB_JIRA_USER_Entity;
@@ -29,6 +30,7 @@ import com.jira.project.model.dto.ProjectDTO;
 import com.jira.project.model.entity.TB_JLL_Entity;
 import com.jira.project.model.entity.TB_JML_Entity;
 import com.jira.project.service.JiraProjectImpl;
+import com.utils.ConvertHtmlToADF;
 import com.utils.ProjectConfig;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
@@ -36,7 +38,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -141,7 +142,7 @@ public class PlatformProjectImpl implements PlatformProject {
 
         if (중복_프로젝트명_확인) {
             logger.error("프로젝트명 중복");
-            result.put("result", "프로젝트 생성 실패 (프로젝트명 중복)");
+            result.put("result", "프로젝트 생성 실패");
             return result;
         }
 
@@ -476,7 +477,7 @@ public class PlatformProjectImpl implements PlatformProject {
 
         if (중복_프로젝트명_확인) {
             logger.error("프로젝트명 중복");
-            result.put("result", "프로젝트 생성 실패 (프로젝트명 중복)");
+            result.put("result", "프로젝트 생성 실패");
             return result;
         }
 
@@ -977,21 +978,8 @@ public class PlatformProjectImpl implements PlatformProject {
                 .orElse(StringUtils.EMPTY);
 
         if (!StringUtils.isEmpty(설명)) {
-
-            설명 = processHtml(설명);
-            String text = replaceText(removeHtmlTags(Jsoup.clean(설명, Whitelist.basic())), "&nbsp;", " ");
-
-            FieldDTO.ContentItem contentItem = FieldDTO.ContentItem.builder().text(text).type("text").build();
-
-            List<FieldDTO.ContentItem> contentItems = new ArrayList<>();
-            contentItems.add(contentItem);
-
-            FieldDTO.Content content = FieldDTO.Content.builder().type("paragraph").content(contentItems).build();
-            List<FieldDTO.Content> contents = new ArrayList<>();
-            contents.add(content);
-
-            FieldDTO.Description description = FieldDTO.Description.builder().version(1).type("doc").content(contents).build();
-            customBuilder.description(description);
+            JsonNode ADF_변환 = ConvertHtmlToADF.converter(설명);
+            customBuilder.description(ADF_변환);
         }
 
         // 기타 정보
@@ -1247,21 +1235,8 @@ public class PlatformProjectImpl implements PlatformProject {
         // 설명
         String 설명 = description;
         if (!StringUtils.isEmpty(설명)) {
-
-            설명 = processHtml(설명);
-            String text = replaceText(removeHtmlTags(Jsoup.clean(설명, Whitelist.basic())), "&nbsp;", " ");
-
-            FieldDTO.ContentItem contentItem = FieldDTO.ContentItem.builder().text(text).type("text").build();
-
-            List<FieldDTO.ContentItem> contentItems = new ArrayList<>();
-            contentItems.add(contentItem);
-
-            FieldDTO.Content content = FieldDTO.Content.builder().type("paragraph").content(contentItems).build();
-            List<FieldDTO.Content> contents = new ArrayList<>();
-            contents.add(content);
-
-            FieldDTO.Description descriptionObject = FieldDTO.Description.builder().version(1).type("doc").content(contents).build();
-            fieldDTO.setDescription(descriptionObject);
+            JsonNode ADF_변환 = ConvertHtmlToADF.converter(설명);
+            fieldDTO.setDescription(ADF_변환);
         }
 
         createIssueDTO = new CreateIssueDTO<>(fieldDTO);

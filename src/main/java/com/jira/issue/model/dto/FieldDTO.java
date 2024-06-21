@@ -26,7 +26,7 @@ public class FieldDTO {
 
     private String summary;
 
-    private Description description;
+    private Object description;
 
     private Comment comment;
 
