@@ -45,6 +45,9 @@ public class BackupController {
         backupScheduler.지라프로젝트_백업();
     }
 
+    /*
+     *  기본 정보 저장 스케줄러
+     * */
     @ResponseBody
     @RequestMapping(
             value={"/baseinfo"},
@@ -56,6 +59,20 @@ public class BackupController {
 
         backupScheduler.지라기본정보_백업();
     }
+
+    /*
+    *  기본 정보 저장 1개만
+    * */
+    @ResponseBody
+    @RequestMapping(
+            value = {"/baseissue"},
+            method = {RequestMethod.PUT}
+    )
+    public Boolean 기본정보이슈_저장(@RequestParam String jiraKey, @RequestParam String projectType) throws Exception {
+        logger.info("기본정보 이슈 저장 컨트롤러 진입");
+        return backupScheduler.기본정보이슈_저장(jiraKey,projectType);
+    }
+
 
     @ResponseBody
     @RequestMapping(
