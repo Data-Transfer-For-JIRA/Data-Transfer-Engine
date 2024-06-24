@@ -51,6 +51,9 @@ public class JiraIssueController {
         return jiraIssue.transferIssueData(transferIssueDTO);
     }
 
+    /*
+     *  기본정보 이슈 업데이트시 사용 API - 현재 미사용
+     * */
     @ResponseBody
     @RequestMapping(
             value = {"/update"},
@@ -62,7 +65,7 @@ public class JiraIssueController {
     }
 
     /*
-     *  유지보수_기본정보 이슈 조회
+     *  유지보수_기본정보 이슈 조회 API
      * */
     @ResponseBody
     @RequestMapping(
@@ -74,7 +77,7 @@ public class JiraIssueController {
         return jiraIssue.getMaintenanceIssue(issueKey);
     }
     /*
-     *  프로젝트_기본정보 이슈 조회
+     *  프로젝트_기본정보 이슈 조회 API
      * */
     @ResponseBody
     @RequestMapping(
