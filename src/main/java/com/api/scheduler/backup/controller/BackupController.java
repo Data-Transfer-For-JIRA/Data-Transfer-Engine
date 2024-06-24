@@ -6,9 +6,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-/*
-*  프로젝트는 플랫폼을 통해 JML에 생성하기 때문에 백업 대상 정보는 지라 프로젝트 이름, 담당자 이름
-* */
 @RestController
 @RequestMapping("/api/scheduler/backup")
 public class BackupController {
@@ -17,22 +14,10 @@ public class BackupController {
     @Autowired
     BackupScheduler backupScheduler;
 
+    /*------------------------------------젠킨스 스케줄러에 등록되는 API------------------------------------*/
     /*
-    *  JML 테이블에 지라 프로젝트 리더 백업 하는 스케줄러 API
+    *  프로젝트 정보(담당자,이름) 백업 스케줄러 API
     * */
-    @ResponseBody
-    @RequestMapping(
-            value={"/project/leader"},
-            method={RequestMethod.PUT}
-    )
-    public void 지라프로젝트리더_백업() throws Exception{
-
-        logger.info("[::BackupProjectController::] 지라 프로젝트 리더 백업 스케줄러");
-
-        backupScheduler.updateJMLProjectLeader();
-
-    }
-
     @ResponseBody
     @RequestMapping(
             value={"/project"},
@@ -44,9 +29,8 @@ public class BackupController {
 
         backupScheduler.지라프로젝트_백업();
     }
-
     /*
-     *  기본 정보 저장 스케줄러
+     *  기본 정보 백업 스케줄러 API
      * */
     @ResponseBody
     @RequestMapping(
@@ -59,21 +43,6 @@ public class BackupController {
 
         backupScheduler.지라기본정보_백업();
     }
-
-    /*
-    *  기본 정보 저장 1개만
-    * */
-    @ResponseBody
-    @RequestMapping(
-            value = {"/baseissue"},
-            method = {RequestMethod.PUT}
-    )
-    public Boolean 기본정보이슈_저장(@RequestParam String jiraKey, @RequestParam String projectType) throws Exception {
-        logger.info("기본정보 이슈 저장 컨트롤러 진입");
-        return backupScheduler.기본정보이슈_저장(jiraKey,projectType);
-    }
-
-
     @ResponseBody
     @RequestMapping(
             value={"/issue"},
@@ -84,5 +53,34 @@ public class BackupController {
         logger.info("[::BackupController::] 지라 이슈 백업 스케줄러");
 
         backupScheduler.지라이슈_백업();
+    }
+    /*------------------------------------젠킨스 스케줄러에 등록되지 않는 API------------------------------------*/
+    /*
+     *  기본 정보 1개만 백업 API
+     * */
+    @ResponseBody
+    @RequestMapping(
+            value = {"/baseissue"},
+            method = {RequestMethod.PUT}
+    )
+    public Boolean 기본정보이슈_저장(@RequestParam String jiraKey, @RequestParam String projectType) throws Exception {
+
+        logger.info("[::BackupController::] 지라 기본정보 백업 스케줄러");
+
+        return backupScheduler.기본정보이슈_저장(jiraKey,projectType);
+    }
+    /*
+     *  JML 테이블에 지라 프로젝트 리더 백업 하는 스케줄러 API (지라에서 변경한 내용을 감지하기 위함)
+     * */
+    @ResponseBody
+    @RequestMapping(
+            value={"/project/leader"},
+            method={RequestMethod.PUT}
+    )
+    public void 지라프로젝트리더_백업() throws Exception{
+
+        logger.info("[::BackupProjectController::] 지라 프로젝트 리더 백업 스케줄러");
+
+        backupScheduler.updateJMLProjectLeader();
     }
 }
