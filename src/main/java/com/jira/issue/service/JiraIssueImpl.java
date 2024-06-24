@@ -9,8 +9,6 @@ import com.jira.account.model.dao.TB_JIRA_USER_JpaRepository;
 import com.jira.account.model.entity.TB_JIRA_USER_Entity;
 import com.jira.issue.model.FieldInfo;
 import com.jira.issue.model.FieldInfoCategory;
-import com.jira.issue.model.dao.BACKUP_BASEINFO_M_JpaRepository;
-import com.jira.issue.model.dao.BACKUP_BASEINFO_P_JpaRepository;
 import com.jira.issue.model.dao.PJ_PG_SUB_JpaRepository;
 import com.jira.issue.model.dto.FieldDTO;
 import com.jira.issue.model.dto.ResponseIssueDTO;
@@ -1154,8 +1152,7 @@ public class JiraIssueImpl implements JiraIssue {
     /*
     *  해당 이슈에 댓글 생성하는 구현체
     * */
-    @Override
-    public Boolean addComment(String issueIdOrKey, String contents) throws Exception{
+    private Boolean addComment(String issueIdOrKey, String contents) throws Exception{
         logger.info("[::JiraIssueImpl::] addComment");
 
         try {
@@ -1196,8 +1193,7 @@ public class JiraIssueImpl implements JiraIssue {
         }
     }
 
-    @Override
-    public Boolean addMention(String issueIdOrKey, String targetUser) throws Exception{
+    private Boolean addMention(String issueIdOrKey, String targetUser) throws Exception{
         try {
             logger.info("[::JiraIssueImpl::] addMention");
 
