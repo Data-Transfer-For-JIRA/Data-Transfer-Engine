@@ -77,9 +77,9 @@ public class PlatformController {
             value = {"/update"},
             method = {RequestMethod.PUT}
     )
-    public void upDateProjectInfo(@RequestBody BaseDTO baseDTO) throws Exception {
+    public void upDateProjectInfo(@RequestParam String jiraKey, @RequestBody BaseDTO baseDTO) throws Exception {
         logger.info("[::PlatformController::] 플랫폼 프로젝트 업데이트");
-        platformProject.upDateProjectInfo(baseDTO);
+        platformProject.upDateProjectInfo(jiraKey, baseDTO);
     }
     
 }

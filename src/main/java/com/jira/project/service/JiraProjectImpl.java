@@ -341,7 +341,7 @@ public class JiraProjectImpl implements JiraProject {
 
         CreateProjectDTO 업데이트_데이터 = new CreateProjectDTO();
             
-            // 프로젝트 이름 수정
+        // 프로젝트 이름 수정
         if(createProjectDTO.getName() != null && !createProjectDTO.getName().isEmpty()){
             업데이트_데이터.setName(createProjectDTO.getName());
         }

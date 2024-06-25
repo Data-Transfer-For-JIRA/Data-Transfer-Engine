@@ -701,7 +701,7 @@ public class PlatformProjectImpl implements PlatformProject {
 
     @Override
     @Transactional
-    public void upDateProjectInfo(BaseDTO baseDTO) throws Exception {
+    public void upDateProjectInfo(String jiraKey, BaseDTO baseDTO) throws Exception {
         // 프로젝트 정보 업데이트
         CreateProjectDTO 업데이트_정보 = new CreateProjectDTO();
         // 프로젝트 이름
@@ -714,13 +714,15 @@ public class PlatformProjectImpl implements PlatformProject {
             String 계정_정보 = user.getAccountId();
             업데이트_정보.setLeadAccountId(계정_정보);
         }
-
+        업데이트_정보.setKey(jiraKey);
         업데이트_정보.setName(프로젝트_이름);
-
         jiraProject.updateProjectInfo(업데이트_정보);
 
-        // TODO: 기본 정보 이슈 업데이트
-
+        // 기본 정보 이슈 업데이트
+        String issueKey = jiraIssue.getBaseIssueKeyByJiraKey(jiraKey);
+        if (issueKey != null) {
+            updateBaseIssue(issueKey, baseDTO);
+        }
     }
 
     @Override
