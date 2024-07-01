@@ -461,6 +461,12 @@ public class PlatformProjectImpl implements PlatformProject {
         result.put("jiraProjectCode", jiraProjectCode);
         result.put("jiraProjectName", finalJiraProjectName);
 
+        if (jiraProject.checkJiraProjectName(finalJiraProjectName)) {
+            logger.error("프로젝트명 중복");
+            result.put("result", "DUPLICATE");
+            return result;
+        }
+
         try {
 
             logger.info("[::platformCreateProject::] dto 확인 " + createProjectDTO.toString());
