@@ -377,7 +377,7 @@ public class JiraProjectImpl implements JiraProject {
     }
 
     @Override
-    public List<String> getJiraProject() throws Exception {
+    public boolean checkJiraProjectName(String jiraProjectName) throws Exception {
 
         try {
             int startAt = 0;
@@ -392,10 +392,11 @@ public class JiraProjectImpl implements JiraProject {
                         = webClientUtils.get(endpoint, ProjectListDTO.class).block();
 
                 if (프로젝트_데이터 == null) {
-                    logger.error("프로젝트 목록이 null 입니다.");
+                    logger.error("[ :: JiraProjectImpl :: ] 프로젝트 목록이 null 입니다.");
+                    break;
                 } else if (프로젝트_데이터.getValues() == null || 프로젝트_데이터.getValues().size() == 0) {
-                    logger.info("클라우드 프로젝트 목록이 없습니다.");
-                    return 프로젝트_목록;
+                    logger.info("[ :: JiraProjectImpl :: ] 클라우드 프로젝트 목록이 없습니다.");
+                    break;
                 }
 
                 for (ProjectListDTO.Project 프로젝트 : 프로젝트_데이터.getValues()) {
@@ -409,12 +410,16 @@ public class JiraProjectImpl implements JiraProject {
                 }
             }
 
-            return 프로젝트_목록;
+            boolean 중복_프로젝트명_확인 = 프로젝트_목록.stream()
+                    .anyMatch(이름 -> 이름.equalsIgnoreCase(jiraProjectName));
+
+            logger.info("[ :: JiraProjectImpl :: ] :: 중복 프로젝트 확인 :: " + jiraProjectName + " :: " + 중복_프로젝트명_확인);
+            return 중복_프로젝트명_확인;
 
         } catch (Exception e) {
-            logger.error("프로젝트 목록 조회 중 에러 발생");
+            logger.error("[ :: JiraProjectImpl :: ] 중복 프로젝트명 체크 중 에러 발생");
         }
 
-        return null;
+        return false;
     }
 }

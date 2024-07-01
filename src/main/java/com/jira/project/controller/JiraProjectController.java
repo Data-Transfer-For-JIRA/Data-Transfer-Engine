@@ -165,13 +165,13 @@ public class JiraProjectController {
 
     @ResponseBody
     @RequestMapping(
-            value={"/list"},
+            value={"/check/name"},
             method={RequestMethod.GET}
     )
-    public List<String> getJiraProject() throws Exception{
+    public boolean checkJiraProjectName(@RequestParam String jiraProjectName) throws Exception{
 
-        logger.info("[::JiraProjectController::] 지라에 생성된 프로젝트 정보 조회");
-        return jiraProject.getJiraProject();
+        logger.info("[ :: JiraProjectController :: ] 중복 프로젝트명 체크");
+        return jiraProject.checkJiraProjectName(jiraProjectName);
     }
 
 }

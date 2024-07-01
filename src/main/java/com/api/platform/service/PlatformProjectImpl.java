@@ -136,16 +136,6 @@ public class PlatformProjectImpl implements PlatformProject {
         result.put("jiraProjectCode", jiraProjectKey);
         result.put("jiraProjectName", finalJiraProjectName);
 
-        List<String> 프로젝트_목록 = jiraProject.getJiraProject();
-        boolean 중복_프로젝트명_확인 =  프로젝트_목록.stream()
-                .anyMatch(이름 -> 이름.equalsIgnoreCase(finalJiraProjectName));
-
-        if (중복_프로젝트명_확인) {
-            logger.error("프로젝트명 중복");
-            result.put("result", "프로젝트 생성 실패");
-            return result;
-        }
-
         try {
 
             logger.info("[::platformCreateProject::] dto 확인 " + createProjectDTO);
@@ -470,16 +460,6 @@ public class PlatformProjectImpl implements PlatformProject {
 
         result.put("jiraProjectCode", jiraProjectCode);
         result.put("jiraProjectName", finalJiraProjectName);
-
-        List<String> 프로젝트_목록 = jiraProject.getJiraProject();
-        boolean 중복_프로젝트명_확인 =  프로젝트_목록.stream()
-                .anyMatch(이름 -> 이름.equalsIgnoreCase(finalJiraProjectName));
-
-        if (중복_프로젝트명_확인) {
-            logger.error("프로젝트명 중복");
-            result.put("result", "프로젝트 생성 실패");
-            return result;
-        }
 
         try {
 
