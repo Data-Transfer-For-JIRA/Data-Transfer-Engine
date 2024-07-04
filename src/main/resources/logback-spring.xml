@@ -1,55 +1,47 @@
 <configuration>
-    <property name="INFO_LOG_FILE" value="${INFO_LOG_FILE:-C:/logs/info.log}" />
-    <property name="ERROR_LOG_FILE" value="${ERROR_LOG_FILE:-C:/logs/error.log}" />
-    <property name="LOG_PATTERN_CONSOLE" value="${LOG_PATTERN_CONSOLE:-%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n}" />
-    <property name="LOG_PATTERN_FILE" value="${LOG_PATTERN_FILE:-%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n}" />
-    <property name="INFO_ROLLINGPOLICY_FILE_NAME_PATTERN" value="${INFO_ROLLINGPOLICY_FILE_NAME_PATTERN:-C:/logs/info-%d{yyyy-MM-dd}.log}" />
-    <property name="ERROR_ROLLINGPOLICY_FILE_NAME_PATTERN" value="${ERROR_ROLLINGPOLICY_FILE_NAME_PATTERN:-C:/logs/error-%d{yyyy-MM-dd}.log}" />
-    <property name="MAX_HISTORY" value="${MAX_HISTORY:-30}" />
 
-    <!-- 콘솔에 로그 출력 -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>${LOG_PATTERN_CONSOLE}</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <!-- INFO 로그 파일에 저장 (일자별로 로그 파일 생성) -->
-    <appender name="INFO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${INFO_LOG_FILE}</file>
+    <appender name="FILE_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>C:/logs/info.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- 일자별로 로그 파일 생성 -->
-            <fileNamePattern>${INFO_ROLLINGPOLICY_FILE_NAME_PATTERN}</fileNamePattern>
-            <maxHistory>${MAX_HISTORY}</maxHistory> <!-- 최대 30일치 로그 보관 -->
+            <fileNamePattern>C:/logs/info-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>${LOG_PATTERN_FILE}</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n</pattern>
         </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
     </appender>
 
-    <!-- ERROR 로그 파일에 저장 (일자별로 로그 파일 생성) -->
-    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${ERROR_LOG_FILE}</file>
+    <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>C:/logs/error.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- 일자별로 로그 파일 생성 -->
-            <fileNamePattern>${ERROR_ROLLINGPOLICY_FILE_NAME_PATTERN}</fileNamePattern>
-            <maxHistory>${MAX_HISTORY}</maxHistory> <!-- 최대 30일치 로그 보관 -->
+            <fileNamePattern>C:/logs/error-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>${LOG_PATTERN_FILE}</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n</pattern>
         </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
     </appender>
 
-    <logger name="com.api" level="INFO"/>
-
-    <!-- root logger 설정 -->
     <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="INFO_FILE"/>
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE_INFO" />
+        <appender-ref ref="FILE_ERROR" />
     </root>
 
-    <!-- ERROR 레벨 로그 설정 -->
-    <logger name="ERROR_LOGGER" level="ERROR" additivity="false">
-        <appender-ref ref="ERROR_FILE"/>
-    </logger>
 </configuration>
