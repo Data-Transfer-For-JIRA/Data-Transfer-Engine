@@ -1,5 +1,7 @@
 package com.api.scheduler.backup.service;
 
+import com.jira.issue.model.FieldInfo;
+import com.jira.issue.model.FieldInfoCategory;
 import com.jira.issue.model.dto.FieldDTO;
 import com.jira.issue.model.dto.search.SearchIssueDTO;
 import com.jira.issue.model.dto.search.SearchMaintenanceInfoDTO;
@@ -129,6 +131,58 @@ public class BackupSchedulerImpl implements BackupScheduler {
         }
     }
 
+    @Override
+    @Transactional
+    public void 지라이슈_데일리_백업()throws Exception{
+
+        List<String> 프로젝트기본정보_이슈키목록 = new ArrayList<>();
+        List<String> 유지보수기본정보_이슈키목록 = new ArrayList<>();
+        List<String> 일반_이슈키목록 = new ArrayList<>();
+        // 오늘 생성 및 업데이트 된 이슈 조회
+        List<SearchIssueDTO<FieldDTO>> 이슈목록 = JiraIssue.오늘_업데이트및_생성된이슈들().getIssues();
+
+        String 프로젝트_기본정보 = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "프로젝트 기본 정보").getId();
+        String 유지보수_기본정보  = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "유지보수 기본 정보").getId();
+
+        // 생성 업데이트 된 키목록 분류
+        이슈목록.forEach(issue -> {
+            if (issue.getFields().getIssuetype().getId().equals(프로젝트_기본정보) ) {
+                프로젝트기본정보_이슈키목록.add(issue.getKey());
+            }
+            else if(issue.getFields().getIssuetype().getId().equals(유지보수_기본정보)){
+                유지보수기본정보_이슈키목록.add(issue.getKey());
+            }
+            else {
+                일반_이슈키목록.add(issue.getKey());
+            }
+        });
+
+        // 프로젝트 기본정보 이슈 생성 업데이트
+        if(프로젝트기본정보_이슈키목록 != null && !프로젝트기본정보_이슈키목록.isEmpty()){
+            프로젝트기본정보_이슈키목록.forEach(이슈키 -> {
+                try {
+                    프로젝트_기본정보이슈_저장(JiraIssue.getProjectIssue(이슈키));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+        // 유지보수 기본정보 이슈 생성 업데이트 
+        if(유지보수기본정보_이슈키목록 != null && !유지보수기본정보_이슈키목록.isEmpty()){
+            유지보수기본정보_이슈키목록.forEach(이슈키 -> {
+                try {
+                    유지보수_기본정보이슈_저장(JiraIssue.getMaintenanceIssue(이슈키));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+
+        if(일반_이슈키목록 != null && !일반_이슈키목록.isEmpty()){
+
+        }
+
+    }
 
     /*
      *  기본정보 이슈 데이터를 백업
@@ -426,12 +480,11 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
 
     /*
-     *  지라 이슈 데이터를 백업
-     *  todo 이미지 저장 고려
-     * */
+    *  최초 실행
+    * */
     @Override
     @Transactional
-    public void 지라이슈_백업() throws Exception{
+    public void 지라이슈_벌크_백업() throws Exception{
 
         /* 1. 최초 데이터 백업
          * - 지라 프로젝트에 생성된 모든 이슈를 가져옴
@@ -439,8 +492,8 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
         /* 2. 주기적인 데이터 백업
         *  - wss 이슈를 제외한 나머지 이슈중 업데이트가 있는 이슈를 조회하여 백업
-        *  - 삭제 된것이 있는지 확인 필요
-        * */
+        *  - 삭제 된것이 있는지 확인 필요 이슈키도 저장 updated >= startOfDay() OR created >= startOfDay()
+         * */
 
     }
     @Override
