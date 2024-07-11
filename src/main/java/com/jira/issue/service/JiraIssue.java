@@ -1,10 +1,7 @@
 package com.jira.issue.service;
 
 import com.jira.issue.model.dto.TransferIssueDTO;
-import com.jira.issue.model.dto.search.SearchIssueDTO;
-import com.jira.issue.model.dto.search.SearchMaintenanceInfoDTO;
-import com.jira.issue.model.dto.search.SearchProjectInfoDTO;
-import com.jira.issue.model.dto.search.SearchRenderedIssue;
+import com.jira.issue.model.dto.search.*;
 import com.jira.issue.model.dto.weblink.RequestWeblinkDTO;
 import com.jira.issue.model.dto.weblink.SearchWebLinkDTO;
 import com.jira.project.model.entity.TB_JML_Entity;
@@ -18,7 +15,10 @@ public interface JiraIssue {
     *  이슈 조회 API
     * */
     SearchRenderedIssue 이슈_조회(String 이슈_키) throws Exception;
-
+    /*
+    * 오늘 생성 및 업데이트 된 이슈 데이터
+    * */
+    오늘_생성및_업데이트된_이슈데이터 오늘_업데이트및_생성된이슈들() throws Exception;
     /*
      * 해당 프로젝트에 이슈 생성 API - WSS 지라시 사용
      * */

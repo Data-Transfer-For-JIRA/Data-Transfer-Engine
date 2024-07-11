@@ -1,10 +1,7 @@
 package com.jira.issue.controller;
 
 import com.jira.issue.model.dto.TransferIssueDTO;
-import com.jira.issue.model.dto.search.SearchIssueDTO;
-import com.jira.issue.model.dto.search.SearchMaintenanceInfoDTO;
-import com.jira.issue.model.dto.search.SearchProjectInfoDTO;
-import com.jira.issue.model.dto.search.SearchRenderedIssue;
+import com.jira.issue.model.dto.search.*;
 import com.jira.issue.model.dto.weblink.SearchWebLinkDTO;
 import com.jira.issue.service.JiraIssue;
 import org.slf4j.Logger;
@@ -100,6 +97,19 @@ public class JiraIssueController {
     public List<SearchWebLinkDTO> getWebLinks(@RequestParam String issueKey) throws Exception{
         logger.info(":: JiraIssueController :: getWebLinks 웹링크 조회");
         return jiraIssue.getWebLinkByJiraIssueKey(issueKey);
+    }
+
+    /*
+     *  웹링크 조회 API
+     * */
+    @ResponseBody
+    @RequestMapping(
+            value = {"/today"},
+            method = {RequestMethod.GET}
+    )
+    public 오늘_생성및_업데이트된_이슈데이터 오늘_업데이트및_생성된이슈들() throws Exception{
+        logger.info(":: JiraIssueController :: 오늘_업데이트및_생성된이슈들");
+        return jiraIssue.오늘_업데이트및_생성된이슈들();
     }
 
 }

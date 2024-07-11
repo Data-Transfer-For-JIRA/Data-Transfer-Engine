@@ -19,10 +19,7 @@ import com.jira.issue.model.dto.create.CreateIssueDTO;
 import com.jira.issue.model.dto.create.CustomFieldDTO;
 import com.jira.issue.model.dto.create.MaintenanceInfoDTO;
 import com.jira.issue.model.dto.create.ProjectInfoDTO;
-import com.jira.issue.model.dto.search.SearchIssueDTO;
-import com.jira.issue.model.dto.search.SearchMaintenanceInfoDTO;
-import com.jira.issue.model.dto.search.SearchProjectInfoDTO;
-import com.jira.issue.model.dto.search.SearchRenderedIssue;
+import com.jira.issue.model.dto.search.*;
 import com.jira.issue.model.dto.weblink.CreateWebLinkDTO;
 import com.jira.issue.model.dto.weblink.RequestWeblinkDTO;
 import com.jira.issue.model.dto.weblink.SearchWebLinkDTO;
@@ -47,6 +44,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -1332,6 +1330,26 @@ public class JiraIssueImpl implements JiraIssue {
         try {
             String endpoint = "/rest/api/3/issue/" + 이슈_키+"?expand=renderedFields";
             SearchRenderedIssue 조회결과 =  webClientUtils.get(endpoint,new ParameterizedTypeReference<SearchRenderedIssue>() {}).block();
+
+            return 조회결과;
+
+        } catch (Exception e) {
+            logger.error("이슈 조회 에러 발생");
+            throw new Exception(e.getMessage());
+        }
+    }
+
+    /*https://markany.atlassian.net/rest/api/3/search?jql=(updated >= startOfDay() OR created >= startOfDay()) AND (category = "전자문서사업부 유지보수" OR category = "전자문서사업부 프로젝트")
+    *  초
+    * */
+    @Override
+    public 오늘_생성및_업데이트된_이슈데이터 오늘_업데이트및_생성된이슈들()throws Exception{
+        try {
+            Date currentDate = new Date();
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+            logger.info("{} 오늘 생성 및 이슈 조회",dateFormat.format(currentDate) );
+            String endpoint = "/rest/api/3/search?jql=(updated >= startOfDay() OR created >= startOfDay()) AND (category = \"전자문서사업부 유지보수\" OR category = \"전자문서사업부 프로젝트\")";
+            오늘_생성및_업데이트된_이슈데이터 조회결과 =  webClientUtils.get(endpoint,new ParameterizedTypeReference<오늘_생성및_업데이트된_이슈데이터>() {}).block();
 
             return 조회결과;
 
