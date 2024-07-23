@@ -43,6 +43,16 @@ public class PlatformController {
 
     @ResponseBody
     @RequestMapping(
+            value = {"/issue"},
+            method = {RequestMethod.GET}
+    )
+    public BaseDTO platformGetIssue(@RequestParam String jiraIssueKey) throws Exception {
+        logger.info("[::PlatformController::] 이슈 상세 조회");
+        return platformProject.platformGetIssue(jiraIssueKey);
+    }
+
+    @ResponseBody
+    @RequestMapping(
             value = {"/service"},
             method = {RequestMethod.POST}
     )

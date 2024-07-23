@@ -191,9 +191,9 @@ public class PlatformProjectImpl implements PlatformProject {
         ProjectDTO 프로젝트 = jiraProject.getJiraProjectInfoByJiraKey(jiraKey); // 지라에서 조회한 프로젝트
 
         BaseDTO 기본정보_이슈 = new BaseDTO();
-        BaseDTO.EssentialDTO.EssentialDTOBuilder 필수데이터빌더 = BaseDTO.EssentialDTO.builder();;
-        BaseDTO.CommonDTO.CommonDTOBuilder 공통데이터빌더 = BaseDTO.CommonDTO.builder();;
-        BaseDTO.SelectedDTO.SelectedDTOBuilder 선택데이터빌더 = BaseDTO.SelectedDTO.builder();;
+        BaseDTO.EssentialDTO.EssentialDTOBuilder 필수데이터빌더 = BaseDTO.EssentialDTO.builder();
+        BaseDTO.CommonDTO.CommonDTOBuilder 공통데이터빌더 = BaseDTO.CommonDTO.builder();
+        BaseDTO.SelectedDTO.SelectedDTOBuilder 선택데이터빌더 = BaseDTO.SelectedDTO.builder();
 
         // json 변환
         ObjectMapper objectMapper = new ObjectMapper();
@@ -205,6 +205,10 @@ public class PlatformProjectImpl implements PlatformProject {
 
             기본정보_이슈키 = jiraIssue.getBaseIssueKey(jiraKey, 이슈유형키); // 해당 프로젝트의 기본 정보 이슈키 조회
             SearchIssueDTO<SearchMaintenanceInfoDTO> 유지보수_기본정보이슈 = jiraIssue.getMaintenanceIssue(기본정보_이슈키);
+            String 설명 = Optional.ofNullable(jiraIssue.이슈_조회(기본정보_이슈키))
+                    .map(이슈 -> 이슈.getRenderedFields().getDescription())
+                    .map(String::trim)
+                    .orElse(null);
 
             String jsonRequestBody = objectMapper.writeValueAsString(유지보수_기본정보이슈);
             logger.info("json: " + jsonRequestBody);
@@ -237,7 +241,7 @@ public class PlatformProjectImpl implements PlatformProject {
                     공통데이터빌더::printerSupportRange
             );
 
-            setBuilder(objectMapper.writeValueAsString(유지보수_기본정보.getDescription()), 공통데이터빌더::description);
+            setBuilder(설명, 공통데이터빌더::description);
 
             setBuilder(
                     유지보수_기본정보::getProductInfo1,
@@ -328,6 +332,11 @@ public class PlatformProjectImpl implements PlatformProject {
 
             기본정보_이슈키 = jiraIssue.getBaseIssueKey(jiraKey, 이슈유형키);
             SearchIssueDTO<SearchProjectInfoDTO> 프로젝트_기본정보이슈 = jiraIssue.getProjectIssue(기본정보_이슈키);
+            String 설명 = Optional.ofNullable(jiraIssue.이슈_조회(기본정보_이슈키))
+                    .map(이슈 -> 이슈.getRenderedFields().getDescription())
+                    .map(String::trim)
+                    .orElse(null);
+
             SearchProjectInfoDTO 프로젝트_기본정보 = 프로젝트_기본정보이슈.getFields();
             logger.info("프로젝트 기본 정보: " + 프로젝트_기본정보);
 
@@ -357,7 +366,7 @@ public class PlatformProjectImpl implements PlatformProject {
                     공통데이터빌더::printerSupportRange
             );
 
-            setBuilder(objectMapper.writeValueAsString(프로젝트_기본정보.getDescription()), 공통데이터빌더::description);
+            setBuilder(설명, 공통데이터빌더::description);
 
             setBuilder(
                     프로젝트_기본정보::getProductInfo1,
@@ -434,6 +443,30 @@ public class PlatformProjectImpl implements PlatformProject {
         기본정보_이슈.setSelected(선택데이터빌더.build());
 
         return 기본정보_이슈;
+    }
+
+    @Override
+    public BaseDTO platformGetIssue(String jiraIssueKey) throws Exception {
+
+        BaseDTO 이슈 = new BaseDTO();
+        BaseDTO.EssentialDTO.EssentialDTOBuilder 필수데이터빌더 = BaseDTO.EssentialDTO.builder();
+        BaseDTO.CommonDTO.CommonDTOBuilder 공통데이터빌더 = BaseDTO.CommonDTO.builder();
+        BaseDTO.SelectedDTO.SelectedDTOBuilder 선택데이터빌더 = BaseDTO.SelectedDTO.builder();
+
+        // 이슈 조회
+        SearchIssueDTO<SearchMaintenanceInfoDTO> 유지보수_기본정보이슈 = jiraIssue.getMaintenanceIssue(jiraIssueKey);
+        String 설명 = Optional.ofNullable(jiraIssue.이슈_조회(jiraIssueKey))
+                .map(issue -> issue.getRenderedFields().getDescription())
+                .map(String::trim)
+                .orElse(StringUtils.EMPTY);
+
+        setBuilder(설명, 공통데이터빌더::description);
+
+        이슈.setEssential(필수데이터빌더.build());
+        이슈.setCommon(공통데이터빌더.build());
+        이슈.setSelected(선택데이터빌더.build());
+
+        return 이슈;
     }
 
     @Override
