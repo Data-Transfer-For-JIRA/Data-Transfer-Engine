@@ -1320,4 +1320,49 @@ public class PlatformProjectImpl implements PlatformProject {
                 .orElse(null);
     }
 
+    @Override
+    public Map<String, String> createTicket(String summary, String description) throws Exception {
+
+        Map<String, String> createInfo = new HashMap<>();
+
+        MaintenanceInfoDTO maintenanceInfoDTO = new MaintenanceInfoDTO();
+        maintenanceInfoDTO.setProject(new FieldDTO.Project("TED779","13796"));
+        maintenanceInfoDTO.setIssuetype(new FieldDTO.Field("10002"));
+
+        if (!StringUtils.isEmpty(summary)) {
+            maintenanceInfoDTO.setSummary(summary);
+        }
+        if (!StringUtils.isEmpty(description)) {
+            JsonNode ADF_변환 = ConvertHtmlToADF.converter(description);
+            maintenanceInfoDTO.setDescription(ADF_변환);
+        }
+
+        CreateIssueDTO createIssueDTO = new CreateIssueDTO(maintenanceInfoDTO);
+
+        String endpoint = "/rest/api/3/issue";
+        ResponseIssueDTO responseIssueDTO = null;
+        try {
+            responseIssueDTO = webClientUtils.post(endpoint, createIssueDTO, ResponseIssueDTO.class).block();
+
+
+        } catch (Exception e) {
+            if (e instanceof WebClientResponseException) {
+                WebClientResponseException wcException = (WebClientResponseException) e;
+                HttpStatus status = wcException.getStatusCode();
+                String body = wcException.getResponseBodyAsString();
+
+                System.out.println("[::PlatformProjectImpl::] createBaseInfoIssue -> " + status + " : " + body);
+            }
+        }
+
+        // 이슈 생성되었는지 체크 / 이슈 상태를 완료됨으로 변경
+        if (responseIssueDTO.getKey() != null) {
+            createInfo.put("result", "이슈 생성 성공");
+        } else {
+            createInfo.put("result", "이슈 생성 실패");
+        }
+
+        return createInfo;
+    }
+
 }

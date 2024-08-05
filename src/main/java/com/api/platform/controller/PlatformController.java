@@ -91,5 +91,14 @@ public class PlatformController {
         logger.info("[::PlatformController::] 플랫폼 프로젝트 업데이트");
         platformProject.upDateProjectInfo(jiraKey, baseDTO);
     }
-    
+
+    @ResponseBody
+    @RequestMapping(
+            value = {"/test/createTicket"},
+            method = {RequestMethod.POST}
+    )
+    public Map<String, String> platformCreateTicket(@RequestParam(defaultValue = "테스트") String summary, @RequestBody String description) throws Exception {
+        logger.info("[::PlatformController::] 테스트용 티켓 생성");
+        return platformProject.createTicket(summary, description);
+    }
 }

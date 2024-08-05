@@ -40,4 +40,6 @@ public interface PlatformProject {
     void upDateProjectInfo(String jiraKey, BaseDTO baseDTO) throws Exception;
 
     Map<String, String> updateBaseIssue(String issueKey, BaseDTO baseDTO) throws Exception;
+
+    Map<String, String> createTicket(String summary, String description) throws Exception;
 }
