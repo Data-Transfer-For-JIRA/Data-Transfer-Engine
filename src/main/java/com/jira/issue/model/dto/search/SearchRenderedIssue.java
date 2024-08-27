@@ -1,8 +1,11 @@
 package com.jira.issue.model.dto.search;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.jira.issue.model.dto.FieldDTO;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+
+import java.util.Date;
 
 @Getter
 @Setter
@@ -27,8 +30,11 @@ public class SearchRenderedIssue {
     @AllArgsConstructor
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class RenderedFields {
-        String created;
         String description;
+
+        String updated;
+
+        String created;
     }
 
     @Getter
@@ -40,6 +46,8 @@ public class SearchRenderedIssue {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Fields {
         Assignee assignee;
+        Field issuetype;
+        String summary;
     }
 
     @Getter
@@ -52,4 +60,21 @@ public class SearchRenderedIssue {
     public static class Assignee {
         String displayName;
     }
+
+    @Getter
+    @Setter
+    @Builder
+    @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class Field {
+        private String id;
+        private String value;
+        public Field(String id) {
+            this.id = id;
+            this.value = null;
+        }
+    }
+
 }
