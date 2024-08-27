@@ -41,7 +41,10 @@ public interface JiraIssue {
     *  프로젝트에 걸링 웹링크 API
     * */
     List<SearchWebLinkDTO> getWebLinkByJiraIssueKey(String jiraKey) throws Exception;
-
+    /*
+    *  프로젝트에 생성된 이슈 조회
+    * */
+    프로젝트에_생성된_이슈데이터 프로젝트에_생성된_이슈조회(String 지라프로젝트_키, String 검색_시작_지점, String 검색_최대_개수) throws Exception;
 
     /*---------------------------------------------------------------------------------*/
 

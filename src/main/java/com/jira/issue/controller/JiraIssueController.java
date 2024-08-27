@@ -78,7 +78,7 @@ public class JiraIssueController {
      * */
     @ResponseBody
     @RequestMapping(
-            value = {"/project"},
+            value = {"/project/base-info"},
             method = {RequestMethod.GET}
     )
     public SearchIssueDTO<SearchProjectInfoDTO> getProjectIssue(@RequestParam String issueKey) throws Exception{
@@ -100,7 +100,7 @@ public class JiraIssueController {
     }
 
     /*
-     *  웹링크 조회 API
+     *  오늘_업데이트및_생성된이슈들 조회 API
      * */
     @ResponseBody
     @RequestMapping(
@@ -110,6 +110,23 @@ public class JiraIssueController {
     public 오늘_생성및_업데이트된_이슈데이터 오늘_업데이트및_생성된이슈들() throws Exception{
         logger.info(":: JiraIssueController :: 오늘_업데이트및_생성된이슈들");
         return jiraIssue.오늘_업데이트및_생성된이슈들();
+    }
+
+    /*
+    *  프로젝트에 생성된 이슈 조회 API
+    * */
+    @ResponseBody
+    @RequestMapping(
+            value = {"/project/all-issues"},
+            method = {RequestMethod.GET}
+    )
+    public 프로젝트에_생성된_이슈데이터 프로젝트에_생성된_이슈데이터(@RequestParam String 지라프로젝트_키 ,
+                                           @RequestParam String 검색_시작_지점 ,
+                                           @RequestParam String 검색_최대_개수 ) throws Exception {
+
+        logger.info("프로젝트에_생성된_이슈데이터");
+
+        return jiraIssue.프로젝트에_생성된_이슈조회(지라프로젝트_키,검색_시작_지점,검색_최대_개수);
     }
 
 }
