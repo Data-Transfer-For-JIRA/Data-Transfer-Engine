@@ -7,7 +7,7 @@ import com.atlassian.adf.model.node.Doc;
 import com.atlassian.renderer.wysiwyg.converter.DefaultWysiwygConverter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-;
+
 public class ConvertHtmlToADF {
 
     public static JsonNode converter(String html) throws Exception{

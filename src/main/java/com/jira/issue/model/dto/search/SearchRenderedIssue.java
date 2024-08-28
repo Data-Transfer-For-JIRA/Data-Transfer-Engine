@@ -31,10 +31,6 @@ public class SearchRenderedIssue {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class RenderedFields {
         String description;
-
-        String updated;
-
-        String created;
     }
 
     @Getter
@@ -47,7 +43,12 @@ public class SearchRenderedIssue {
     public static class Fields {
         Assignee assignee;
         Field issuetype;
+
         String summary;
+
+        String updated;
+
+        String created;
     }
 
     @Getter

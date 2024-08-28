@@ -3,17 +3,17 @@ package com.api.scheduler.backup.service;
 import com.jira.issue.model.FieldInfo;
 import com.jira.issue.model.FieldInfoCategory;
 import com.jira.issue.model.dto.FieldDTO;
-import com.jira.issue.model.dto.search.SearchIssueDTO;
-import com.jira.issue.model.dto.search.SearchMaintenanceInfoDTO;
-import com.jira.issue.model.dto.search.SearchProjectInfoDTO;
+import com.jira.issue.model.dto.search.*;
 import com.jira.issue.model.dto.weblink.SearchWebLinkDTO;
 import com.jira.issue.model.entity.backup.BACKUP_BASEINFO_M_Entity;
 import com.jira.issue.model.entity.backup.BACKUP_BASEINFO_P_Entity;
+import com.jira.issue.model.entity.backup.BACKUP_ISSUE_Entity;
 import com.jira.issue.service.JiraIssue;
 import com.jira.project.model.dao.TB_JML_JpaRepository;
 import com.jira.project.model.dto.ProjectDTO;
 import com.jira.project.service.JiraProject;
 import com.utils.SaveLog;
+import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import com.jira.project.model.entity.TB_JML_Entity;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,6 +40,7 @@ import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Service("backupScheduler")
+@EnableAsync
 public class BackupSchedulerImpl implements BackupScheduler {
 
     @Autowired
@@ -46,6 +48,9 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
     @Autowired
     JiraIssue JiraIssue;
+
+    @Autowired
+    private WebClientUtils webClientForImage;
 
     @Autowired
     private TB_JML_JpaRepository TB_JML_JpaRepository;
@@ -56,7 +61,10 @@ public class BackupSchedulerImpl implements BackupScheduler {
     @Autowired
     private com.jira.issue.model.dao.BACKUP_BASEINFO_P_JpaRepository BACKUP_BASEINFO_P_JpaRepository;
 
+    @Autowired
+    private com.jira.issue.model.dao.BACKUP_ISSUE_JpaRepository BACKUP_ISSUE_JpaRepository;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
 
 
     /*
@@ -187,60 +195,61 @@ public class BackupSchedulerImpl implements BackupScheduler {
     /*
      *  기본정보 이슈 데이터를 백업
      * */
+    @Async
     @Override
     @Transactional
-    public void 지라기본정보_벌크_백업() throws Exception{
+    public CompletableFuture<Void> 지라기본정보_벌크_백업() throws Exception {
+        logger.info("[::BackupSchedulerImpl::] 지라 기본 정보 벌크 백업 스케줄러");
         int page = 0;
-        int size = 100; // 한 번에 처리할 프로젝트 수
+        int size = 100;
         Pageable pageable = PageRequest.of(page, size);
 
         Page<TB_JML_Entity> 프로젝트_페이지;
         do {
             프로젝트_페이지 = TB_JML_JpaRepository.findAll(pageable);
             List<TB_JML_Entity> 모든_프로젝트 = 프로젝트_페이지.getContent();
-            List<CompletableFuture<Void>> futures = new ArrayList<>();
-            for (TB_JML_Entity 프로젝트 : 모든_프로젝트) {
-                futures.add(CompletableFuture.runAsync(() -> {
-                    try {
-                        String 지라_프로젝트_키 = 프로젝트.getKey();
-                        String 프로젝트_유형 = 프로젝트.getFlag();
-                        String 기본정보_이슈키 = JiraIssue.getBaseIssueKeyByJiraKey(지라_프로젝트_키);
-
-                        if (기본정보_이슈키 != null) {
-                            logger.info("[{}] 기본정보 이슈 저장 시작", 기본정보_이슈키);
-                            if ("M".equals(프로젝트_유형)) {
-                                SearchIssueDTO<SearchMaintenanceInfoDTO> 유지보수_기본_정보 = JiraIssue.getMaintenanceIssue(기본정보_이슈키);
-                                유지보수_기본정보이슈_저장(유지보수_기본_정보);
-                            } else {
-                                SearchIssueDTO<SearchProjectInfoDTO> 프로젝트_기본_정보 = JiraIssue.getProjectIssue(기본정보_이슈키);
-                                프로젝트_기본정보이슈_저장(프로젝트_기본_정보);
-                            }
-                        } else {
-                            logger.warn("기본정보 이슈키가 null입니다. 프로젝트 키: {}", 지라_프로젝트_키);
-                        }
-                    } catch (Exception e) {
-                        logger.error("Error processing project key" + 프로젝트.getKey(), e);
-                    }}).thenCompose(aVoid -> {
-                    // 각 요청 사이에 1초의 간격을 둡니다.
-                    return CompletableFuture.runAsync(() -> {
-                        try {
-                            TimeUnit.SECONDS.sleep(1);
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        }
-                    });
-                }));
-            }
+            List<CompletableFuture<Void>> futures = 모든_프로젝트.stream()
+                    .map(프로젝트 -> 지라기본정보_처리(프로젝트))
+                    .collect(Collectors.toList());
 
             // 모든 비동기 작업이 완료될 때까지 대기
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
             pageable = 프로젝트_페이지.nextPageable();
         } while (프로젝트_페이지.hasNext());
+
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async
+    private CompletableFuture<Void> 지라기본정보_처리(TB_JML_Entity 프로젝트) {
+        try {
+            String 지라_프로젝트_키 = 프로젝트.getKey();
+            String 프로젝트_유형 = 프로젝트.getFlag();
+            String 기본정보_이슈키 = JiraIssue.getBaseIssueKeyByJiraKey(지라_프로젝트_키);
+
+            logger.info("[::BackupSchedulerImpl::] 저장 대상 프로젝트 키 정보: {}, 이슈 키:{} ",지라_프로젝트_키,기본정보_이슈키);
+
+            if (기본정보_이슈키 != null) {
+                if ("M".equals(프로젝트_유형)) {
+                    SearchIssueDTO<SearchMaintenanceInfoDTO> 유지보수_기본_정보 = JiraIssue.getMaintenanceIssue(기본정보_이슈키);
+                    유지보수_기본정보이슈_저장(유지보수_기본_정보);
+                } else {
+                    SearchIssueDTO<SearchProjectInfoDTO> 프로젝트_기본_정보 = JiraIssue.getProjectIssue(기본정보_이슈키);
+                    프로젝트_기본정보이슈_저장(프로젝트_기본_정보);
+                }
+            } else {
+                logger.warn("기본정보 이슈키가 null입니다. 프로젝트 키: {}", 지라_프로젝트_키);
+            }
+        } catch (Exception e) {
+            logger.error("Error processing project key" + 프로젝트.getKey(), e);
+        }
+        return CompletableFuture.completedFuture(null);
     }
 
     /*
      *  기본정보 이슈 저장
+     *  단일 프로젝트 정보 저장
      * */
     @Override
     @Transactional
@@ -275,6 +284,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
             return false;
         }
     }
+
     public static <T> T 값_널체크(Supplier<T> supplier) {
         try {
             return supplier.get();
@@ -478,24 +488,201 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
     }
 
+    /* 1. 최초 데이터 백업
+     * - 지라 프로젝트에 생성된 모든 이슈를 가져옴
+     */
 
+    /* 2. 주기적인 데이터 백업
+     *  - wss 이슈를 제외한 나머지 이슈중 업데이트가 있는 이슈를 조회하여 백업
+     *  - 삭제 된것이 있는지 확인 필요 이슈키도 저장 updated >= startOfDay() OR created >= startOfDay()
+     * */
     /*
     *  최초 실행
+    *  일반 이슈는 작성자 내용 작성 시간(updated)을 저장한다.
     * */
+    @Async
     @Override
     @Transactional
-    public void 지라이슈_벌크_백업() throws Exception{
+    public CompletableFuture<Void> 지라이슈_벌크_백업() throws Exception {
+        logger.info("[::BackupSchedulerImpl::] 지라 이슈 벌크 백업 스케줄러");
+       /* int page = 0;
+        int size = 100;
+        Pageable pageable = PageRequest.of(page, size);
 
-        /* 1. 최초 데이터 백업
-         * - 지라 프로젝트에 생성된 모든 이슈를 가져옴
-         */
+        Page<TB_JML_Entity> 프로젝트_페이지;
+        do {
+            프로젝트_페이지 = TB_JML_JpaRepository.findAll(pageable);
+            List<TB_JML_Entity> 모든_프로젝트 = 프로젝트_페이지.getContent();
+            List<CompletableFuture<Void>> futures = 모든_프로젝트.stream()
+                    .map(프로젝트 -> 지라이슈_처리(프로젝트))
+                    .collect(Collectors.toList());
 
-        /* 2. 주기적인 데이터 백업
-        *  - wss 이슈를 제외한 나머지 이슈중 업데이트가 있는 이슈를 조회하여 백업
-        *  - 삭제 된것이 있는지 확인 필요 이슈키도 저장 updated >= startOfDay() OR created >= startOfDay()
-         * */
+            // 모든 비동기 작업이 완료될 때까지 대기
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
+            pageable = 프로젝트_페이지.nextPageable();
+        } while (프로젝트_페이지.hasNext());*/
+
+        return CompletableFuture.completedFuture(null);
     }
+
+    @Override
+    @Transactional
+    public void 지라이슈_저장(String 지라이슈_키) throws Exception{
+        logger.info("[::지라이슈_저장::] 단일 프로젝트 지라 이슈 저장 스케줄러");
+        TB_JML_Entity 프로젝트 = TB_JML_JpaRepository.findByKey(지라이슈_키);
+        try{
+            지라이슈_처리(프로젝트);
+        }catch (Exception e){
+            logger.error("[::지라이슈_저장::] 장애 발생 {}",e.getMessage());
+        }
+    }
+    // 1. 기본 정보에서는 댓글 수집
+
+    // 2. wss history -> === 기준으로 split
+
+    // 3. 일반 이슈 -> 제목 + 내용 + 담당자
+    @Async
+    private CompletableFuture<Void> 지라이슈_처리(TB_JML_Entity 프로젝트) throws Exception{
+
+        try {
+            int 검색_시작_지점 = 0;
+            int 검색_최대_개수 = 50;
+            boolean isLast = false;
+            // 1. 프로젝트에 걸린 모든 이슈 조회
+            List<SearchRenderedIssue> 전체이슈_목록 = new ArrayList<>();
+
+            String 프로젝트_키 =프로젝트.getKey();
+
+            while (!isLast) {
+                프로젝트에_생성된_이슈데이터 전체이슈_조회 = JiraIssue.프로젝트에_생성된_이슈조회(프로젝트_키,검색_시작_지점,검색_최대_개수);
+
+                전체이슈_목록.addAll(전체이슈_조회.getIssues());
+
+                if (검색_시작_지점 + 검색_최대_개수 >= 전체이슈_조회.getTotal()) {
+                    isLast = true;
+                } else {
+                    검색_시작_지점 += 검색_최대_개수;
+                }
+            }
+
+            // 2. 케이스 분리 -> 기본정보 이슈 타입, wss history, 일반 이슈
+            String 프로젝트_기본정보 = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "프로젝트 기본 정보").getId();
+            String 유지보수_기본정보  = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "유지보수 기본 정보").getId();
+            전체이슈_목록.parallelStream()
+                    .forEach(지라이슈 -> {
+                        String 이슈유형_아이디 = 지라이슈.getFields().getIssuetype().getId();
+
+                        if (프로젝트_기본정보.equals(이슈유형_아이디) || 유지보수_기본정보.equals(이슈유형_아이디)) {
+                            // 기본 정보 이슈일 때는 본문 내용과 댓글을 모두 저장한다.
+
+                        } else if (지라이슈.getFields().getSummary().contains("WSS HISTORY")) {
+                            // WSS에서 넘어온 데이터 처리
+
+                        } else {
+                            // 나머지 일반 데이터 처리
+                            try {
+                                지라이슈_저장(지라이슈,프로젝트_키);
+                            }catch (Exception e){
+                                logger.error("[::지라이슈_처리::]  {}",e.getMessage());
+                            }
+                        }
+                    });
+
+        }catch(Exception e){
+            logger.error("[::지라이슈_처리::] 장애 발생 {}",e.getMessage());
+        }
+
+        return CompletableFuture.completedFuture(null);
+    }
+
+    private BACKUP_ISSUE_Entity 지라이슈_저장(SearchRenderedIssue 지라이슈, String 프로젝트_키) throws Exception{
+
+        // 지라_이슈_키가 null인지 확인
+        String 지라_이슈_키 = 지라이슈.getKey();
+        if (지라_이슈_키 == null || 지라_이슈_키.isEmpty()) {
+            throw new Exception("::[::지라이슈_저장::]::지라 이슈 키가 null이거나 빈 값이므로 저장할 수 없습니다.");
+        }
+
+        String 담당자 = null;
+        if (지라이슈.getFields() != null && 지라이슈.getFields().getAssignee() != null) {
+            담당자 = 지라이슈.getFields().getAssignee().getDisplayName();
+        }
+
+        String 상세_내용 = null;
+        if (지라이슈.getRenderedFields() != null) {
+            상세_내용 = 지라이슈.getRenderedFields().getDescription();
+            
+            이미지_저장(상세_내용,지라_이슈_키);
+        }
+
+        String 지라_이슈_제목 = null;
+        if (지라이슈.getFields() != null) {
+            지라_이슈_제목 = 지라이슈.getFields().getSummary();
+        }
+
+        Date 생성일 = null;
+        if (지라이슈.getRenderedFields() != null && 지라이슈.getFields().getCreated() != null) {
+            생성일 = 일자변환기(지라이슈.getFields().getCreated());
+        }
+
+        Date 업데이트일 = null;
+        if (지라이슈.getRenderedFields() != null && 지라이슈.getFields().getUpdated() != null) {
+            업데이트일 = 일자변환기(지라이슈.getFields().getUpdated());
+        }
+        BACKUP_ISSUE_Entity 이슈_저장 = BACKUP_ISSUE_Entity.builder()
+                                    .지라_프로젝트_키(프로젝트_키)
+                                    .지라_이슈_키(지라_이슈_키)
+                                    .지라_이슈_제목(지라_이슈_제목)
+                                    .상세내용(상세_내용)
+                                    .담당자(담당자)
+                                    .생성일(생성일)
+                                    .업데이트일(업데이트일)
+                                    .build();
+
+
+        BACKUP_ISSUE_Entity 저장_결과 = BACKUP_ISSUE_JpaRepository.save(이슈_저장);
+
+        return 저장_결과;
+    }
+
+    private String 이미지_저장(String 상세_내용, String 이슈_키) {
+
+        String baseUrl = "https://markany.atlassian.net";
+
+        if (상세_내용 != null && 상세_내용.contains("<img")) {
+
+            Pattern 이미지테그_패턴 = Pattern.compile("<img\\s+[^>]*src=\"([^\"]+)\"");
+            Matcher 이미지테그_속성값 = 이미지테그_패턴.matcher(상세_내용);
+
+            Pattern 이미지이름_패턴 = Pattern.compile("alt=\"(.*?)\"");
+            Matcher 이미지이름_속성값 = 이미지이름_패턴.matcher(상세_내용);
+
+            if (이미지테그_속성값.find() && 이미지이름_속성값.find()) {
+                String srcValue = 이미지테그_속성값.group(1); // src 속성의 값을 추출
+                String 요청_경로 =  baseUrl + srcValue; // src 값이 절대 경로인지 확인
+
+                String 파일_이름 = 이슈_키 + "-" + 이미지이름_속성값.group(1); // 이미지_이름
+                webClientForImage.downloadImage(요청_경로, 파일_이름);
+
+                return 요청_경로; // 최종 URL 반환
+            }
+        }
+
+        return null; // img 태그가 없거나 src 값을 찾지 못한 경우 null 리턴
+    }
+
+    private Date 일자변환기(String 일자) throws Exception {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        try {
+            Date date = formatter.parse(일자);
+
+            return date;
+        } catch (Exception e) {
+            throw new Exception("일자 변환 중 오류 "+e.getMessage());
+        }
+    }
+
     @Override
     public void updateJMLProjectLeader() throws Exception{
         try {
