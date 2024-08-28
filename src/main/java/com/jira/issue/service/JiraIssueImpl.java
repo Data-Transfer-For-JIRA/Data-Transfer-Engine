@@ -1359,7 +1359,7 @@ public class JiraIssueImpl implements JiraIssue {
         }
     }
     @Override
-    public 프로젝트에_생성된_이슈데이터 프로젝트에_생성된_이슈조회(String 지라프로젝트_키, String 검색_시작_지점, String 검색_최대_개수) throws Exception{
+    public 프로젝트에_생성된_이슈데이터 프로젝트에_생성된_이슈조회(String 지라프로젝트_키, int 검색_시작_지점, int 검색_최대_개수) throws Exception{
         try {
             String endpoint = "/rest/api/3/search?jql=project="+지라프로젝트_키+"&startAt=" + 검색_시작_지점 + "&maxResults=" + 검색_최대_개수+ "&expand=renderedFields";
 

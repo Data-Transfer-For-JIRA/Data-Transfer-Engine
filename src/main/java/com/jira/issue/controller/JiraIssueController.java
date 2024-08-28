@@ -121,8 +121,8 @@ public class JiraIssueController {
             method = {RequestMethod.GET}
     )
     public 프로젝트에_생성된_이슈데이터 프로젝트에_생성된_이슈데이터(@RequestParam String 지라프로젝트_키 ,
-                                           @RequestParam String 검색_시작_지점 ,
-                                           @RequestParam String 검색_최대_개수 ) throws Exception {
+                                           @RequestParam int 검색_시작_지점 ,
+                                           @RequestParam int 검색_최대_개수 ) throws Exception {
 
         logger.info("프로젝트에_생성된_이슈데이터");
 
