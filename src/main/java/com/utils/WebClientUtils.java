@@ -5,6 +5,8 @@ import com.jira.account.service.Account;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.buffer.DataBuffer;
@@ -25,16 +27,20 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Optional;
-
+import java.io.FileOutputStream;
+import java.io.IOException;
 @Component
 public class WebClientUtils {
 
     private final WebClient webClient;
 
+    private final WebClient webClientForImage;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     @Autowired
     public WebClientUtils(Account account) {
         AdminInfoDTO info = account.getAdminInfo(1);
         this.webClient = createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
+        this.webClientForImage = createJiraWebClientForImage(info.getUrl(), info.getId(), info.getToken());
     }
 
     public static WebClient createJiraWebClient(String baseUrl, String jiraId, String apiToken) {
@@ -43,6 +49,15 @@ public class WebClientUtils {
                 .baseUrl(baseUrl)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader("Authorization", "Basic " + getBase64Credentials(jiraId, apiToken))
+                .build();
+    }
+
+    public static WebClient createJiraWebClientForImage(String baseUrl, String jiraId, String apiToken) {
+
+        return WebClient.builder()
+                .baseUrl(baseUrl)
+                .defaultHeader(HttpHeaders.ACCEPT, MediaType.ALL_VALUE)
                 .defaultHeader("Authorization", "Basic " + getBase64Credentials(jiraId, apiToken))
                 .build();
     }
@@ -67,6 +82,62 @@ public class WebClientUtils {
                 .retrieve()
                 .bodyToMono(elementTypeRef);
     }
+
+    /*
+    * 서버의 정책: 특정 리소스에 접근하려면 인증 또는 특정 조건이 필요할 때 서버가 리소스에 직접 접근하는 것을 막고, 대신 다른 URL로 리디렉션하도록 설정될 수 있습니다.
+    * 파일 다운로드 처리: 특히 파일이나 이미지 같은 리소스를 제공할 때, 서버는 실제 파일을 제공하기 위해 클라이언트를 다른 URL로 리디렉션하는 방식을 사용할 수 있습니다. 이 방식은 CDN(Content Delivery Network) 같은 곳에서 파일을 제공할 때 자주 사용됩니다.
+    * 보안 또는 권한 문제: 어떤 경우에는 요청한 URL이 직접 접근할 수 없는 위치에 있거나, 접근 권한이 없을 때, 서버가 이를 다른 안전한 위치로 리디렉션 시킬 수 있습니다.
+    * */
+    public void downloadImage(String uri, String fileName) {
+        String destinationFile = "C:/JIRA/images/"+ fileName;
+        try {
+            // 이미지를 동기적으로 다운로드 -> 다운로드 요청
+            // 서버로 부터 응답을 받아옴
+            WebClient.ResponseSpec responseSpec = webClientForImage.get()
+                    .uri(uri)
+                    .retrieve();
+
+            // 리디렉션 여부 확인
+            // 응답 본문에서 로케이션 값을 확인함
+            String redirectUri = responseSpec.toBodilessEntity() // 응답 본문 제외 헤더 데이터만 수신
+                    .flatMap(responseEntity -> {
+                        if (responseEntity.getStatusCode().is3xxRedirection()) { // 리다이렉션 여부 확인 303에러 발생 (웹클라언트는 리다이렉션 해주지 않음)
+                            return Mono.just(responseEntity.getHeaders().getLocation().toString()); // 로케이션 값 반환
+                        } else {
+                            return Mono.empty();
+                        }
+                    }).block();
+
+            byte[] imageBytes;
+
+            // 리디렉션이 발생한 경우, 새로운 URI로 재요청
+            if (redirectUri != null) {
+                imageBytes = webClientForImage.get()
+                        .uri(redirectUri)
+                        .retrieve()
+                        .bodyToMono(byte[].class)
+                        .block();
+            } else {
+                // 리디렉션이 없으면 원래 응답을 처리
+                imageBytes = responseSpec.bodyToMono(byte[].class).block();
+            }
+
+            // 다운로드된 이미지를 파일로 저장
+            if (imageBytes != null) {
+                try (FileOutputStream outputStream = new FileOutputStream(destinationFile)) {
+                    outputStream.write(imageBytes);
+                    logger.info(":: 이미지 다운로드 성공 :: 경로: {}, " ,destinationFile);
+                } catch (IOException e) {
+                    logger.error(":: 이미지 다운로드 오류 :: 이미지 로컬 서버 저장 실패");
+                }
+            } else {
+                logger.error(":: 이미지 다운로드 오류 :: 수신된 데이터가 없음");
+            }
+        } catch (Exception e) {
+            logger.error(":: 이미지 다운로드 오류::");
+        }
+    }
+
 
     public <T> Mono<T> post(String uri, Object requestBody, Class<T> responseType) {
 
