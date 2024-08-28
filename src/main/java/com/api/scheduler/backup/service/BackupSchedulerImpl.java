@@ -569,6 +569,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
             // 2. 케이스 분리 -> 기본정보 이슈 타입, wss history, 일반 이슈
             String 프로젝트_기본정보 = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "프로젝트 기본 정보").getId();
             String 유지보수_기본정보  = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "유지보수 기본 정보").getId();
+
             전체이슈_목록.parallelStream()
                     .forEach(지라이슈 -> {
                         String 이슈유형_아이디 = 지라이슈.getFields().getIssuetype().getId();
@@ -577,14 +578,15 @@ public class BackupSchedulerImpl implements BackupScheduler {
                             // 기본 정보 이슈일 때는 본문 내용과 댓글을 모두 저장한다.
 
                         } else if (지라이슈.getFields().getSummary().contains("WSS HISTORY")) {
-                            // WSS에서 넘어온 데이터 처리
+                            // WSS에서 넘어온 데이터 처리 -> 기존 디비에 저장된 데이터 긁어오기
+
 
                         } else {
                             // 나머지 일반 데이터 처리
                             try {
                                 지라이슈_저장(지라이슈,프로젝트_키);
-                            }catch (Exception e){
-                                logger.error("[::지라이슈_처리::]  {}",e.getMessage());
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
                             }
                         }
                     });
@@ -646,9 +648,10 @@ public class BackupSchedulerImpl implements BackupScheduler {
         return 저장_결과;
     }
 
-    private String 이미지_저장(String 상세_내용, String 이슈_키) {
+    private List<String> 이미지_저장(String 상세_내용, String 이슈_키) {
 
         String baseUrl = "https://markany.atlassian.net";
+        List<String> 저장된이미지_경로목록 = new ArrayList<>();
 
         if (상세_내용 != null && 상세_내용.contains("<img")) {
 
@@ -658,20 +661,19 @@ public class BackupSchedulerImpl implements BackupScheduler {
             Pattern 이미지이름_패턴 = Pattern.compile("alt=\"(.*?)\"");
             Matcher 이미지이름_속성값 = 이미지이름_패턴.matcher(상세_내용);
 
-            if (이미지테그_속성값.find() && 이미지이름_속성값.find()) {
+            while (이미지테그_속성값.find() && 이미지이름_속성값.find()) {
                 String srcValue = 이미지테그_속성값.group(1); // src 속성의 값을 추출
-                String 요청_경로 =  baseUrl + srcValue; // src 값이 절대 경로인지 확인
+                String 요청_경로 = baseUrl + srcValue; // src 값이 절대 경로인지 확인
 
                 String 파일_이름 = 이슈_키 + "-" + 이미지이름_속성값.group(1); // 이미지_이름
                 webClientForImage.downloadImage(요청_경로, 파일_이름);
 
-                return 요청_경로; // 최종 URL 반환
+                저장된이미지_경로목록.add(요청_경로); // 최종 URL 리스트에 추가
             }
         }
 
-        return null; // img 태그가 없거나 src 값을 찾지 못한 경우 null 리턴
+        return 저장된이미지_경로목록; // 저장된 이미지 경로 목록 반환
     }
-
     private Date 일자변환기(String 일자) throws Exception {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
         try {
