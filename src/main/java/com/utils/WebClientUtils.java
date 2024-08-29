@@ -25,7 +25,9 @@ import reactor.core.publisher.Mono;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -90,6 +92,23 @@ public class WebClientUtils {
     * */
     public void downloadImage(String uri, String fileName) {
         String destinationFile = "C:/JIRA/images/"+ fileName;
+
+        // 허용된 이미지 확장자 목록
+        List<String> allowedExtensions = Arrays.asList("jpg", "jpeg", "png");
+
+        // 파일 이름에서 확장자 추출
+        String fileExtension = "";
+        int i = fileName.lastIndexOf('.');
+        if (i > 0) {
+            fileExtension = fileName.substring(i + 1).toLowerCase();
+        }
+
+        // 확장자가 허용된 이미지 확장자인지 확인
+        if (!allowedExtensions.contains(fileExtension)) {
+            logger.error(":: 이미지 다운로드 오류 :: 지원되지 않는 파일 확장자: {}", fileExtension);
+            return;
+        }
+
         try {
             // 이미지를 동기적으로 다운로드 -> 다운로드 요청
             // 서버로 부터 응답을 받아옴

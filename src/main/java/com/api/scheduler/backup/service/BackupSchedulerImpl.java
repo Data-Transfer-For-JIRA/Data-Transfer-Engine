@@ -491,18 +491,11 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
     }
 
-    /* 1. 최초 데이터 백업
-     * - 지라 프로젝트에 생성된 모든 이슈를 가져옴
-     */
 
     /* 2. 주기적인 데이터 백업
      *  - wss 이슈를 제외한 나머지 이슈중 업데이트가 있는 이슈를 조회하여 백업
      *  - 삭제 된것이 있는지 확인 필요 이슈키도 저장 updated >= startOfDay() OR created >= startOfDay()
      * */
-    /*
-    *  최초 실행
-    *  일반 이슈는 작성자 내용 작성 시간(updated)을 저장한다.
-    * */
     @Async
     @Override
     @Transactional
@@ -537,20 +530,22 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
     @Override
     @Transactional
-    public void 지라이슈_저장(String 지라이슈_키) throws Exception{
+    public void 지라이슈_저장(String 지라프로젝트_키) throws Exception{
         logger.info("[::지라이슈_저장::] 단일 프로젝트 지라 이슈 저장 스케줄러");
-        TB_JML_Entity 프로젝트 = TB_JML_JpaRepository.findByKey(지라이슈_키);
+        TB_JML_Entity 프로젝트 = TB_JML_JpaRepository.findByKey(지라프로젝트_키);
+
+        if(프로젝트 == null){
+            logger.error("[::지라이슈_저장::] 지라 이슈 테이블 조회 오류 발생: {}",지라프로젝트_키);
+            throw new Exception("[::지라이슈_저장::] 지라 이슈 테이블 조회 오류 발생: {} "+ 지라프로젝트_키);
+        }
+
         try{
             지라이슈_처리(프로젝트);
         }catch (Exception e){
             logger.error("[::지라이슈_저장::] 장애 발생 {}",e.getMessage());
         }
     }
-    // 1. 기본 정보에서는 댓글 수집
 
-    // 2. wss history -> === 기준으로 split
-
-    // 3. 일반 이슈 -> 제목 + 내용 + 담당자
     @Async
     private CompletableFuture<Void> 지라이슈_처리(TB_JML_Entity 프로젝트) throws Exception{
 
@@ -576,16 +571,17 @@ public class BackupSchedulerImpl implements BackupScheduler {
                 }
             }
 
-            // 2. 케이스 분리 -> 기본정보 이슈 타입, wss history, 일반 이슈
-            String 프로젝트_기본정보 = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "프로젝트 기본 정보").getId();
-            String 유지보수_기본정보  = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "유지보수 기본 정보").getId();
-
             전체이슈_목록.parallelStream()
                     .forEach(지라이슈 -> {
                         String 이슈유형_아이디 = 지라이슈.getFields().getIssuetype().getId();
                         if (지라이슈.getFields().getSummary().contains("WSS HISTORY")) {
                             // WSS에서 넘어온 데이터 처리 -> 기존 디비에 저장된 데이터 긁어오기
-                            WSS이슈데이터_이관(지라이슈,프로젝트_키,wss_프로젝트_코드);
+                            try {
+                                WSS이슈데이터_이관(지라이슈,프로젝트_키,wss_프로젝트_코드);
+                            }catch (Exception e){
+                                logger.error("::[:: 지라이슈_처리 ::]::WSS 이슈 데이터 이관시 오류 발생"+e.getMessage());
+                                throw new RuntimeException(e);
+                            }
                         } else {
                             try {
                                 지라이슈_저장(지라이슈,프로젝트_키);
