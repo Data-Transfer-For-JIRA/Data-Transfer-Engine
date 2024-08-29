@@ -1,6 +1,7 @@
 package com.jira.issue.controller;
 
 import com.jira.issue.model.dto.TransferIssueDTO;
+import com.jira.issue.model.dto.comment.CommentDTO;
 import com.jira.issue.model.dto.search.*;
 import com.jira.issue.model.dto.weblink.SearchWebLinkDTO;
 import com.jira.issue.service.JiraIssue;
@@ -129,6 +130,20 @@ public class JiraIssueController {
         return jiraIssue.프로젝트에_생성된_이슈조회(지라프로젝트_키,검색_시작_지점,검색_최대_개수);
     }
 
+    /*
+    *  이슈 코멘트 조회
+    * */
+    @ResponseBody
+    @RequestMapping(
+            value = {"/comment"},
+            method = {RequestMethod.GET}
+    )
+    public CommentDTO 이슈에_생성된_댓글조회(@RequestParam String 지라_이슈_아이디) throws Exception {
+
+        logger.info("이슈에_생성된_댓글조회");
+
+        return jiraIssue.이슈에_생성된_댓글조회(지라_이슈_아이디);
+    }
 }
 
 

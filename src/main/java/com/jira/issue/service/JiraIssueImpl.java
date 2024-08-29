@@ -15,6 +15,7 @@ import com.jira.issue.model.dto.ResponseIssueDTO;
 import com.jira.issue.model.dto.TransferIssueDTO;
 import com.jira.issue.model.dto.TransitionDTO;
 import com.jira.issue.model.dto.comment.AddCommentDTO;
+import com.jira.issue.model.dto.comment.CommentDTO;
 import com.jira.issue.model.dto.create.CreateIssueDTO;
 import com.jira.issue.model.dto.create.CustomFieldDTO;
 import com.jira.issue.model.dto.create.MaintenanceInfoDTO;
@@ -1369,6 +1370,22 @@ public class JiraIssueImpl implements JiraIssue {
 
         } catch (Exception e) {
             logger.error("이슈 조회 에러 발생");
+            throw new Exception(e.getMessage());
+        }
+    }
+
+    @Override
+    public CommentDTO 이슈에_생성된_댓글조회(String 지라_이슈_아이디) throws Exception{
+
+        try {
+            String endpoint = "/rest/api/3/issue/"+지라_이슈_아이디+"/comment?expand=renderedBody";
+
+            CommentDTO 조회결과 =  webClientUtils.get(endpoint,new ParameterizedTypeReference<CommentDTO>() {}).block();
+
+            return 조회결과;
+
+        } catch (Exception e) {
+            logger.error("이슈에 생성된 댓글 조회시 오류 발생");
             throw new Exception(e.getMessage());
         }
     }

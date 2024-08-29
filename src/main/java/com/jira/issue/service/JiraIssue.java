@@ -1,6 +1,7 @@
 package com.jira.issue.service;
 
 import com.jira.issue.model.dto.TransferIssueDTO;
+import com.jira.issue.model.dto.comment.CommentDTO;
 import com.jira.issue.model.dto.search.*;
 import com.jira.issue.model.dto.weblink.RequestWeblinkDTO;
 import com.jira.issue.model.dto.weblink.SearchWebLinkDTO;
@@ -45,7 +46,10 @@ public interface JiraIssue {
     *  프로젝트에 생성된 이슈 조회
     * */
     프로젝트에_생성된_이슈데이터 프로젝트에_생성된_이슈조회(String 지라프로젝트_키, int 검색_시작_지점, int 검색_최대_개수) throws Exception;
-
+    /*
+    *  이슈에 걸린 댓글 조회
+    * */
+    CommentDTO 이슈에_생성된_댓글조회(String 지라_이슈_아이디) throws Exception;
     /*---------------------------------------------------------------------------------*/
 
     /*

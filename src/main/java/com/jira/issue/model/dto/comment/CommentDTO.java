@@ -27,5 +27,25 @@ public class CommentDTO {
 
         Date created;
 
+        Date updated;
+
+        Author author;
+
+        String renderedBody;
+
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class Author{
+        String accountId;
+
+        String displayName;
+
     }
 }
