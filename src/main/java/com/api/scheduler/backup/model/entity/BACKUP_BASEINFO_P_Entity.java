@@ -1,4 +1,4 @@
-package com.jira.issue.model.entity.backup;
+package com.api.scheduler.backup.model.entity;
 
 import lombok.*;
 

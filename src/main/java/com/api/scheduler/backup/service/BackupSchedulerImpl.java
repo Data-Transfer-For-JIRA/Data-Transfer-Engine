@@ -1,14 +1,17 @@
 package com.api.scheduler.backup.service;
 
+import com.api.scheduler.backup.model.dao.BACKUP_ISSUE_COMMENT_JpaRepository;
+import com.api.scheduler.backup.model.entity.BACKUP_ISSUE_COMMENT_Entity;
 import com.jira.issue.model.FieldInfo;
 import com.jira.issue.model.FieldInfoCategory;
 import com.jira.issue.model.dto.FieldDTO;
+import com.jira.issue.model.dto.comment.CommentDTO;
 import com.jira.issue.model.dto.search.*;
 import com.jira.issue.model.dto.weblink.SearchWebLinkDTO;
 import com.jira.issue.model.entity.PJ_PG_SUB_Entity;
-import com.jira.issue.model.entity.backup.BACKUP_BASEINFO_M_Entity;
-import com.jira.issue.model.entity.backup.BACKUP_BASEINFO_P_Entity;
-import com.jira.issue.model.entity.backup.BACKUP_ISSUE_Entity;
+import com.api.scheduler.backup.model.entity.BACKUP_BASEINFO_M_Entity;
+import com.api.scheduler.backup.model.entity.BACKUP_BASEINFO_P_Entity;
+import com.api.scheduler.backup.model.entity.BACKUP_ISSUE_Entity;
 import com.jira.issue.service.JiraIssue;
 import com.jira.project.model.dao.TB_JML_JpaRepository;
 import com.jira.project.model.dto.ProjectDTO;
@@ -31,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -58,16 +62,20 @@ public class BackupSchedulerImpl implements BackupScheduler {
     private TB_JML_JpaRepository TB_JML_JpaRepository;
 
     @Autowired
-    private com.jira.issue.model.dao.BACKUP_BASEINFO_M_JpaRepository BACKUP_BASEINFO_M_JpaRepository;
+    private com.api.scheduler.backup.model.dao.BACKUP_BASEINFO_M_JpaRepository BACKUP_BASEINFO_M_JpaRepository;
 
     @Autowired
-    private com.jira.issue.model.dao.BACKUP_BASEINFO_P_JpaRepository BACKUP_BASEINFO_P_JpaRepository;
+    private com.api.scheduler.backup.model.dao.BACKUP_BASEINFO_P_JpaRepository BACKUP_BASEINFO_P_JpaRepository;
 
     @Autowired
-    private com.jira.issue.model.dao.BACKUP_ISSUE_JpaRepository BACKUP_ISSUE_JpaRepository;
+    private com.api.scheduler.backup.model.dao.BACKUP_ISSUE_JpaRepository BACKUP_ISSUE_JpaRepository;
 
     @Autowired
     private com.jira.issue.model.dao.PJ_PG_SUB_JpaRepository PJ_PG_SUB_JpaRepository;
+
+    @Autowired
+    private com.api.scheduler.backup.model.dao.BACKUP_ISSUE_COMMENT_JpaRepository BACKUP_ISSUE_COMMENT_JpaRepository;
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /*
@@ -585,7 +593,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
                         } else {
                             try {
                                 지라이슈_저장(지라이슈,프로젝트_키);
-                                // 지라이슈_댓글저장(지라이슈); todo 코멘트 체크해서 가져오기
+                                지라이슈_댓글저장(지라이슈); //todo 코멘트 체크해서 가져오기
                             } catch (Exception e) {
                                 logger.error("::[:: 지라이슈_처리 ::]::일반 이슈 저장시 오류 발생"+e.getMessage());
                                 throw new RuntimeException(e);
@@ -719,6 +727,37 @@ public class BackupSchedulerImpl implements BackupScheduler {
         // 배치 저장
         BACKUP_ISSUE_JpaRepository.saveAll(이슈_저장_리스트);
     }
+
+    private List<BACKUP_ISSUE_COMMENT_Entity> 지라이슈_댓글저장(SearchRenderedIssue 지라이슈) throws Exception {
+        try {
+            String 지라이슈_키 = 지라이슈.getKey();
+
+            // 댓글 조회
+            CommentDTO 조회된_댓글 = JiraIssue.이슈에_생성된_댓글조회(지라이슈_키);
+
+            // 조회된 댓글이 없으면 빈 리스트 반환
+            if (조회된_댓글 == null || 조회된_댓글.getComments() == null) {
+                return Collections.emptyList();
+            }
+
+            List<BACKUP_ISSUE_COMMENT_Entity> 댓글_저장_리스트 = 조회된_댓글.getComments().stream()
+                    .map(comments -> BACKUP_ISSUE_COMMENT_Entity.builder()
+                            .댓글_아이디(comments.getId())
+                            .댓글_내용(comments.getRenderedBody())
+                            .생성일(comments.getCreated())
+                            .업데이트일(comments.getUpdated())
+                            .작성자(comments.getAuthor().getDisplayName())
+                            .지라이슈_키(지라이슈_키)
+                            .build())
+                    .collect(Collectors.toList());
+
+            return BACKUP_ISSUE_COMMENT_JpaRepository.saveAll(댓글_저장_리스트);
+        }catch (Exception e){
+            logger.error("::[::지라이슈_댓글저장::]::댓글 저장 중 오류 발생.");
+            throw new Exception("댓글 저장 중 오류 발생");
+        }
+    }
+
 
     @Override
     public void updateJMLProjectLeader() throws Exception{
