@@ -3,6 +3,7 @@ package com.api.platform.controller;
 import com.api.platform.dto.BaseDTO;
 import com.api.platform.dto.ReturnMessage;
 import com.api.platform.service.PlatformProject;
+import com.api.scheduler.backup.model.entity.BACKUP_ISSUE_Entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/platform")
@@ -100,5 +102,15 @@ public class PlatformController {
     public Map<String, String> platformCreateTicket(@RequestParam(defaultValue = "테스트") String summary, @RequestBody String description) throws Exception {
         logger.info("[::PlatformController::] 테스트용 티켓 생성");
         return platformProject.createTicket(summary, description);
+    }
+
+    @ResponseBody
+    @RequestMapping(
+            value = {"/ticket"},
+            method = {RequestMethod.GET}
+    )
+    public Optional<BACKUP_ISSUE_Entity> 티켓_정보_조회(@RequestParam String jiraIssueKey) throws Exception {
+        logger.info("[::PlatformController::] 티켓_정보_조회");
+        return platformProject.티켓_정보_조회(jiraIssueKey);
     }
 }

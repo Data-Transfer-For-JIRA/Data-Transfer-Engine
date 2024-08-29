@@ -2,11 +2,13 @@ package com.api.platform.service;
 
 import com.api.platform.dto.BaseDTO;
 import com.api.platform.dto.ReturnMessage;
+import com.api.scheduler.backup.model.entity.BACKUP_ISSUE_Entity;
 import com.jira.issue.model.dto.create.CustomFieldDTO;
 import com.jira.issue.model.dto.FieldDTO;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -42,4 +44,6 @@ public interface PlatformProject {
     Map<String, String> updateBaseIssue(String issueKey, BaseDTO baseDTO) throws Exception;
 
     Map<String, String> createTicket(String summary, String description) throws Exception;
+
+    Optional<BACKUP_ISSUE_Entity> 티켓_정보_조회(String jiraIssueKey);
 }

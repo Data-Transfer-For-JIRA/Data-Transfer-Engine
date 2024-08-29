@@ -1,9 +1,11 @@
 package com.api.scheduler.backup.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -39,4 +41,8 @@ public class BACKUP_ISSUE_Entity {
 
     @Column(name = "DATA_FROM")
     private Boolean 이슈_출처; // true: 지라 ,false: wss
+
+    @OneToMany(mappedBy = "지라이슈", fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private List<BACKUP_ISSUE_COMMENT_Entity> 댓글들;
 }

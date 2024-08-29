@@ -2,11 +2,13 @@ package com.api.platform.service;
 
 import com.api.platform.dto.BaseDTO;
 import com.api.platform.dto.ReturnMessage;
+import com.api.scheduler.backup.model.entity.BACKUP_ISSUE_Entity;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jira.account.model.dao.TB_JIRA_USER_JpaRepository;
 import com.jira.account.model.entity.TB_JIRA_USER_Entity;
+import  com.api.scheduler.backup.model.dao.BACKUP_ISSUE_JpaRepository;
 import com.jira.account.service.AccountImpl;
 import com.jira.issue.model.FieldInfo;
 import com.jira.issue.model.FieldInfoCategory;
@@ -69,6 +71,9 @@ public class PlatformProjectImpl implements PlatformProject {
 
     @Autowired
     private TB_JIRA_USER_JpaRepository TB_JIRA_USER_JpaRepository;
+
+    @Autowired
+    private BACKUP_ISSUE_JpaRepository BACKUP_ISSUE_JpaRepository;
 
     @Autowired
     private TB_JLL_JpaRepository TB_JLL_JpaRepository;
@@ -1363,6 +1368,11 @@ public class PlatformProjectImpl implements PlatformProject {
         }
 
         return createInfo;
+    }
+
+    @Override
+    public Optional<BACKUP_ISSUE_Entity> 티켓_정보_조회(String 지라_이슈_키){
+        return BACKUP_ISSUE_JpaRepository.findById(지라_이슈_키);
     }
 
 }

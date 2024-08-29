@@ -1,11 +1,10 @@
 package com.api.scheduler.backup.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.Date;
 
 @Getter
@@ -37,4 +36,8 @@ public class BACKUP_ISSUE_COMMENT_Entity {
     @Column(name = "JIRA_ISSUE")
     private String 지라이슈_키;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "JIRA_ISSUE", insertable = false, updatable = false)
+    @JsonBackReference
+    private BACKUP_ISSUE_Entity 지라이슈;
 }
