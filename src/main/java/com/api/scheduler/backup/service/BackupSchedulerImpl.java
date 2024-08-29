@@ -5,6 +5,7 @@ import com.jira.issue.model.FieldInfoCategory;
 import com.jira.issue.model.dto.FieldDTO;
 import com.jira.issue.model.dto.search.*;
 import com.jira.issue.model.dto.weblink.SearchWebLinkDTO;
+import com.jira.issue.model.entity.PJ_PG_SUB_Entity;
 import com.jira.issue.model.entity.backup.BACKUP_BASEINFO_M_Entity;
 import com.jira.issue.model.entity.backup.BACKUP_BASEINFO_P_Entity;
 import com.jira.issue.model.entity.backup.BACKUP_ISSUE_Entity;
@@ -37,6 +38,7 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @AllArgsConstructor
 @Service("backupScheduler")
@@ -63,9 +65,10 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
     @Autowired
     private com.jira.issue.model.dao.BACKUP_ISSUE_JpaRepository BACKUP_ISSUE_JpaRepository;
+
+    @Autowired
+    private com.jira.issue.model.dao.PJ_PG_SUB_JpaRepository PJ_PG_SUB_JpaRepository;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-
 
     /*
     *  프로젝트 백업은 프로젝트 이름, 담당자 정보, 업데이트 시간 정보를 백업 및 업데이트 진행
@@ -505,7 +508,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
     @Transactional
     public CompletableFuture<Void> 지라이슈_벌크_백업() throws Exception {
         logger.info("[::BackupSchedulerImpl::] 지라 이슈 벌크 백업 스케줄러");
-       /* int page = 0;
+        int page = 0;
         int size = 100;
         Pageable pageable = PageRequest.of(page, size);
 
@@ -514,14 +517,20 @@ public class BackupSchedulerImpl implements BackupScheduler {
             프로젝트_페이지 = TB_JML_JpaRepository.findAll(pageable);
             List<TB_JML_Entity> 모든_프로젝트 = 프로젝트_페이지.getContent();
             List<CompletableFuture<Void>> futures = 모든_프로젝트.stream()
-                    .map(프로젝트 -> 지라이슈_처리(프로젝트))
+                    .map(프로젝트 -> {
+                        try {
+                            return 지라이슈_처리(프로젝트);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
                     .collect(Collectors.toList());
 
             // 모든 비동기 작업이 완료될 때까지 대기
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
             pageable = 프로젝트_페이지.nextPageable();
-        } while (프로젝트_페이지.hasNext());*/
+        } while (프로젝트_페이지.hasNext());
 
         return CompletableFuture.completedFuture(null);
     }
@@ -553,6 +562,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
             List<SearchRenderedIssue> 전체이슈_목록 = new ArrayList<>();
 
             String 프로젝트_키 =프로젝트.getKey();
+            String wss_프로젝트_코드 = 프로젝트.getProjectCode();
 
             while (!isLast) {
                 프로젝트에_생성된_이슈데이터 전체이슈_조회 = JiraIssue.프로젝트에_생성된_이슈조회(프로젝트_키,검색_시작_지점,검색_최대_개수);
@@ -573,19 +583,15 @@ public class BackupSchedulerImpl implements BackupScheduler {
             전체이슈_목록.parallelStream()
                     .forEach(지라이슈 -> {
                         String 이슈유형_아이디 = 지라이슈.getFields().getIssuetype().getId();
-
-                        if (프로젝트_기본정보.equals(이슈유형_아이디) || 유지보수_기본정보.equals(이슈유형_아이디)) {
-                            // 기본 정보 이슈일 때는 본문 내용과 댓글을 모두 저장한다.
-
-                        } else if (지라이슈.getFields().getSummary().contains("WSS HISTORY")) {
+                        if (지라이슈.getFields().getSummary().contains("WSS HISTORY")) {
                             // WSS에서 넘어온 데이터 처리 -> 기존 디비에 저장된 데이터 긁어오기
-
-
+                            WSS이슈데이터_이관(지라이슈,프로젝트_키,wss_프로젝트_코드);
                         } else {
-                            // 나머지 일반 데이터 처리
                             try {
                                 지라이슈_저장(지라이슈,프로젝트_키);
+                                // 지라이슈_댓글저장(지라이슈); todo 코멘트 체크해서 가져오기
                             } catch (Exception e) {
+                                logger.error("::[:: 지라이슈_처리 ::]::일반 이슈 저장시 오류 발생"+e.getMessage());
                                 throw new RuntimeException(e);
                             }
                         }
@@ -640,8 +646,8 @@ public class BackupSchedulerImpl implements BackupScheduler {
                                     .담당자(담당자)
                                     .생성일(생성일)
                                     .업데이트일(업데이트일)
+                                    .이슈_출처(true)
                                     .build();
-
 
         BACKUP_ISSUE_Entity 저장_결과 = BACKUP_ISSUE_JpaRepository.save(이슈_저장);
 
@@ -683,6 +689,39 @@ public class BackupSchedulerImpl implements BackupScheduler {
         } catch (Exception e) {
             throw new Exception("일자 변환 중 오류 "+e.getMessage());
         }
+    }
+
+    private void WSS이슈데이터_이관(SearchRenderedIssue 지라이슈, String 지라_프로젝트_키,String wss_프로젝트_코드){
+
+        String 지라_이슈_제목 = 지라이슈.getFields().getSummary();
+        String 지라_이슈_키 = 지라이슈.getKey();
+
+        List<PJ_PG_SUB_Entity> wss_이슈조회_결과 = PJ_PG_SUB_JpaRepository.findAllByProjectCodeOrderByCreationDateDesc(wss_프로젝트_코드);
+
+        List<BACKUP_ISSUE_Entity> 이슈_저장_리스트 = IntStream.range(0, wss_이슈조회_결과.size())
+                .mapToObj(i -> {
+                    PJ_PG_SUB_Entity wss_조회이슈 = wss_이슈조회_결과.get(i);
+
+                    Date 이슈_생성일 = wss_조회이슈.getCreationDate();
+                    String 이슈_내용 = wss_조회이슈.getIssueContent();
+                    String 이슈_작성자 = wss_조회이슈.getWriter();
+
+                    String 지라_이슈_키_wss = 지라_이슈_키 + "-" + (i + 1);
+
+                    return BACKUP_ISSUE_Entity.builder()
+                            .지라_프로젝트_키(지라_프로젝트_키)
+                            .지라_이슈_키(지라_이슈_키_wss)
+                            .지라_이슈_제목(지라_이슈_제목)
+                            .상세내용(이슈_내용)
+                            .담당자(이슈_작성자)
+                            .생성일(이슈_생성일)
+                            .업데이트일(이슈_생성일)
+                            .이슈_출처(false)
+                            .build();
+                })
+                .collect(Collectors.toList());
+        // 배치 저장
+        BACKUP_ISSUE_JpaRepository.saveAll(이슈_저장_리스트);
     }
 
     @Override

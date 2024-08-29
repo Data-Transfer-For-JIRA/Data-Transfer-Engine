@@ -38,4 +38,6 @@ public class BACKUP_ISSUE_Entity {
     @Column(name = "UPDATE_DATE")
     private Date 업데이트일;
 
+    @Column(name = "DATA_FROM")
+    private Boolean 이슈_출처; // true: 지라 ,false: wss
 }
