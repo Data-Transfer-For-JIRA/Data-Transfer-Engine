@@ -346,17 +346,24 @@ public class JiraProjectImpl implements JiraProject {
             업데이트_데이터.setName(createProjectDTO.getName());
         }
 
-            // 담당자 수정
+        // 담당자 수정
         if(createProjectDTO.getLeadAccountId() !=  null && !createProjectDTO.getLeadAccountId().isEmpty()){
             업데이트_데이터.setLeadAccountId(createProjectDTO.getLeadAccountId());
         }
 
-        ProjectDTO  결과 = webClientUtils.put(endpoint,업데이트_데이터, ProjectDTO.class).block();
+        ProjectDTO  결과 = new ProjectDTO();
 
-        if(결과.getKey() != null){ // JML 테이블 업데이트
-            String 이름;
+        String 이름;
 
-            TB_JML_Entity 업데이트_대상 = TB_JML_JpaRepository.findByKey(결과.getKey());
+        TB_JML_Entity 업데이트_대상 = TB_JML_JpaRepository.findByKey(createProjectDTO.getKey());
+
+        String 저장된_지라_프로젝트_이름= 업데이트_대상.getJiraProjectName();
+
+        if(!저장된_지라_프로젝트_이름.equals(업데이트_데이터.getName())){ // 프로젝트 이름 동일할 경우 업데이트 안됨
+            결과 = webClientUtils.put(endpoint,업데이트_데이터, ProjectDTO.class).block();
+        }
+
+        if(결과.getKey()!=null){
             업데이트_대상.setJiraProjectName(결과.getName());
 
             String 담당자_이름 = 결과.getLead().getDisplayName();
@@ -372,7 +379,6 @@ public class JiraProjectImpl implements JiraProject {
 
             TB_JML_JpaRepository.save(업데이트_대상);
         }
-
         return 결과;
     }
 
