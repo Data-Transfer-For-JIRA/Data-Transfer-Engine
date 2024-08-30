@@ -728,32 +728,45 @@ public class PlatformProjectImpl implements PlatformProject {
     public Map<String, String> upDateProjectInfo(String jiraKey, BaseDTO baseDTO) throws Exception {
 
         Map<String, String> result;
-        Map<String, String> issueResult = new HashMap<>();
+
+        // 기존 프로젝트 정보
+        ProjectDTO 기존_프로젝트_정보 = jiraProject.getJiraProjectInfoByJiraKey(jiraKey);
+        String 기존_프로젝트_이름 = 기존_프로젝트_정보.getName();
+        String 기존_담당자_이름 = account.getUserNameByJiraAccountId(기존_프로젝트_정보.getLead().getAccountId());
 
         // 프로젝트 정보 업데이트
         CreateProjectDTO 업데이트_정보 = new CreateProjectDTO();
+
         // 프로젝트 이름
         String 프로젝트_이름 = baseDTO.getEssential().getProjectName();
+        if (프로젝트_이름 != null && !프로젝트_이름.isEmpty() && !프로젝트_이름.equals(기존_프로젝트_이름)) {
+            업데이트_정보.setName(프로젝트_이름);
+        }
+
         // 담당자
         String 담당자_이름 = baseDTO.getCommon().getAssignee();
-
-        if (담당자_이름 != null && !담당자_이름.isEmpty()) {
+        if (담당자_이름 != null && !담당자_이름.isEmpty() && !담당자_이름.equals(기존_담당자_이름)) {
             setBuilder(
                     () -> getAccountId(담당자_이름),
                     업데이트_정보::setLeadAccountId
             );
         }
         업데이트_정보.setKey(jiraKey);
-        업데이트_정보.setName(프로젝트_이름);
+
         result = jiraProject.updateProjectInfo(업데이트_정보);
+        String projectStatus = result.get("projectResult");
 
         // 기본 정보 이슈 업데이트
         String issueKey = jiraIssue.getBaseIssueKeyByJiraKey(jiraKey);
-        if (issueKey != null) {
-            issueResult = updateBaseIssue(issueKey, baseDTO);
+
+        if ("UPDATE_DUPLICATE".equals(projectStatus)) {
+            result.put("jiraIssueKey", issueKey);
+            result.put("issueResult", "UPDATE_FAIL");
+        } else if (issueKey != null) {
+            Map<String, String> issueResult = updateBaseIssue(issueKey, baseDTO);
+            result.putAll(issueResult);
         }
 
-        result.putAll(issueResult);
         return result;
     }
 
@@ -778,14 +791,14 @@ public class PlatformProjectImpl implements PlatformProject {
             Optional<Boolean> response = webClientUtils.executePut(endpoint, updateIssueDTO);
             if (response.isPresent()) {
                 if (response.get()) {
-                    result.put("issueResult", "이슈 업데이트 성공");
+                    result.put("issueResult", "UPDATE_SUCCESS");
 
                     return result;
                 }
             }
         }
 
-        result.put("issueResult", "이슈 업데이트 실패");
+        result.put("issueResult", "UPDATE_FAIL");
 
         return result;
     }

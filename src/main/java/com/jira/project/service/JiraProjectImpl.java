@@ -345,8 +345,13 @@ public class JiraProjectImpl implements JiraProject {
         CreateProjectDTO 업데이트_데이터 = new CreateProjectDTO();
             
         // 프로젝트 이름 수정
-        if (createProjectDTO.getName() != null && !createProjectDTO.getName().isEmpty() && !checkJiraProjectName(createProjectDTO.getName())) {
-            업데이트_데이터.setName(createProjectDTO.getName());
+        if (createProjectDTO.getName() != null && !createProjectDTO.getName().isEmpty()) {
+            if (!checkJiraProjectName(createProjectDTO.getName())) {
+                업데이트_데이터.setName(createProjectDTO.getName());
+            } else {
+                result.put("projectResult", "UPDATE_DUPLICATE");
+                return result;
+            }
         }
 
         // 담당자 수정
@@ -356,7 +361,7 @@ public class JiraProjectImpl implements JiraProject {
 
         // 업데이트할 데이터가 있는지 확인
         if (업데이트_데이터.getName() == null && 업데이트_데이터.getLeadAccountId() == null) {
-            result.put("projectResult", "업데이트할 프로젝트 정보가 없음");
+            result.put("projectResult", "UPDATE_SUCCESS");
             return result;
         }
 
@@ -381,10 +386,10 @@ public class JiraProjectImpl implements JiraProject {
 
             TB_JML_JpaRepository.save(업데이트_대상);
 
-            result.put("projectResult", "프로젝트 업데이트 성공");
+            result.put("projectResult", "UPDATE_SUCCESS");
 
         } else {
-            result.put("projectResult", "프로젝트 업데이트 실패");
+            result.put("projectResult", "UPDATE_FAIL");
         }
 
         return result;
