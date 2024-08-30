@@ -50,6 +50,8 @@ public interface JiraIssue {
     *  이슈에 걸린 댓글 조회
     * */
     CommentDTO 이슈에_생성된_댓글조회(String 지라_이슈_아이디) throws Exception;
+
+    CommentDTO 오늘_업데이트및_생성된댓글들(String 지라_이슈_아이디) throws Exception;
     /*---------------------------------------------------------------------------------*/
 
     /*

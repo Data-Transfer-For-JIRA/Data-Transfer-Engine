@@ -41,7 +41,11 @@ public class SearchRenderedIssue {
     @AllArgsConstructor
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Fields {
+
+        FieldDTO.Project project;
+
         Assignee assignee;
+
         Field issuetype;
 
         String summary;

@@ -48,6 +48,7 @@ import javax.persistence.criteria.Predicate;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -1380,7 +1381,7 @@ public class JiraIssueImpl implements JiraIssue {
         try {
             String endpoint = "/rest/api/3/issue/"+지라_이슈_아이디+"/comment?expand=renderedBody";
 
-            CommentDTO 조회결과 =  webClientUtils.get(endpoint,new ParameterizedTypeReference<CommentDTO>() {}).block();
+            CommentDTO 조회결과 = webClientUtils.get(endpoint,new ParameterizedTypeReference<CommentDTO>() {}).block();
 
             return 조회결과;
 
@@ -1390,4 +1391,41 @@ public class JiraIssueImpl implements JiraIssue {
         }
     }
 
+    @Override
+    public CommentDTO 오늘_업데이트및_생성된댓글들(String 지라_이슈_아이디) throws Exception {
+
+        try {
+            String endpoint = "/rest/api/3/issue/"+지라_이슈_아이디+"/comment?expand=renderedBody";
+
+            CommentDTO 조회결과 = webClientUtils.get(endpoint,new ParameterizedTypeReference<CommentDTO>() {}).block();
+
+            if (조회결과 == null || 조회결과.getComments() == null) {
+                return new CommentDTO();  // 빈 객체 반환
+            }
+
+            // 오늘 날짜의 시작 시각 구하기
+            LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+            ZoneId systemZone = ZoneId.systemDefault(); // 시스템의 기본 시간대 사용
+
+            // 오늘 생성되거나 업데이트된 댓글만 필터링
+            List<CommentDTO.Comments> 오늘_댓글목록 = 조회결과.getComments().stream()
+                    .filter(comment -> {
+                        LocalDateTime createdDate = LocalDateTime.ofInstant(comment.getCreated().toInstant(), systemZone);
+                        LocalDateTime updatedDate = LocalDateTime.ofInstant(comment.getUpdated().toInstant(), systemZone);
+                        return createdDate.isAfter(startOfDay) || updatedDate.isAfter(startOfDay);
+                    })
+                    .collect(Collectors.toList());
+
+            // 필터링된 댓글 목록을 새로운 CommentDTO 객체에 설정
+            CommentDTO 필터링된_결과 = new CommentDTO();
+            필터링된_결과.setComments(오늘_댓글목록);
+
+            return 필터링된_결과;
+
+        } catch (Exception e) {
+            logger.error("이슈에 생성된 댓글 조회시 오류 발생");
+            throw new Exception(e.getMessage());
+        }
+
+    }
 }

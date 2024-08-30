@@ -53,7 +53,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
     JiraProject jiraProject;
 
     @Autowired
-    JiraIssue JiraIssue;
+    JiraIssue jiraIssue;
 
     @Autowired
     private WebClientUtils webClientForImage;
@@ -152,19 +152,23 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
     @Override
     @Transactional
-    public void 지라이슈_데일리_백업()throws Exception{
+    public void 지라이슈_데일리_백업() throws Exception{
 
         List<String> 프로젝트기본정보_이슈키목록 = new ArrayList<>();
         List<String> 유지보수기본정보_이슈키목록 = new ArrayList<>();
         List<String> 일반_이슈키목록 = new ArrayList<>();
-        // 오늘 생성 및 업데이트 된 이슈 조회
-        List<SearchIssueDTO<FieldDTO>> 이슈목록 = JiraIssue.오늘_업데이트및_생성된이슈들().getIssues();
+        List<String> 댓글_이슈키목록 = new ArrayList<>();
+
+        // 오늘 생성 및 업데이트 된 이슈 조회 (댓글 생성 및 업데이트된 경우도 포함)
+        List<SearchIssueDTO<FieldDTO>> 이슈목록 = jiraIssue.오늘_업데이트및_생성된이슈들().getIssues();
+        //이슈목록.forEach(issue -> System.out.println(issue));
 
         String 프로젝트_기본정보 = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "프로젝트 기본 정보").getId();
         String 유지보수_기본정보  = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "유지보수 기본 정보").getId();
 
-        // 생성 업데이트 된 키목록 분류
+        // 생성 업데이트 된 키 목록 분류
         이슈목록.forEach(issue -> {
+            댓글_이슈키목록.add(issue.getKey());
             if (issue.getFields().getIssuetype().getId().equals(프로젝트_기본정보) ) {
                 프로젝트기본정보_이슈키목록.add(issue.getKey());
             }
@@ -176,31 +180,48 @@ public class BackupSchedulerImpl implements BackupScheduler {
             }
         });
 
-        // 프로젝트 기본정보 이슈 생성 업데이트
-        if(프로젝트기본정보_이슈키목록 != null && !프로젝트기본정보_이슈키목록.isEmpty()){
+        // 프로젝트 기본정보 이슈 생성·업데이트
+        if (프로젝트기본정보_이슈키목록 != null && !프로젝트기본정보_이슈키목록.isEmpty()) {
             프로젝트기본정보_이슈키목록.forEach(이슈키 -> {
                 try {
-                    프로젝트_기본정보이슈_저장(JiraIssue.getProjectIssue(이슈키));
+                    프로젝트_기본정보이슈_저장(jiraIssue.getProjectIssue(이슈키));
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             });
         }
-        // 유지보수 기본정보 이슈 생성 업데이트 
-        if(유지보수기본정보_이슈키목록 != null && !유지보수기본정보_이슈키목록.isEmpty()){
+        // 유지보수 기본정보 이슈 생성·업데이트
+        if (유지보수기본정보_이슈키목록 != null && !유지보수기본정보_이슈키목록.isEmpty()) {
             유지보수기본정보_이슈키목록.forEach(이슈키 -> {
                 try {
-                    유지보수_기본정보이슈_저장(JiraIssue.getMaintenanceIssue(이슈키));
+                    유지보수_기본정보이슈_저장(jiraIssue.getMaintenanceIssue(이슈키));
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             });
         }
 
-        if(일반_이슈키목록 != null && !일반_이슈키목록.isEmpty()){
-
+        // 일반 이슈 백업
+        if (일반_이슈키목록 != null && !일반_이슈키목록.isEmpty()) {
+            일반_이슈키목록.forEach(이슈키 -> {
+                try {
+                    SearchRenderedIssue 이슈 = jiraIssue.이슈_조회(이슈키);
+                    String 프로젝트키 = 이슈.getFields().getProject().getKey();
+                    지라이슈_저장(이슈, 프로젝트키);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
         }
 
+        // 댓글 백업
+        댓글_이슈키목록.forEach(이슈키 -> {
+            try {
+                오늘_지라이슈_댓글저장(이슈키);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     /*
@@ -237,16 +258,16 @@ public class BackupSchedulerImpl implements BackupScheduler {
         try {
             String 지라_프로젝트_키 = 프로젝트.getKey();
             String 프로젝트_유형 = 프로젝트.getFlag();
-            String 기본정보_이슈키 = JiraIssue.getBaseIssueKeyByJiraKey(지라_프로젝트_키);
+            String 기본정보_이슈키 = jiraIssue.getBaseIssueKeyByJiraKey(지라_프로젝트_키);
 
             logger.info("[::BackupSchedulerImpl::] 저장 대상 프로젝트 키 정보: {}, 이슈 키:{} ",지라_프로젝트_키,기본정보_이슈키);
 
             if (기본정보_이슈키 != null) {
                 if ("M".equals(프로젝트_유형)) {
-                    SearchIssueDTO<SearchMaintenanceInfoDTO> 유지보수_기본_정보 = JiraIssue.getMaintenanceIssue(기본정보_이슈키);
+                    SearchIssueDTO<SearchMaintenanceInfoDTO> 유지보수_기본_정보 = jiraIssue.getMaintenanceIssue(기본정보_이슈키);
                     유지보수_기본정보이슈_저장(유지보수_기본_정보);
                 } else {
-                    SearchIssueDTO<SearchProjectInfoDTO> 프로젝트_기본_정보 = JiraIssue.getProjectIssue(기본정보_이슈키);
+                    SearchIssueDTO<SearchProjectInfoDTO> 프로젝트_기본_정보 = jiraIssue.getProjectIssue(기본정보_이슈키);
                     프로젝트_기본정보이슈_저장(프로젝트_기본_정보);
                 }
             } else {
@@ -267,14 +288,14 @@ public class BackupSchedulerImpl implements BackupScheduler {
     public Boolean 기본정보이슈_저장(String 지라_키,String 프로젝트_유형) throws Exception{
         try {
             String 기본정보_이슈키=null;
-            기본정보_이슈키 = JiraIssue.getBaseIssueKeyByJiraKey(지라_키);
+            기본정보_이슈키 = jiraIssue.getBaseIssueKeyByJiraKey(지라_키);
             logger.info("[{}] 기본정보 이슈 저장 시작",기본정보_이슈키);
             if(기본정보_이슈키 == null){
                 logger.error("{} 해당 프로젝트에는 기본 정보이슈가 없습니다.",지라_키);
             }
 
             if(프로젝트_유형.equals("M")){
-                SearchIssueDTO<SearchMaintenanceInfoDTO> 조회결과 = JiraIssue.getMaintenanceIssue(기본정보_이슈키);
+                SearchIssueDTO<SearchMaintenanceInfoDTO> 조회결과 = jiraIssue.getMaintenanceIssue(기본정보_이슈키);
                 if (조회결과 == null || 조회결과.getFields() == null) {
                     throw new Exception("유효한 조회 결과가 없습니다.");
                 }
@@ -283,7 +304,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
                 return true;
             }
             else{
-                SearchIssueDTO<SearchProjectInfoDTO> 조회결과 = JiraIssue.getProjectIssue(기본정보_이슈키);
+                SearchIssueDTO<SearchProjectInfoDTO> 조회결과 = jiraIssue.getProjectIssue(기본정보_이슈키);
                 if (조회결과 == null || 조회결과.getFields() == null) {
                     throw new Exception("유효한 조회 결과가 없습니다.");
                 }
@@ -370,10 +391,10 @@ public class BackupSchedulerImpl implements BackupScheduler {
             String 바코드_타입 = 값_널체크(() -> 조회결과.getFields().getBarcodeType().getValue());
             String 멀티_OS_지원여부 = 값_널체크(() -> 조회결과.getFields().getMultiOsSupport().get(0).getValue());
 
-            List<SearchWebLinkDTO> 연관된_프로젝트_정보 = JiraIssue.getWebLinkByJiraIssueKey(이슈_키);
+            List<SearchWebLinkDTO> 연관된_프로젝트_정보 = jiraIssue.getWebLinkByJiraIssueKey(이슈_키);
 
             if (연관된_프로젝트_정보.size()>0){
-                연관된_프로젝트_키 =연관된_프로젝트_키_가져오기( JiraIssue.getWebLinkByJiraIssueKey(이슈_키) );
+                연관된_프로젝트_키 =연관된_프로젝트_키_가져오기( jiraIssue.getWebLinkByJiraIssueKey(이슈_키) );
             }
 
             String 제품정보1 = 제품정보_변환(조회결과.getFields().getProductInfo1());
@@ -447,9 +468,9 @@ public class BackupSchedulerImpl implements BackupScheduler {
             String 바코드_타입 = 값_널체크(() -> 조회결과.getFields().getBarcodeType().getValue());
             String 멀티_OS_지원여부 = 값_널체크(() -> 조회결과.getFields().getMultiOsSupport().get(0).getValue());
 
-            List<SearchWebLinkDTO> 연관된_프로젝트_정보 = JiraIssue.getWebLinkByJiraIssueKey(이슈_키);
+            List<SearchWebLinkDTO> 연관된_프로젝트_정보 = jiraIssue.getWebLinkByJiraIssueKey(이슈_키);
             if (연관된_프로젝트_정보.size()>0){
-                연관된_프로젝트_키 =연관된_프로젝트_키_가져오기( JiraIssue.getWebLinkByJiraIssueKey(이슈_키) );
+                연관된_프로젝트_키 =연관된_프로젝트_키_가져오기( jiraIssue.getWebLinkByJiraIssueKey(이슈_키) );
             }
 
             String 제품정보1 = 제품정보_변환(조회결과.getFields().getProductInfo1());
@@ -568,7 +589,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
             String wss_프로젝트_코드 = 프로젝트.getProjectCode();
 
             while (!isLast) {
-                프로젝트에_생성된_이슈데이터 전체이슈_조회 = JiraIssue.프로젝트에_생성된_이슈조회(프로젝트_키,검색_시작_지점,검색_최대_개수);
+                프로젝트에_생성된_이슈데이터 전체이슈_조회 = jiraIssue.프로젝트에_생성된_이슈조회(프로젝트_키,검색_시작_지점,검색_최대_개수);
 
                 전체이슈_목록.addAll(전체이슈_조회.getIssues());
 
@@ -593,7 +614,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
                         } else {
                             try {
                                 지라이슈_저장(지라이슈,프로젝트_키);
-                                지라이슈_댓글저장(지라이슈); //todo 코멘트 체크해서 가져오기
+                                지라이슈_댓글저장(지라이슈.getKey()); //todo 코멘트 체크해서 가져오기
                             } catch (Exception e) {
                                 logger.error("::[:: 지라이슈_처리 ::]::일반 이슈 저장시 오류 발생"+e.getMessage());
                                 throw new RuntimeException(e);
@@ -728,12 +749,40 @@ public class BackupSchedulerImpl implements BackupScheduler {
         BACKUP_ISSUE_JpaRepository.saveAll(이슈_저장_리스트);
     }
 
-    private List<BACKUP_ISSUE_COMMENT_Entity> 지라이슈_댓글저장(SearchRenderedIssue 지라이슈) throws Exception {
+    private List<BACKUP_ISSUE_COMMENT_Entity> 지라이슈_댓글저장(String 지라이슈_키) throws Exception {
         try {
-            String 지라이슈_키 = 지라이슈.getKey();
 
             // 댓글 조회
-            CommentDTO 조회된_댓글 = JiraIssue.이슈에_생성된_댓글조회(지라이슈_키);
+            CommentDTO 조회된_댓글 = jiraIssue.이슈에_생성된_댓글조회(지라이슈_키);
+
+            // 조회된 댓글이 없으면 빈 리스트 반환
+            if (조회된_댓글 == null || 조회된_댓글.getComments() == null) {
+                return Collections.emptyList();
+            }
+
+            List<BACKUP_ISSUE_COMMENT_Entity> 댓글_저장_리스트 = 조회된_댓글.getComments().stream()
+                    .map(comments -> BACKUP_ISSUE_COMMENT_Entity.builder()
+                            .댓글_아이디(comments.getId())
+                            .댓글_내용(comments.getRenderedBody())
+                            .생성일(comments.getCreated())
+                            .업데이트일(comments.getUpdated())
+                            .작성자(comments.getAuthor().getDisplayName())
+                            .지라이슈_키(지라이슈_키)
+                            .build())
+                    .collect(Collectors.toList());
+
+            return BACKUP_ISSUE_COMMENT_JpaRepository.saveAll(댓글_저장_리스트);
+        }catch (Exception e){
+            logger.error("::[::지라이슈_댓글저장::]::댓글 저장 중 오류 발생.");
+            throw new Exception("댓글 저장 중 오류 발생");
+        }
+    }
+
+    private List<BACKUP_ISSUE_COMMENT_Entity> 오늘_지라이슈_댓글저장(String 지라이슈_키) throws Exception {
+        try {
+
+            // 댓글 조회
+            CommentDTO 조회된_댓글 = jiraIssue.오늘_업데이트및_생성된댓글들(지라이슈_키);
 
             // 조회된 댓글이 없으면 빈 리스트 반환
             if (조회된_댓글 == null || 조회된_댓글.getComments() == null) {

@@ -144,6 +144,18 @@ public class JiraIssueController {
 
         return jiraIssue.이슈에_생성된_댓글조회(지라_이슈_아이디);
     }
+
+    @ResponseBody
+    @RequestMapping(
+            value = {"/today/comment"},
+            method = {RequestMethod.GET}
+    )
+    public CommentDTO 오늘_업데이트및_생성된댓글들(@RequestParam String 지라_이슈_아이디) throws Exception {
+
+        logger.info("오늘_업데이트및_생성된댓글들");
+
+        return jiraIssue.오늘_업데이트및_생성된댓글들(지라_이슈_아이디);
+    }
 }
 
 
