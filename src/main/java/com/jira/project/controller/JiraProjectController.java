@@ -157,7 +157,7 @@ public class JiraProjectController {
             value={"/update"},
             method={RequestMethod.PUT}
     )
-    public ProjectDTO updateProjectInfo(@RequestBody CreateProjectDTO createProjectDTO) throws Exception{
+    public Map<String, String> updateProjectInfo(@RequestBody CreateProjectDTO createProjectDTO) throws Exception{
 
         logger.info("[::TransferProjectController::] 지라에 생성된 프로젝트 정보 업데이트");
         return jiraProject.updateProjectInfo(createProjectDTO);

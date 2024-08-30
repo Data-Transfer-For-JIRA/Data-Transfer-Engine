@@ -45,7 +45,7 @@ public interface JiraProject {
     * */
     List<TB_JLL_Entity> saveProjectsRelation() throws Exception;
 
-    ProjectDTO  updateProjectInfo(CreateProjectDTO createProjectDTO) throws Exception;
+    Map<String, String>  updateProjectInfo(CreateProjectDTO createProjectDTO) throws Exception;
 
     boolean checkJiraProjectName(String jiraProjectName) throws Exception;
 

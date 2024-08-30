@@ -39,7 +39,7 @@ public interface PlatformProject {
 
     ReturnMessage platformWeblink(String mainJiraKey, String subJiraKey) throws Exception;
 
-    void upDateProjectInfo(String jiraKey, BaseDTO baseDTO) throws Exception;
+    Map<String, String> upDateProjectInfo(String jiraKey, BaseDTO baseDTO) throws Exception;
 
     Map<String, String> updateBaseIssue(String issueKey, BaseDTO baseDTO) throws Exception;
 

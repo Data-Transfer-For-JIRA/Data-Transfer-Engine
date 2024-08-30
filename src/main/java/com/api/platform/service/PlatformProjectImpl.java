@@ -725,7 +725,11 @@ public class PlatformProjectImpl implements PlatformProject {
 
     @Override
     @Transactional
-    public void upDateProjectInfo(String jiraKey, BaseDTO baseDTO) throws Exception {
+    public Map<String, String> upDateProjectInfo(String jiraKey, BaseDTO baseDTO) throws Exception {
+
+        Map<String, String> result;
+        Map<String, String> issueResult = new HashMap<>();
+
         // 프로젝트 정보 업데이트
         CreateProjectDTO 업데이트_정보 = new CreateProjectDTO();
         // 프로젝트 이름
@@ -733,20 +737,24 @@ public class PlatformProjectImpl implements PlatformProject {
         // 담당자
         String 담당자_이름 = baseDTO.getCommon().getAssignee();
 
-        if(담당자_이름 != null && !담당자_이름.isEmpty()){
-            TB_JIRA_USER_Entity user = (TB_JIRA_USER_Entity) TB_JIRA_USER_JpaRepository.findByDisplayNameContaining(담당자_이름);
-            String 계정_정보 = user.getAccountId();
-            업데이트_정보.setLeadAccountId(계정_정보);
+        if (담당자_이름 != null && !담당자_이름.isEmpty()) {
+            setBuilder(
+                    () -> getAccountId(담당자_이름),
+                    업데이트_정보::setLeadAccountId
+            );
         }
         업데이트_정보.setKey(jiraKey);
         업데이트_정보.setName(프로젝트_이름);
-        jiraProject.updateProjectInfo(업데이트_정보);
+        result = jiraProject.updateProjectInfo(업데이트_정보);
 
         // 기본 정보 이슈 업데이트
         String issueKey = jiraIssue.getBaseIssueKeyByJiraKey(jiraKey);
         if (issueKey != null) {
-            updateBaseIssue(issueKey, baseDTO);
+            issueResult = updateBaseIssue(issueKey, baseDTO);
         }
+
+        result.putAll(issueResult);
+        return result;
     }
 
     @Override
@@ -764,21 +772,20 @@ public class PlatformProjectImpl implements PlatformProject {
         logger.info("[ :: PlatformProjectImpl :: ] updateIssueDTO -> " + jsonRequestBody);
 
         // 이슈 업데이트
+        result.put("jiraIssueKey", issueKey);
         if (issueKey != null) {
             String endpoint = "/rest/api/3/issue/" + issueKey;
             Optional<Boolean> response = webClientUtils.executePut(endpoint, updateIssueDTO);
             if (response.isPresent()) {
                 if (response.get()) {
-                    result.put("jiraIssueKey", issueKey);
-                    result.put("result", "이슈 업데이트 성공");
+                    result.put("issueResult", "이슈 업데이트 성공");
 
                     return result;
                 }
             }
         }
 
-        result.put("jiraIssueKey", issueKey);
-        result.put("result", "이슈 업데이트 실패");
+        result.put("issueResult", "이슈 업데이트 실패");
 
         return result;
     }
