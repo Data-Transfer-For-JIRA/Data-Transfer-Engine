@@ -738,9 +738,17 @@ public class PlatformProjectImpl implements PlatformProject {
         CreateProjectDTO 업데이트_정보 = new CreateProjectDTO();
 
         // 프로젝트 이름
-        String 프로젝트_이름 = baseDTO.getEssential().getProjectName();
-        if (프로젝트_이름 != null && !프로젝트_이름.isEmpty() && !프로젝트_이름.equals(기존_프로젝트_이름)) {
-            업데이트_정보.setName(프로젝트_이름);
+        String 프로젝트_이름 = baseDTO.getEssential() != null ? baseDTO.getEssential().getProjectName() : null;
+
+        if (프로젝트_이름 != null) {
+            if ("P".equals(baseDTO.getEssential().getProjectFlag())) {
+                프로젝트_이름 = "ED-P_" + 프로젝트_이름;
+            } else {
+                프로젝트_이름 = "ED-M_" + 프로젝트_이름;
+            }
+            if (!프로젝트_이름.isEmpty() && !프로젝트_이름.equals(기존_프로젝트_이름)) {
+                업데이트_정보.setName(프로젝트_이름);
+            }
         }
 
         // 담당자
