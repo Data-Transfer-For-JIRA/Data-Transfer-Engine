@@ -88,23 +88,23 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
         for(TB_JML_Entity 프로젝트 : 모든_프로젝트){
 
-            String 지라_프로제트_키 = 프로젝트.getKey(); // 지라 키 조회
+            String 지라_프로젝트_키 = 프로젝트.getKey(); // 지라 키 조회
 
-            지라프로젝트_JML테이블_업데이트(지라_프로제트_키, 프로젝트); // 해당 프로젝트 지라에서 조회 후 업데이트 처리
+            지라프로젝트_JML테이블_업데이트(지라_프로젝트_키, 프로젝트); // 해당 프로젝트 지라에서 조회 후 업데이트 처리
 
         }
 
     }
-    private void 지라프로젝트_JML테이블_업데이트(String 지라_프로제트_키, TB_JML_Entity 프로젝트) throws Exception{
+    private void 지라프로젝트_JML테이블_업데이트(String 지라_프로젝트_키, TB_JML_Entity 프로젝트) throws Exception{
         Date currentTime = new Date();
-        String message ="["+지라_프로제트_키+"] - "+ currentTime+" - ";
+        String message ="["+지라_프로젝트_키+"] - "+ currentTime+" - ";
 
         try {
 
             String 저장된_담당자 = 프로젝트.getJiraProjectLeader();  // 디비에 저장된 담당자
             String 저장된_프로젝트_이름 = 프로젝트.getJiraProjectName(); // 디비에 저장된 프로젝트 이름
 
-            ProjectDTO 조회한_프로제트_정보 = jiraProject.getJiraProjectInfoByJiraKey(지라_프로제트_키); // 지라에서 조회한 프로젝트 정보
+            ProjectDTO 조회한_프로제트_정보 = jiraProject.getJiraProjectInfoByJiraKey(지라_프로젝트_키); // 지라에서 조회한 프로젝트 정보
 
             String 가공한_담당자_이름; // 지라에서 조회한 담당자 이름
 
@@ -118,12 +118,12 @@ public class BackupSchedulerImpl implements BackupScheduler {
                 int startIndex = 담당자_이름.indexOf("(");
                 가공한_담당자_이름= 담당자_이름.substring(0, startIndex).trim();
             }else{
-                가공한_담당자_이름 = 담당자_이름; // epage dev 케이스
+                가공한_담당자_이름 = 담당자_이름; // epage div 케이스
             }
 
             // 변경된 부분만 업데이트
             TB_JML_Entity 업데이트_정보 = new TB_JML_Entity();
-            업데이트_정보.setKey(지라_프로제트_키);
+            업데이트_정보.setKey(지라_프로젝트_키);
             // 프로젝트 정보 업데이트
             if (!저장된_프로젝트_이름.equals(프로젝트_이름)) {
                 업데이트_정보.setJiraProjectName(프로젝트_이름);
@@ -143,7 +143,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
             }
 
         }catch (Exception e){
-            message += e.getMessage()+"프로젝트 정보 업데이트간 오류 발생";
+            message += e.getMessage()+"프로젝트 정보 업데이트 중 오류 발생";
             SaveLog.SchedulerResult("BACKUP\\PROJECT\\FAIL",message,currentTime);
             logger.error(message);
             throw new Exception(e.getMessage());
