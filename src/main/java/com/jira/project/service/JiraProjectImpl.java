@@ -441,4 +441,12 @@ public class JiraProjectImpl implements JiraProject {
 
         return false;
     }
+
+
+    @Override
+    @Transactional
+    public List<TB_JML_Entity> getJiraProjectListByContractorKeywordOnJML(String searchKeyword) throws Exception{
+        List<TB_JML_Entity> searchResult = TB_JML_JpaRepository.findByContractorLike(searchKeyword);
+        return searchResult;
+    }
 }

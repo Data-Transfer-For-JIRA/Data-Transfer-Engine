@@ -174,4 +174,16 @@ public class JiraProjectController {
         return jiraProject.checkJiraProjectName(jiraProjectName);
     }
 
+    @ResponseBody
+    @RequestMapping(
+            value={"/search/contractor"},
+            method={RequestMethod.GET}
+    )
+    public List<TB_JML_Entity> getJiraProjectListByContractorKeywordOnJML(@RequestParam String searchKeyword) throws Exception{
+
+        logger.info("[::TransferProjectController::] 지라에 생성된 프로젝트 목록 키워드로 검색");
+        return jiraProject.getJiraProjectListByContractorKeywordOnJML(searchKeyword);
+
+    }
+
 }

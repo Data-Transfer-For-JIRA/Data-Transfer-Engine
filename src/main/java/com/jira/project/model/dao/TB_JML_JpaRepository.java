@@ -36,4 +36,10 @@ public interface TB_JML_JpaRepository extends JpaRepository<TB_JML_Entity,String
     Page<TB_JML_Entity> findAll(Specification<TB_JML_Entity> updateDate, Pageable pageable);
 
     TB_JML_Entity findByKey(String jiraKey);
+
+    @Query("SELECT j FROM TB_JML_Entity j " +
+            "LEFT JOIN BACKUP_BASEINFO_P_Entity bp ON j.key = bp.지라_프로젝트_키 " +
+            "LEFT JOIN BACKUP_BASEINFO_M_Entity bm ON j.key = bm.지라_프로젝트_키 " +
+            "WHERE bp.계약사 LIKE %:keyword% OR bm.계약사 LIKE %:keyword%")
+    List<TB_JML_Entity> findByContractorLike(@Param("keyword") String keyword);
 }

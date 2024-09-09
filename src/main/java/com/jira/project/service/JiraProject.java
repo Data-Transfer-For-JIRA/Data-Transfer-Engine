@@ -49,4 +49,6 @@ public interface JiraProject {
 
     boolean checkJiraProjectName(String jiraProjectName) throws Exception;
 
+    List<TB_JML_Entity> getJiraProjectListByContractorKeywordOnJML(String searchKeyword) throws Exception;
+
 }
