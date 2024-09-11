@@ -22,7 +22,7 @@ public class BACKUP_ISSUE_Entity {
     private String 지라_이슈_키;
 
     @Column(name = "JIRA_PROJECT_KEY")
-    private String 지라_프로젝트_키;
+    private String jiraProjectKey;
 
     @Column(name = "JIRA_ISSUE_DESCRIPTION")
     private String 상세내용;
@@ -34,7 +34,7 @@ public class BACKUP_ISSUE_Entity {
     private String 담당자;
 
     @Column(name = "CREATE_DATE")
-    private Date 생성일;
+    private Date createDate;
 
     @Column(name = "UPDATE_DATE")
     private Date 업데이트일;

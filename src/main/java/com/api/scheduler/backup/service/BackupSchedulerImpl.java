@@ -664,12 +664,12 @@ public class BackupSchedulerImpl implements BackupScheduler {
             업데이트일 = 일자변환기(지라이슈.getFields().getUpdated());
         }
         BACKUP_ISSUE_Entity 이슈_저장 = BACKUP_ISSUE_Entity.builder()
-                                    .지라_프로젝트_키(프로젝트_키)
+                                    .jiraProjectKey(프로젝트_키)
                                     .지라_이슈_키(지라_이슈_키)
                                     .지라_이슈_제목(지라_이슈_제목)
                                     .상세내용(상세_내용)
                                     .담당자(담당자)
-                                    .생성일(생성일)
+                                    .createDate(생성일)
                                     .업데이트일(업데이트일)
                                     .이슈_출처(true)
                                     .build();
@@ -734,12 +734,12 @@ public class BackupSchedulerImpl implements BackupScheduler {
                     String 지라_이슈_키_wss = 지라_이슈_키 + "-" + (i + 1);
 
                     return BACKUP_ISSUE_Entity.builder()
-                            .지라_프로젝트_키(지라_프로젝트_키)
+                            .jiraProjectKey(지라_프로젝트_키)
                             .지라_이슈_키(지라_이슈_키_wss)
                             .지라_이슈_제목(지라_이슈_제목)
                             .상세내용(이슈_내용)
                             .담당자(이슈_작성자)
-                            .생성일(이슈_생성일)
+                            .createDate(이슈_생성일)
                             .업데이트일(이슈_생성일)
                             .이슈_출처(false)
                             .build();

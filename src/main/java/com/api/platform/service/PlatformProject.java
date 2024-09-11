@@ -5,6 +5,7 @@ import com.api.platform.dto.ReturnMessage;
 import com.api.scheduler.backup.model.entity.BACKUP_ISSUE_Entity;
 import com.jira.issue.model.dto.create.CustomFieldDTO;
 import com.jira.issue.model.dto.FieldDTO;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 import java.util.Map;
@@ -46,4 +47,6 @@ public interface PlatformProject {
     Map<String, String> createTicket(String summary, String description) throws Exception;
 
     Optional<BACKUP_ISSUE_Entity> 티켓_정보_조회(String jiraIssueKey);
+
+    Page<BACKUP_ISSUE_Entity> 프로젝트에_생성된_티켓_정보_조회(String jiraProjectKey , int page, int size);
 }

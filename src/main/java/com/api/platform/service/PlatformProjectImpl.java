@@ -44,6 +44,9 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -1401,6 +1404,14 @@ public class PlatformProjectImpl implements PlatformProject {
     @Override
     public Optional<BACKUP_ISSUE_Entity> 티켓_정보_조회(String 지라_이슈_키){
         return BACKUP_ISSUE_JpaRepository.findById(지라_이슈_키);
+    }
+
+    @Override
+    public Page<BACKUP_ISSUE_Entity> 프로젝트에_생성된_티켓_정보_조회(String jiraProjectKey , int page, int size){
+
+        Pageable pageable = PageRequest.of(page,size);
+
+        return BACKUP_ISSUE_JpaRepository.findByJiraProjectKeyOrderByCreateDate(jiraProjectKey,pageable);
     }
 
 }

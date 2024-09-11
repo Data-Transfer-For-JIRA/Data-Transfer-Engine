@@ -7,6 +7,7 @@ import com.api.scheduler.backup.model.entity.BACKUP_ISSUE_Entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -113,4 +114,19 @@ public class PlatformController {
         logger.info("[::PlatformController::] 티켓_정보_조회");
         return platformProject.티켓_정보_조회(jiraIssueKey);
     }
+
+
+    @ResponseBody
+    @RequestMapping(
+            value = {"/project/all-tickets"},
+            method = {RequestMethod.GET}
+    )
+    public Page<BACKUP_ISSUE_Entity> 프로젝트에_생성된_티켓_정보_조회(@RequestParam String jiraProjectKey ,
+                                                        @RequestParam int page ,
+                                                        @RequestParam int size ) throws Exception {
+        logger.info("[::PlatformController::] 프로젝트에_생성된_티켓_정보_조회 ----------->  조회 대상 지라 프로젝트 : {}, 페이지 번호  :  {}, 조회 이슈 수  :  {}", jiraProjectKey, page ,size);
+
+        return platformProject.프로젝트에_생성된_티켓_정보_조회(jiraProjectKey,page,size);
+    }
+
 }
