@@ -71,7 +71,7 @@ public class AccountImpl implements Account {
         AdminInfoDTO info = getAdminInfo(1);
 
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-        String endpoint = "https://markany.atlassian.net/rest/api/3/users/search?startAt=0&maxResults=400";
+        String endpoint = "https://markany.atlassian.net/rest/api/3/users/search?startAt=0&maxResults=500";
 
         //List<UserInfoDTO> response = WebClientUtils.get(webClient, endpoint, new ParameterizedTypeReference<List<UserInfoDTO>>() {}).block();
         int bufferSize = 50; // 버퍼 크기
@@ -91,7 +91,10 @@ public class AccountImpl implements Account {
 
             TB_JIRA_USER_Entity existUser = TB_JIRA_USER_JpaRepository.findByAccountId(userInfo.getAccountId());
 
-            Optional<TeamInfo> 팀정보 = Optional.ofNullable(TeamInfo.findInfoByName(이름_추출(existUser.getDisplayName())));
+            Optional<TeamInfo> 팀정보 = Optional.ofNullable(existUser)
+                    .map(TB_JIRA_USER_Entity::getDisplayName) // existUser.getDisplayName()이 null일 경우 안전하게 처리
+                    .map(name -> 이름_추출(name)) // 이름_추출()이 null일 경우 안전하게 처리
+                    .map(TeamInfo::findInfoByName);
             String 팀 = 팀정보.map(TeamInfo::getTeam).orElse(null);
             String 파트 = 팀정보.map(TeamInfo::getPart).orElse(null);
 
