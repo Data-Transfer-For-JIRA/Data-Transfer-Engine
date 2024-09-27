@@ -12,4 +12,6 @@ public interface Account {
     public Flux<UserInfoDTO> getCollectUserInfo();
 
     String getUserNameByJiraAccountId(String accountId);
+
+    String 이름_추출(String displayName);
 }

@@ -137,11 +137,12 @@ public class AccountImpl implements Account {
         }
     }
 
+    @Override
     public String 이름_추출(String displayName) {
 
         if (displayName.contains("(")) {
             String name = displayName.substring(0, displayName.indexOf("(")).trim();
-            return  name;
+            return name;
         }
 
         return StringUtils.EMPTY;
