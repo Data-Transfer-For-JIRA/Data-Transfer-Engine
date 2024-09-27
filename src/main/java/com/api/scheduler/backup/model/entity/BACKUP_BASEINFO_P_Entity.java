@@ -1,7 +1,5 @@
 package com.api.scheduler.backup.model.entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.jira.project.model.entity.TB_JML_Entity;
 import lombok.*;
 
 import javax.persistence.*;
@@ -85,8 +83,4 @@ public class BACKUP_BASEINFO_P_Entity {
         this.업데이트_시간 = LocalDateTime.now();
     }
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "JIRA_PROJECT_KEY", insertable = false, updatable = false)
-    @JsonBackReference
-    private TB_JML_Entity 프로젝트_기본정보;
 }

@@ -1,11 +1,7 @@
 package com.jira.project.model.entity;
 
 
-import com.api.scheduler.backup.model.entity.BACKUP_BASEINFO_M_Entity;
-import com.api.scheduler.backup.model.entity.BACKUP_BASEINFO_P_Entity;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
-
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -65,13 +61,5 @@ public class TB_JML_Entity {
     public void preUpdate() {
         this.updateDate = LocalDateTime.now();
     }
-
-    @OneToOne(mappedBy = "프로젝트_기본정보", fetch = FetchType.LAZY)
-    @JsonManagedReference
-    private BACKUP_BASEINFO_P_Entity projectBaseInfo;
-
-    @OneToOne(mappedBy = "유지보수_기본정보", fetch = FetchType.LAZY)
-    @JsonManagedReference
-    private BACKUP_BASEINFO_M_Entity maintenanceBaseInfo;
 
 }
