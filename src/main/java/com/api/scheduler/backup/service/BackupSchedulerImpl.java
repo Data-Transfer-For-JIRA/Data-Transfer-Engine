@@ -1,7 +1,10 @@
 package com.api.scheduler.backup.service;
 
-import com.api.scheduler.backup.model.dao.BACKUP_ISSUE_COMMENT_JpaRepository;
+import com.api.scheduler.backup.model.entity.BACKUP_BASEINFO_M_Entity;
+import com.api.scheduler.backup.model.entity.BACKUP_BASEINFO_P_Entity;
 import com.api.scheduler.backup.model.entity.BACKUP_ISSUE_COMMENT_Entity;
+import com.api.scheduler.backup.model.entity.BACKUP_ISSUE_Entity;
+import com.jira.account.service.Account;
 import com.jira.issue.model.FieldInfo;
 import com.jira.issue.model.FieldInfoCategory;
 import com.jira.issue.model.dto.FieldDTO;
@@ -9,16 +12,15 @@ import com.jira.issue.model.dto.comment.CommentDTO;
 import com.jira.issue.model.dto.search.*;
 import com.jira.issue.model.dto.weblink.SearchWebLinkDTO;
 import com.jira.issue.model.entity.PJ_PG_SUB_Entity;
-import com.api.scheduler.backup.model.entity.BACKUP_BASEINFO_M_Entity;
-import com.api.scheduler.backup.model.entity.BACKUP_BASEINFO_P_Entity;
-import com.api.scheduler.backup.model.entity.BACKUP_ISSUE_Entity;
 import com.jira.issue.service.JiraIssue;
 import com.jira.project.model.dao.TB_JML_JpaRepository;
 import com.jira.project.model.dto.ProjectDTO;
+import com.jira.project.model.entity.TB_JML_Entity;
 import com.jira.project.service.JiraProject;
 import com.utils.SaveLog;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,15 +30,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
-import com.jira.project.model.entity.TB_JML_Entity;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -54,6 +51,9 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
     @Autowired
     JiraIssue jiraIssue;
+
+    @Autowired
+    Account account;
 
     @Autowired
     private WebClientUtils webClientForImage;
@@ -80,41 +80,22 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
     /*
     *  프로젝트 백업은 프로젝트 이름, 담당자 정보, 업데이트 시간 정보를 백업 및 업데이트 진행
-    *  프로젝트 코드 추가
     * */
-    @Async
     @Override
     @Transactional
-    public CompletableFuture<Void> 지라프로젝트_백업() throws Exception {
-        logger.info("[::BackupSchedulerImpl::] 지라 기본 정보 벌크 백업 스케줄러");
-        int page = 0;
-        int size = 100;
-        Pageable pageable = PageRequest.of(page, size);
+    public void 지라프로젝트_백업() throws Exception{
+        List<TB_JML_Entity> 모든_프로젝트 = TB_JML_JpaRepository.findAll(); // 전체 프로젝트 조회
 
-        Page<TB_JML_Entity> 프로젝트_페이지;
-        do {
-            프로젝트_페이지 = TB_JML_JpaRepository.findAll(pageable);
-            List<TB_JML_Entity> 모든_프로젝트 = 프로젝트_페이지.getContent();
-            List<CompletableFuture<Void>> futures = 모든_프로젝트.stream()
-                    .map(프로젝트 -> {
-                        try {
-                            return 지라프로젝트_JML테이블_업데이트(프로젝트.getKey(),프로젝트);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
-                    .collect(Collectors.toList());
+        for(TB_JML_Entity 프로젝트 : 모든_프로젝트){
 
-            // 모든 비동기 작업이 완료될 때까지 대기
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            String 지라_프로젝트_키 = 프로젝트.getKey(); // 지라 키 조회
 
-            pageable = 프로젝트_페이지.nextPageable();
-        } while (프로젝트_페이지.hasNext());
+            지라프로젝트_JML테이블_업데이트(지라_프로젝트_키, 프로젝트); // 해당 프로젝트 지라에서 조회 후 업데이트 처리
 
-        return CompletableFuture.completedFuture(null);
+        }
+
     }
-    @Async
-    private CompletableFuture<Void> 지라프로젝트_JML테이블_업데이트(String 지라_프로젝트_키, TB_JML_Entity 프로젝트) throws Exception{
+    private void 지라프로젝트_JML테이블_업데이트(String 지라_프로젝트_키, TB_JML_Entity 프로젝트) throws Exception{
         Date currentTime = new Date();
         String message ="["+지라_프로젝트_키+"] - "+ currentTime+" - ";
 
@@ -122,74 +103,84 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
             String 저장된_담당자 = 프로젝트.getJiraProjectLeader();  // 디비에 저장된 담당자
             String 저장된_프로젝트_이름 = 프로젝트.getJiraProjectName(); // 디비에 저장된 프로젝트 이름
-            String 저장된_프로젝트_코드  = 프로젝트.getProjectCode(); // 디비에 저장된 프로젝트 코드
-            String 프로젝트_유형 = 프로젝트.getProjectCode();
+            String 저장된_프로젝트_코드 = 프로젝트.getProjectCode(); // 디비에 저장된 프로젝트 코드
 
-            SearchIssueDTO<SearchProjectInfoDTO> 프로젝트_기본정보_조회결과 = new SearchIssueDTO<>();
-            SearchIssueDTO<SearchMaintenanceInfoDTO> 유지보수_기본정보_조회결과 = new SearchIssueDTO<>();
+            ProjectDTO 조회한_프로젝트_정보 = jiraProject.getJiraProjectInfoByJiraKey(지라_프로젝트_키); // 지라에서 조회한 프로젝트 정보
+
+            // 기본 정보 이슈 티켓 조회 (프로젝트 코드 및 담당자 조회)
             String 기본정보_이슈키 = jiraIssue.getBaseIssueKeyByJiraKey(지라_프로젝트_키);
-            String 프로젝트_유지보수_코드 = null;
+            SearchIssueDTO<SearchProjectInfoDTO> 프로젝트_기본정보;
+            SearchIssueDTO<SearchMaintenanceInfoDTO> 유지보수_기본정보;
+            String 담당자_이름 = null;
+            String 프로젝트_코드 = null;
 
-            ProjectDTO 조회한_프로제트_정보 = jiraProject.getJiraProjectInfoByJiraKey(지라_프로젝트_키); // 지라에서 조회한 프로젝트 정보
+            if (StringUtils.equals(프로젝트.getFlag(), "P")) {
+                프로젝트_기본정보 = jiraIssue.getProjectIssue(기본정보_이슈키);
 
-            String 가공한_담당자_이름; // 지라에서 조회한 담당자 이름
+                if (프로젝트_기본정보 != null && 프로젝트_기본정보.getFields() != null) {
+                    담당자_이름 = Optional.ofNullable(프로젝트_기본정보.getFields().getAssignee())
+                            .map(FieldDTO.User::getDisplayName)
+                            .orElse(""); // 담당자가 없을 경우 기본값 설정
 
-            String 담당자_이름 = 조회한_프로제트_정보.getLead().getDisplayName();
+                    프로젝트_코드 = Optional.ofNullable(프로젝트_기본정보.getFields().getProjectCode())
+                            .orElse(""); // 프로젝트 코드가 없을 경우 기본값 설정
+                }
+            } else {
+                유지보수_기본정보 = jiraIssue.getMaintenanceIssue(기본정보_이슈키);
 
-            String 프로젝트_이름 = 조회한_프로제트_정보.getName();
+                if (유지보수_기본정보 != null && 유지보수_기본정보.getFields() != null) {
+                    담당자_이름 = Optional.ofNullable(유지보수_기본정보.getFields().getAssignee())
+                            .map(FieldDTO.User::getDisplayName)
+                            .orElse(""); // 담당자가 없을 경우 기본값 설정
 
-            LocalDateTime 업데이트_시간 = LocalDateTime.now();
-
-            if(프로젝트_유형.equals("M")){
-                유지보수_기본정보_조회결과 = jiraIssue.getMaintenanceIssue(기본정보_이슈키);
-                프로젝트_유지보수_코드 = 유지보수_기본정보_조회결과.getFields().getMaintenanceCode();
+                    프로젝트_코드 = Optional.ofNullable(유지보수_기본정보.getFields().getMaintenanceCode())
+                            .orElse(""); // 유지보수 코드가 없을 경우 기본값 설정
+                }
             }
-            else{
-                프로젝트_기본정보_조회결과 = jiraIssue.getProjectIssue(기본정보_이슈키);
-                프로젝트_유지보수_코드 = 프로젝트_기본정보_조회결과.getFields().getProjectCode();
+
+            String 가공한_담당자_이름 = account.이름_추출(담당자_이름); // 지라에서 조회한 담당자 이름
+            if (StringUtils.isEmpty(가공한_담당자_이름)) {
+                가공한_담당자_이름 = "epage div";
             }
 
-            if(담당자_이름.contains("(")){
-                int startIndex = 담당자_이름.indexOf("(");
-                가공한_담당자_이름= 담당자_이름.substring(0, startIndex).trim();
-            }else{
-                가공한_담당자_이름 = 담당자_이름; // epage div 케이스
-            }
+            String 프로젝트_이름 = 조회한_프로젝트_정보.getName();
 
             // 변경된 부분만 업데이트
+            boolean isUpdated = false;
             TB_JML_Entity 업데이트_정보 = new TB_JML_Entity();
             업데이트_정보.setKey(지라_프로젝트_키);
+
             // 프로젝트 정보 업데이트
-            if (!저장된_프로젝트_이름.equals(프로젝트_이름)) {
+            if (!StringUtils.equals(저장된_프로젝트_이름, 프로젝트_이름)) {
                 업데이트_정보.setJiraProjectName(프로젝트_이름);
-                message += " 프로젝트 이름이 "+저장된_프로젝트_이름 +" 에서"+프로젝트_이름 +"로 업데이트 되었습니다. \n";
+                message += " 프로젝트 이름이 " + 저장된_프로젝트_이름 + "에서 "+프로젝트_이름 + "로 업데이트 되었습니다. \n";
+                isUpdated = true;
             }
             // 담당자 정보 업데이트
-            if (!저장된_담당자.equals(가공한_담당자_이름)) {
+            if (!StringUtils.equals(저장된_담당자, 가공한_담당자_이름)) {
                 업데이트_정보.setJiraProjectLeader(가공한_담당자_이름);
-                message += " 프로젝트 담당자 정보가 "+저장된_담당자 +" 에서"+가공한_담당자_이름 +"로 업데이트 되었습니다. \n";
-            }
-            // 프로젝트 코드 정보 업데이트
-            if (!저장된_프로젝트_코드.equals(프로젝트_유지보수_코드)) {
-                업데이트_정보.setProjectCode(프로젝트_유지보수_코드);
-                message += " 프로젝트 코드 정보가 "+저장된_프로젝트_코드 +" 에서"+프로젝트_유지보수_코드 +"로 업데이트 되었습니다. \n";
+                message += " 프로젝트 담당자 정보가 " + 저장된_담당자 + "에서 " + 가공한_담당자_이름 + "로 업데이트 되었습니다. \n";
+                isUpdated = true;
             }
 
-            업데이트_정보.setUpdateDate(업데이트_시간);
+            // 프로젝트 코드 업데이트
+            if (!StringUtils.equals(저장된_프로젝트_코드, 프로젝트_코드)) {
+                업데이트_정보.setProjectCode(프로젝트_코드);
+                message += " 프로젝트 코드가 " + 저장된_프로젝트_코드 + "에서 " + 프로젝트_코드 + "로 업데이트 되었습니다. \n";
+                isUpdated = true;
+            }
 
-            if (!저장된_프로젝트_이름.equals(프로젝트_이름) || !저장된_담당자.equals(가공한_담당자_이름)) { // 변경 사항 있을 때 업데이트
+            if (isUpdated) { // 변경 사항 있을 때 업데이트
                 TB_JML_JpaRepository.save(업데이트_정보);
-
                 SaveLog.SchedulerResult("BACKUP\\PROJECT\\SUCCESS",message,currentTime);
             }
 
-        }catch (Exception e){
+        } catch (Exception e) {
             message += e.getMessage()+"프로젝트 정보 업데이트 중 오류 발생";
             SaveLog.SchedulerResult("BACKUP\\PROJECT\\FAIL",message,currentTime);
             logger.error(message);
             throw new Exception(e.getMessage());
         }
-        return CompletableFuture.completedFuture(null);
     }
 
     @Override
