@@ -4,7 +4,7 @@ import java.util.concurrent.CompletableFuture;
 
 public interface BackupScheduler {
     /* 프로젝트 정보 백업 스케줄러*/
-    void 지라프로젝트_백업() throws Exception;
+    CompletableFuture<Void> 지라프로젝트_백업() throws Exception;
 
     /* 기본정보 및 일반 이슈 데일리 백업*/
     void 지라이슈_데일리_백업() throws Exception;

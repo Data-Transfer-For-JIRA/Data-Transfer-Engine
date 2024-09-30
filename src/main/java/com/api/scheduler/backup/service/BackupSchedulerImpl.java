@@ -80,22 +80,41 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
     /*
     *  프로젝트 백업은 프로젝트 이름, 담당자 정보, 업데이트 시간 정보를 백업 및 업데이트 진행
+    *  프로젝트 코드 추가
     * */
+    @Async
     @Override
     @Transactional
-    public void 지라프로젝트_백업() throws Exception{
-        List<TB_JML_Entity> 모든_프로젝트 = TB_JML_JpaRepository.findAll(); // 전체 프로젝트 조회
+    public CompletableFuture<Void> 지라프로젝트_백업() throws Exception {
+        logger.info("[::BackupSchedulerImpl::] 지라 기본 정보 벌크 백업 스케줄러");
+        int page = 0;
+        int size = 100;
+        Pageable pageable = PageRequest.of(page, size);
 
-        for(TB_JML_Entity 프로젝트 : 모든_프로젝트){
+        Page<TB_JML_Entity> 프로젝트_페이지;
+        do {
+            프로젝트_페이지 = TB_JML_JpaRepository.findAll(pageable);
+            List<TB_JML_Entity> 모든_프로젝트 = 프로젝트_페이지.getContent();
+            List<CompletableFuture<Void>> futures = 모든_프로젝트.stream()
+                    .map(프로젝트 -> {
+                        try {
+                            return 지라프로젝트_JML테이블_업데이트(프로젝트.getKey(),프로젝트);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .collect(Collectors.toList());
 
-            String 지라_프로젝트_키 = 프로젝트.getKey(); // 지라 키 조회
+            // 모든 비동기 작업이 완료될 때까지 대기
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
-            지라프로젝트_JML테이블_업데이트(지라_프로젝트_키, 프로젝트); // 해당 프로젝트 지라에서 조회 후 업데이트 처리
+            pageable = 프로젝트_페이지.nextPageable();
+        } while (프로젝트_페이지.hasNext());
 
-        }
-
+        return CompletableFuture.completedFuture(null);
     }
-    private void 지라프로젝트_JML테이블_업데이트(String 지라_프로젝트_키, TB_JML_Entity 프로젝트) throws Exception{
+    @Async
+    private CompletableFuture<Void> 지라프로젝트_JML테이블_업데이트(String 지라_프로젝트_키, TB_JML_Entity 프로젝트) throws Exception{
         Date currentTime = new Date();
         String message ="["+지라_프로젝트_키+"] - "+ currentTime+" - ";
 
@@ -103,6 +122,13 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
             String 저장된_담당자 = 프로젝트.getJiraProjectLeader();  // 디비에 저장된 담당자
             String 저장된_프로젝트_이름 = 프로젝트.getJiraProjectName(); // 디비에 저장된 프로젝트 이름
+            String 저장된_프로젝트_코드  = 프로젝트.getProjectCode(); // 디비에 저장된 프로젝트 코드
+            String 프로젝트_유형 = 프로젝트.getProjectCode();
+
+            SearchIssueDTO<SearchProjectInfoDTO> 프로젝트_기본정보_조회결과 = new SearchIssueDTO<>();
+            SearchIssueDTO<SearchMaintenanceInfoDTO> 유지보수_기본정보_조회결과 = new SearchIssueDTO<>();
+            String 기본정보_이슈키 = jiraIssue.getBaseIssueKeyByJiraKey(지라_프로젝트_키);
+            String 프로젝트_유지보수_코드 = null;
 
             ProjectDTO 조회한_프로제트_정보 = jiraProject.getJiraProjectInfoByJiraKey(지라_프로젝트_키); // 지라에서 조회한 프로젝트 정보
 
@@ -113,6 +139,15 @@ public class BackupSchedulerImpl implements BackupScheduler {
             String 프로젝트_이름 = 조회한_프로제트_정보.getName();
 
             LocalDateTime 업데이트_시간 = LocalDateTime.now();
+
+            if(프로젝트_유형.equals("M")){
+                유지보수_기본정보_조회결과 = jiraIssue.getMaintenanceIssue(기본정보_이슈키);
+                프로젝트_유지보수_코드 = 유지보수_기본정보_조회결과.getFields().getMaintenanceCode();
+            }
+            else{
+                프로젝트_기본정보_조회결과 = jiraIssue.getProjectIssue(기본정보_이슈키);
+                프로젝트_유지보수_코드 = 프로젝트_기본정보_조회결과.getFields().getProjectCode();
+            }
 
             if(담당자_이름.contains("(")){
                 int startIndex = 담당자_이름.indexOf("(");
@@ -134,6 +169,12 @@ public class BackupSchedulerImpl implements BackupScheduler {
                 업데이트_정보.setJiraProjectLeader(가공한_담당자_이름);
                 message += " 프로젝트 담당자 정보가 "+저장된_담당자 +" 에서"+가공한_담당자_이름 +"로 업데이트 되었습니다. \n";
             }
+            // 프로젝트 코드 정보 업데이트
+            if (!저장된_프로젝트_코드.equals(프로젝트_유지보수_코드)) {
+                업데이트_정보.setProjectCode(프로젝트_유지보수_코드);
+                message += " 프로젝트 코드 정보가 "+저장된_프로젝트_코드 +" 에서"+프로젝트_유지보수_코드 +"로 업데이트 되었습니다. \n";
+            }
+
             업데이트_정보.setUpdateDate(업데이트_시간);
 
             if (!저장된_프로젝트_이름.equals(프로젝트_이름) || !저장된_담당자.equals(가공한_담당자_이름)) { // 변경 사항 있을 때 업데이트
@@ -148,6 +189,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
             logger.error(message);
             throw new Exception(e.getMessage());
         }
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override
