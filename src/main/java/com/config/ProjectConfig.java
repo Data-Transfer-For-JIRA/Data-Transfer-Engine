@@ -1,4 +1,4 @@
-package com.utils;
+package com.config;
 
 
 import org.springframework.beans.factory.annotation.Value;

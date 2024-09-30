@@ -33,7 +33,7 @@ import com.jira.project.model.entity.TB_JLL_Entity;
 import com.jira.project.model.entity.TB_JML_Entity;
 import com.jira.project.service.JiraProjectImpl;
 import com.utils.ConvertHtmlToADF;
-import com.utils.ProjectConfig;
+import com.config.ProjectConfig;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;

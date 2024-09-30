@@ -13,7 +13,7 @@ import com.jira.project.model.dto.ProjectListDTO;
 import com.jira.project.model.entity.TB_JLL_Entity;
 import com.jira.project.model.entity.TB_JML_Entity;
 import com.jira.project.model.entity.TB_PJT_BASE_Entity;
-import com.utils.ProjectConfig;
+import com.config.ProjectConfig;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
