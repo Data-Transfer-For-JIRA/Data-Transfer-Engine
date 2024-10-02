@@ -19,13 +19,14 @@ public class BackupController {
     *  프로젝트 정보(담당자,이름, 프로젝트 코드) 백업 스케줄러 API
     *  지라에서 수정한 내용을 반영하기 위함
     *  대상 디비: TB_JML
+    *  테스트 커밋
     * */
     @ResponseBody
     @RequestMapping(
             value={"/project"},
             method={RequestMethod.POST}
     )
-    public void 지라프로젝트__백업() throws Exception{
+    public void 지라프로젝트_백업() throws Exception{
 
         logger.info("[::BackupController::] 지라 프로젝트 백업 JML 테이블 백업 스케줄러");
 
