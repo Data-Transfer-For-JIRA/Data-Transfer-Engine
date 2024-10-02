@@ -117,7 +117,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
     @Async
     private  CompletableFuture<Void>  지라프로젝트_JML테이블_업데이트(String 지라_프로젝트_키, TB_JML_Entity 프로젝트) throws Exception{
         Date currentTime = new Date();
-        String message ="["+지라_프로젝트_키+"] - "+ currentTime+" - ";
+        String message = "[" + 지라_프로젝트_키 + "] - " + currentTime + " - ";
 
         try {
 
@@ -126,6 +126,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
             String 저장된_프로젝트_코드 = 프로젝트.getProjectCode(); // 디비에 저장된 프로젝트 코드
 
             ProjectDTO 조회한_프로젝트_정보 = jiraProject.getJiraProjectInfoByJiraKey(지라_프로젝트_키); // 지라에서 조회한 프로젝트 정보
+            String 프로젝트_이름 = 조회한_프로젝트_정보.getName();
 
             // 기본 정보 이슈 티켓 조회 (프로젝트 코드 및 담당자 조회)
             String 기본정보_이슈키 = jiraIssue.getBaseIssueKeyByJiraKey(지라_프로젝트_키);
@@ -163,12 +164,9 @@ public class BackupSchedulerImpl implements BackupScheduler {
                 가공한_담당자_이름 = "epage div";
             }
 
-            String 프로젝트_이름 = 조회한_프로젝트_정보.getName();
-
             // 변경된 부분만 업데이트
             boolean isUpdated = false;
-            TB_JML_Entity 업데이트_정보 = new TB_JML_Entity();
-            업데이트_정보.setKey(지라_프로젝트_키);
+            TB_JML_Entity 업데이트_정보 = TB_JML_JpaRepository.findByKey(지라_프로젝트_키); // 기존 데이터 조회
 
             // 프로젝트 정보 업데이트
             if (!StringUtils.equals(저장된_프로젝트_이름, 프로젝트_이름)) {
@@ -191,6 +189,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
             }
 
             if (isUpdated) { // 변경 사항 있을 때 업데이트
+                업데이트_정보.setUpdateIssueFlag(true);
                 TB_JML_JpaRepository.save(업데이트_정보);
                 SaveLog.SchedulerResult("BACKUP\\PROJECT\\SUCCESS",message,currentTime);
             }
