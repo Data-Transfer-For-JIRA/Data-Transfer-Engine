@@ -16,17 +16,18 @@ public class BackupController {
 
     /*------------------------------------젠킨스 스케줄러에 등록되는 API------------------------------------*/
     /*
-    *  프로젝트 정보(담당자,이름) 백업 스케줄러 API
+    *  프로젝트 정보(담당자,이름, 프로젝트 코드) 백업 스케줄러 API
     *  지라에서 수정한 내용을 반영하기 위함
+    *  대상 디비: TB_JML
     * */
     @ResponseBody
     @RequestMapping(
             value={"/project"},
             method={RequestMethod.POST}
     )
-    public void 지라프로젝트_백업() throws Exception{
+    public void 지라프로젝트__백업() throws Exception{
 
-        logger.info("[::BackupController::] 지라 프로젝트 백업 스케줄러");
+        logger.info("[::BackupController::] 지라 프로젝트 백업 JML 테이블 백업 스케줄러");
 
         backupScheduler.지라프로젝트_백업();
     }
@@ -35,6 +36,7 @@ public class BackupController {
     /*
      *  기본 정보 벌크 백업 스케줄러 API ( 1주에 1번 수행 )
      *  대량으로 기본정보 이슈 데이터를 백업하기 위함( 지라에서 수정한 내용을 백업 ) - 데일리 백업에서 누락된 데이터 백업을 위함
+     *  BACKUP_BASEINFO_P, BACKUP_BASEINFO_M
      * */
     @ResponseBody
     @RequestMapping(
@@ -45,20 +47,13 @@ public class BackupController {
 
         logger.info("[::BackupController::] 지라 기본정보 벌크 백업 스케줄러");
 
-        long 시작시간 = System.currentTimeMillis();
-
         backupScheduler.지라기본정보_벌크_백업();
-
-        long 종료시간 = System.currentTimeMillis();
-
-        long 소요시간 = 종료시간 - 시작시간;
-
-        logger.info("[::BackupController::] 지라 기본정보 벌크 백업 스케줄러 종로 소요시간: {}",소요시간);
     }
 
     /*
      *  이슈 벌크 백업 스케줄러 API ( 1주에 1번 수행 )
      *  대량으로 기본정보 이슈 데이터를 백업하기 위함( 지라에서 수정한 내용을 백업 ) - 데일리 백업에서 누락된 데이터 백업을 위함
+     *  BACKUP_ISSUE,BACKUP_ISSUE_COMMENT
      * */
     @ResponseBody
     @RequestMapping(
@@ -133,15 +128,4 @@ public class BackupController {
         logger.info("[::BackupController::] 지라 이슈 데이터 백업 스케줄러 종로 소요시간: {}",소요시간);
     }
 
-    @ResponseBody
-    @RequestMapping(
-            value={"/project/leader"},
-            method={RequestMethod.POST}
-    )
-    public void 지라프로젝트리더_백업() throws Exception{
-
-        logger.info("[::BackupProjectController::] 지라 프로젝트 리더 백업 스케줄러");
-
-        backupScheduler.updateJMLProjectLeader();
-    }
 }

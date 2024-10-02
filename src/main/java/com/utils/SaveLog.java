@@ -1,5 +1,8 @@
 package com.utils;
 
+import com.config.ProjectConfig;
+import org.springframework.beans.factory.annotation.Value;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -7,7 +10,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class SaveLog { // 성공 실패 디렉토리 구분
-    private static final String FILE_DIRECTORY = "C:\\log\\"; // 파일이 저장될 디렉토리 경로
+
+    private static ProjectConfig projectConfig;
+    private static final String FILE_DIRECTORY = projectConfig.logPath; // 파일이 저장될 디렉토리 경로
 
     public static void SchedulerResult(String path ,String result, Date date) {
         // 현재 날짜를 가져옴

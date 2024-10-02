@@ -35,6 +35,11 @@ logging:
       error-file-name-pattern: C:/logs/error-%d{yyyy-MM-dd}.log
       max-history: 30
 
+path:
+  image: C:/JIRA/images/
+  log: C:/log/
+
+
 create:
   project: ED-P_WSS_
   maintenance: ED-M_WSS_

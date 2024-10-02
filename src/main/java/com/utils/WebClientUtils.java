@@ -1,5 +1,6 @@
 package com.utils;
 
+import com.config.ProjectConfig;
 import com.jira.account.model.dto.AdminInfoDTO;
 import com.jira.account.service.Account;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -37,6 +38,9 @@ public class WebClientUtils {
     private final WebClient webClient;
 
     private final WebClient webClientForImage;
+
+    private ProjectConfig projectConfig;
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     @Autowired
     public WebClientUtils(Account account) {
@@ -91,7 +95,7 @@ public class WebClientUtils {
     * 보안 또는 권한 문제: 어떤 경우에는 요청한 URL이 직접 접근할 수 없는 위치에 있거나, 접근 권한이 없을 때, 서버가 이를 다른 안전한 위치로 리디렉션 시킬 수 있습니다.
     * */
     public void downloadImage(String uri, String fileName) {
-        String destinationFile = "C:/JIRA/images/"+ fileName;
+        String destinationFile = projectConfig.imageSavePath+ fileName;
 
         // 허용된 이미지 확장자 목록
         List<String> allowedExtensions = Arrays.asList("jpg", "jpeg", "png");

@@ -31,4 +31,10 @@ public class ProjectConfig {
     @Value("${create.num}")
     public int projectKeyNum;
 
+    @Value("${path.image}")
+    public  String imageSavePath;
+
+    @Value("${path.log}")
+    public  String logPath;
+
 }
