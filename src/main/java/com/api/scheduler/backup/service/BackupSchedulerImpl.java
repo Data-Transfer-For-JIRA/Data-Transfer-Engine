@@ -80,22 +80,42 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
     /*
     *  프로젝트 백업은 프로젝트 이름, 담당자 정보, 업데이트 시간 정보를 백업 및 업데이트 진행
+    *  프로젝트 코드 추가
     * */
+    @Async
     @Override
     @Transactional
-    public void 지라프로젝트_백업() throws Exception{
-        List<TB_JML_Entity> 모든_프로젝트 = TB_JML_JpaRepository.findAll(); // 전체 프로젝트 조회
+    public  CompletableFuture<Void> 지라프로젝트_백업() throws Exception{
+        logger.info("[::BackupSchedulerImpl::] 지라 프로젝트 정보 벌크 백업 스케줄러");
+        int page = 0;
+        int size = 100;
+        Pageable pageable = PageRequest.of(page, size);
+        Page<TB_JML_Entity> 프로젝트_페이지;
+        do {
+            프로젝트_페이지 = TB_JML_JpaRepository.findAll(pageable);
+            List<TB_JML_Entity> 모든_프로젝트 = 프로젝트_페이지.getContent();
+            List<CompletableFuture<Void>> futures = 모든_프로젝트.stream()
+                    .map(프로젝트 -> {
+                        try {
+                            return 지라프로젝트_JML테이블_업데이트(프로젝트.getKey(),프로젝트);
+                        } catch (Exception e) {
+                            logger.error("프로젝트 정보 업데이트 중 오류 발생 프로젝트 키: {} \n 로그: {}",프로젝트.getKey(),e.getMessage());
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .collect(Collectors.toList());
 
-        for(TB_JML_Entity 프로젝트 : 모든_프로젝트){
+            // 모든 비동기 작업이 완료될 때까지 대기
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
-            String 지라_프로젝트_키 = 프로젝트.getKey(); // 지라 키 조회
+            pageable = 프로젝트_페이지.nextPageable();
+        } while (프로젝트_페이지.hasNext());
 
-            지라프로젝트_JML테이블_업데이트(지라_프로젝트_키, 프로젝트); // 해당 프로젝트 지라에서 조회 후 업데이트 처리
-
-        }
+        return CompletableFuture.completedFuture(null);
 
     }
-    private void 지라프로젝트_JML테이블_업데이트(String 지라_프로젝트_키, TB_JML_Entity 프로젝트) throws Exception{
+    @Async
+    private  CompletableFuture<Void>  지라프로젝트_JML테이블_업데이트(String 지라_프로젝트_키, TB_JML_Entity 프로젝트) throws Exception{
         Date currentTime = new Date();
         String message ="["+지라_프로젝트_키+"] - "+ currentTime+" - ";
 
@@ -181,6 +201,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
             logger.error(message);
             throw new Exception(e.getMessage());
         }
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override
