@@ -66,7 +66,8 @@ jobs:
       env:
         RUNNER_TRACKING_ID: ""
       run: |
-        Start-Process -FilePath "C:/MARKANY_JIRA/JAR/run.bat" -NoNewWindow:$false
+        Start-Process -FilePath "C:/MARKANY_JIRA/JAR/run.bat" -WindowStyle Hidden
+        exit 0
 
 
       # GitHub Actions가 작업이 끝난 후에도 Java 프로세스를 종료하지 않도록 설정
