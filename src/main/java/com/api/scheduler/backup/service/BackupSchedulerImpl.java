@@ -4,6 +4,11 @@ import com.api.scheduler.backup.model.entity.BACKUP_BASEINFO_M_Entity;
 import com.api.scheduler.backup.model.entity.BACKUP_BASEINFO_P_Entity;
 import com.api.scheduler.backup.model.entity.BACKUP_ISSUE_COMMENT_Entity;
 import com.api.scheduler.backup.model.entity.BACKUP_ISSUE_Entity;
+import com.jira.issue.model.dao.PJ_PG_SUB_JpaRepository;
+import com.api.scheduler.backup.model.dao.BACKUP_BASEINFO_M_JpaRepository;
+import com.api.scheduler.backup.model.dao.BACKUP_BASEINFO_P_JpaRepository;
+import com.api.scheduler.backup.model.dao.BACKUP_ISSUE_COMMENT_JpaRepository;
+import com.api.scheduler.backup.model.dao.BACKUP_ISSUE_JpaRepository;
 import com.jira.account.service.Account;
 import com.jira.issue.model.FieldInfo;
 import com.jira.issue.model.FieldInfoCategory;
@@ -62,19 +67,19 @@ public class BackupSchedulerImpl implements BackupScheduler {
     private TB_JML_JpaRepository TB_JML_JpaRepository;
 
     @Autowired
-    private com.api.scheduler.backup.model.dao.BACKUP_BASEINFO_M_JpaRepository BACKUP_BASEINFO_M_JpaRepository;
+    private BACKUP_BASEINFO_M_JpaRepository BACKUP_BASEINFO_M_JpaRepository;
 
     @Autowired
-    private com.api.scheduler.backup.model.dao.BACKUP_BASEINFO_P_JpaRepository BACKUP_BASEINFO_P_JpaRepository;
+    private BACKUP_BASEINFO_P_JpaRepository BACKUP_BASEINFO_P_JpaRepository;
 
     @Autowired
-    private com.api.scheduler.backup.model.dao.BACKUP_ISSUE_JpaRepository BACKUP_ISSUE_JpaRepository;
+    private BACKUP_ISSUE_JpaRepository BACKUP_ISSUE_JpaRepository;
 
     @Autowired
-    private com.jira.issue.model.dao.PJ_PG_SUB_JpaRepository PJ_PG_SUB_JpaRepository;
+    private PJ_PG_SUB_JpaRepository PJ_PG_SUB_JpaRepository;
 
     @Autowired
-    private com.api.scheduler.backup.model.dao.BACKUP_ISSUE_COMMENT_JpaRepository BACKUP_ISSUE_COMMENT_JpaRepository;
+    private BACKUP_ISSUE_COMMENT_JpaRepository BACKUP_ISSUE_COMMENT_JpaRepository;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -115,17 +120,19 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
     }
     @Async
-    private  CompletableFuture<Void>  지라프로젝트_JML테이블_업데이트(String 지라_프로젝트_키, TB_JML_Entity 프로젝트) throws Exception{
+    private CompletableFuture<Void>  지라프로젝트_JML테이블_업데이트(String 지라_프로젝트_키, TB_JML_Entity 프로젝트) throws Exception {
         Date currentTime = new Date();
         String message = "[" + 지라_프로젝트_키 + "] - " + currentTime + " - ";
 
         try {
 
-            String 저장된_담당자 = 프로젝트.getJiraProjectLeader();  // 디비에 저장된 담당자
-            String 저장된_프로젝트_이름 = 프로젝트.getJiraProjectName(); // 디비에 저장된 프로젝트 이름
-            String 저장된_프로젝트_코드 = 프로젝트.getProjectCode(); // 디비에 저장된 프로젝트 코드
+            // DB에 저장된 프로젝트 정보
+            String 저장된_프로젝트_이름 = 프로젝트.getJiraProjectName();
+            String 저장된_프로젝트_코드 = 프로젝트.getProjectCode();
+            String 저장된_담당자 = 프로젝트.getJiraProjectLeader();
 
-            ProjectDTO 조회한_프로젝트_정보 = jiraProject.getJiraProjectInfoByJiraKey(지라_프로젝트_키); // 지라에서 조회한 프로젝트 정보
+            // 지라에서 조회한 프로젝트 정보
+            ProjectDTO 조회한_프로젝트_정보 = jiraProject.getJiraProjectInfoByJiraKey(지라_프로젝트_키);
             String 프로젝트_이름 = 조회한_프로젝트_정보.getName();
 
             // 기본 정보 이슈 티켓 조회 (프로젝트 코드 및 담당자 조회)
@@ -159,7 +166,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
                 }
             }
 
-            String 가공한_담당자_이름 = account.이름_추출(담당자_이름); // 지라에서 조회한 담당자 이름
+            String 가공한_담당자_이름 = account.이름_추출(담당자_이름);
             if (StringUtils.isEmpty(가공한_담당자_이름)) {
                 가공한_담당자_이름 = "epage div";
             }
@@ -168,7 +175,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
             boolean isUpdated = false;
             TB_JML_Entity 업데이트_정보 = TB_JML_JpaRepository.findByKey(지라_프로젝트_키); // 기존 데이터 조회
 
-            // 프로젝트 정보 업데이트
+            // 프로젝트 이름 업데이트
             if (!StringUtils.equals(저장된_프로젝트_이름, 프로젝트_이름)) {
                 업데이트_정보.setJiraProjectName(프로젝트_이름);
                 message += " 프로젝트 이름이 " + 저장된_프로젝트_이름 + "에서 "+프로젝트_이름 + "로 업데이트 되었습니다. \n";

@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -49,4 +50,6 @@ public interface PlatformProject {
     Optional<BACKUP_ISSUE_Entity> 티켓_정보_조회(String jiraIssueKey);
 
     Page<BACKUP_ISSUE_Entity> 프로젝트에_생성된_티켓_정보_조회(String jiraProjectKey , int page, int size);
+
+    CompletableFuture<Void> 지라_프로젝트이름_수정() throws Exception;
 }
