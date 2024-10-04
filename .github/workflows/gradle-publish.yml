@@ -51,8 +51,16 @@ jobs:
     - name: Deploy JAR to local server # 로컬 서버 경로에 jar 파일 생성
       run:  cp ./build/libs/Data-Transfer-Engine.jar C:/MARKANY_JIRA/JAR/Data-Transfer-Engine.jar
 
-    - name: Stop existing JAR (if running) # 현재 프로세스 종료
-      run:  pkill -f 'Data-Transfer-Engine.jar' || echo "No existing process found"  # 기존에 실행 중인 JAR 파일이 있다면 종료
+    - name: Stop specific JAR (if running)
+      run: |
+        $pid = (Get-WmiObject Win32_Process | Where-Object { $_.CommandLine -like '*Data-Transfer-Engine.jar*' }).ProcessId
+        if ($pid) {
+          Stop-Process -Id $pid -Force
+          echo "Process terminated."
+        } else {
+          echo "No existing process found."
+        }
+    
 
     - name: Run JAR on local server # 로컬서버에서 실행
       run: nohup java -jar C:/MARKANY_JIRA/JAR/Data-Transfer-Engine.jar &  # JAR 파일을 백그라운드에서 실행
