@@ -63,7 +63,9 @@ jobs:
     
 
     - name: Run JAR on local server # 로컬서버에서 실행
-      run: nohup java -jar C:/MARKANY_JIRA/JAR/Data-Transfer-Engine.jar &  # JAR 파일을 백그라운드에서 실행
+      run: |
+        Start-Process -NoNewWindow -FilePath "java" -ArgumentList "-jar C:/MARKANY_JIRA/JAR/Data-Transfer-Engine.jar"
+
 
 
 
