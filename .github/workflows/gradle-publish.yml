@@ -63,6 +63,8 @@ jobs:
     
 
     - name: Run JAR on local server # 로컬서버에서 실행
+      env:
+        RUNNER_TRACKING_ID: ""
       run: |
         Start-Process -FilePath "java" -ArgumentList "-jar C:/MARKANY_JIRA/JAR/Data-Transfer-Engine.jar" -NoNewWindow:$false
 
