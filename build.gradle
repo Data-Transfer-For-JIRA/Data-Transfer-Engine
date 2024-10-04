@@ -4,8 +4,8 @@ plugins {
 	id 'io.spring.dependency-management' version '1.0.15.RELEASE'
 }
 
-group = 'tansfer'
-version = '0.0.1-SNAPSHOT'
+/*group = 'tansfer'
+version = '0.0.1-SNAPSHOT'*/
 
 java {
 	sourceCompatibility = '11'
@@ -13,6 +13,15 @@ java {
 
 repositories {
 	mavenCentral()
+}
+
+jar {
+	enabled = false
+}
+
+bootJar{
+	archivesBaseName = 'Data-Transfer-Engine'
+	archiveFileName = 'Data-Transfer-Engine.jar'
 }
 
 dependencies {
