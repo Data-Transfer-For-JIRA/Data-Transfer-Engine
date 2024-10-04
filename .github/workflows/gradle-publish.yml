@@ -51,23 +51,13 @@ jobs:
     - name: Deploy JAR to local server # 로컬 서버 경로에 jar 파일 생성
       run:  cp ./build/libs/Data-Transfer-Engine.jar C:/MARKANY_JIRA/JAR/Data-Transfer-Engine.jar
 
-    - name: Stop specific JAR (if running)
+    - name: Stop DataTransferEngine service
       run: |
-        $jarPid = (Get-WmiObject Win32_Process | Where-Object { $_.CommandLine -like '*Data-Transfer-Engine.jar*' }).ProcessId
-        if ($jarPid) {
-          Stop-Process -Id $jarPid -Force
-          echo "Process terminated."
-        } else {
-          echo "No existing process found."
-        }
-    
+        C:/Users/chkim/Desktop/nssm-2.24/win64/nssm.exe stop DataTransferEngine
 
-    - name: Run JAR on local server # 로컬 서버에서 배치 파일 실행
-      env:
-        RUNNER_TRACKING_ID: ""
+    - name: Start DataTransferEngine service
       run: |
-        Start-Process -FilePath "C:/MARKANY_JIRA/JAR/run.bat" -WindowStyle Hidden
-        exit 0
+        C:/Users/chkim/Desktop/nssm-2.24/win64/nssm.exe start DataTransferEnginee
 
 
       # GitHub Actions가 작업이 끝난 후에도 Java 프로세스를 종료하지 않도록 설정
