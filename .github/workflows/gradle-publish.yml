@@ -64,10 +64,9 @@ jobs:
 
     - name: Run JAR on local server # 로컬서버에서 실행
       run: |
-        Start-Process -NoNewWindow -FilePath "java" -ArgumentList "-jar C:/MARKANY_JIRA/JAR/Data-Transfer-Engine.jar"
-
-
-
+        Start-Process -FilePath "java" -ArgumentList "-jar C:/MARKANY_JIRA/JAR/Data-Transfer-Engine.jar"
+      # GitHub Actions가 작업이 끝난 후에도 Java 프로세스를 종료하지 않도록 설정
+      # Java 프로세스를 GitHub Actions와 독립적으로 실행
 
     # The USERNAME and TOKEN need to correspond to the credentials environment variables used in
     # the publishing section of your build.gradle
