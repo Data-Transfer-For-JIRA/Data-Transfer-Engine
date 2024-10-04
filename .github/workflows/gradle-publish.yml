@@ -53,9 +53,9 @@ jobs:
 
     - name: Stop specific JAR (if running)
       run: |
-        $pid = (Get-WmiObject Win32_Process | Where-Object { $_.CommandLine -like '*Data-Transfer-Engine.jar*' }).ProcessId
-        if ($pid) {
-          Stop-Process -Id $pid -Force
+        $jarPid = (Get-WmiObject Win32_Process | Where-Object { $_.CommandLine -like '*Data-Transfer-Engine.jar*' }).ProcessId
+        if ($jarPid) {
+          Stop-Process -Id $jarPid -Force
           echo "Process terminated."
         } else {
           echo "No existing process found."
