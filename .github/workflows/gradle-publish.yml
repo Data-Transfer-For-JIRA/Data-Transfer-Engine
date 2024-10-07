@@ -34,6 +34,13 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
 
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+
       # Gradle로 프로젝트 빌드 (JAR 파일 생성)
       - name: Build with Gradle
         run: ./gradlew build
