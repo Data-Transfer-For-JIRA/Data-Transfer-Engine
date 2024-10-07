@@ -30,9 +30,14 @@ jobs:
         run: ./gradlew build
 
       # 빌드된 JAR 파일을 WSL Ubuntu-22.04 서버로 복사
-      - name: Copy JAR to WSL Ubuntu-22.04
-        run: |
-          scp -o StrictHostKeyChecking=no -r ./build/libs/Data-Transfer-Engine.jar root@192.168.219.143:/home/test/app/
+      - name: SCP JAR to WSL Server
+        uses: appleboy/scp-action@master
+        with:
+          host: "192.168.219.143"
+          username: "root"
+          #key: ${{ secrets.SSH_PRIVATE_KEY }}  # GitHub Secrets에 SSH 키 저장
+          source: "./build/libs/Data-Transfer-Engine.jar"
+          target: "/root/"
 
       # WSL Ubuntu에서 Docker 이미지 빌드 및 기존 컨테이너 교체
       - name: Build and Replace Docker Container on WSL
