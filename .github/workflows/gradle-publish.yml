@@ -42,15 +42,13 @@ jobs:
           $env:PRIVATE_KEY = "${{ secrets.SSH_PRIVATE_KEY }}"
           $env:PRIVATE_KEY | Out-File -FilePath $HOME\.ssh\id_rsa -Encoding ascii
 
-
-      # Gradle로 프로젝트 빌드 (JAR 파일 생성)
-      - name: Build with Gradle
-        run: ./gradlew build
-
       - name: Test SSH connection
         run: |
           ssh -o StrictHostKeyChecking=no root@192.168.219.143 "echo 'SSH connection successful'"
 
+      # Gradle로 프로젝트 빌드 (JAR 파일 생성)
+      - name: Build with Gradle
+        run: ./gradlew build
 
       # 빌드된 JAR 파일을 WSL Ubuntu-22.04 서버로 복사
       - name: Copy JAR to WSL with PowerShell SCP
@@ -59,14 +57,12 @@ jobs:
 
       # WSL Ubuntu에서 Docker 이미지 빌드 및 기존 컨테이너 교체
       - name: Build and Replace Docker Container on WSL
+        shell: bash
         run: |
           ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 root@192.168.219.143 << EOF
           cd /home/test/app/
-          
           docker stop data-transfer-engine || true
           docker rm data-transfer-engine || true
-          
           docker build -t data-transfer-engine:latest .
-          
           docker run -d --name data-transfer-engine -p 8888:8888 data-transfer-engine:latest
           EOF
