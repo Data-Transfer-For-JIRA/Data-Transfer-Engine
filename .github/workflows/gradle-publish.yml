@@ -59,10 +59,9 @@ jobs:
       - name: Build and Replace Docker Container on WSL
         shell: bash
         run: |
-          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 root@192.168.219.143 << EOF
           cd /root/
           docker stop data-transfer-engine || true
           docker rm data-transfer-engine || true
           docker build -t data-transfer-engine:latest .
-          docker run -d --name data-transfer-engine -p 8888:8888 data-transfer-engine:latest
+          docker run -d --name data-transfer-engine -p 8889:8888 data-transfer-engine:latest
           EOF
