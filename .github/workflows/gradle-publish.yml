@@ -32,12 +32,12 @@ jobs:
       # 빌드된 JAR 파일을 WSL Ubuntu-22.04 서버로 복사
       - name: Copy JAR to WSL Ubuntu-22.04
         run: |
-          scp -o StrictHostKeyChecking=no -r ./build/libs/Data-Transfer-Engine.jar root@192.168.219.143:/root/
+          scp -o StrictHostKeyChecking=no -r ./build/libs/Data-Transfer-Engine.jar root@192.168.219.143:/home/test/app/
 
       # WSL Ubuntu에서 Docker 이미지 빌드 및 기존 컨테이너 교체
       - name: Build and Replace Docker Container on WSL
         run: |
-          ssh -o StrictHostKeyChecking=no root@192.168.219.143 << EOF
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 root@192.168.219.143 << EOF
           cd /home/test/app/
           
           docker stop data-transfer-engine || true
