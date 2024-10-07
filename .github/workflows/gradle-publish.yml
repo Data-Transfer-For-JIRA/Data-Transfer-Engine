@@ -38,10 +38,14 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
 
+      - name: Network Latency Check
+        run: |
+          Test-NetConnection -ComputerName 192.168.219.143 -Port 22
+
       # 빌드된 JAR 파일을 WSL Ubuntu-22.04 서버로 복사
       - name: Copy JAR to WSL with PowerShell SCP
         run: |
-          powershell.exe scp -o StrictHostKeyChecking=no ./build/libs/Data-Transfer-Engine.jar root@192.168.219.143:/root/
+          powershell.exe scp -o ./build/libs/Data-Transfer-Engine.jar root@192.168.219.143:/root/
 
       # WSL Ubuntu에서 Docker 이미지 빌드 및 기존 컨테이너 교체
       - name: Build and Replace Docker Container on WSL
