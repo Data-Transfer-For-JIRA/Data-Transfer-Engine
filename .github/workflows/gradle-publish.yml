@@ -36,7 +36,7 @@ jobs:
 
       - name: Set up SSH key
         run: |
-          mkdir -p ~/.ssh
+          if [ ! -d ~/.ssh ]; then mkdir -p ~/.ssh; fi
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
