@@ -38,9 +38,65 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
 
-      - name: Network Latency Check
+      # 하드코딩된 SSH 키 설정 (테스트용)
+      - name: Set up SSH key
         run: |
-          Test-NetConnection -ComputerName 192.168.219.143 -Port 22
+          mkdir -p ~/.ssh
+          echo "-----BEGIN OPENSSH PRIVATE KEY-----
+          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    
+          -----END OPENSSH PRIVATE KEY-----" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          
+
+      - name: Test SSH connection
+        run: |
+          ssh -o StrictHostKeyChecking=no root@192.168.219.143 "echo 'SSH connection successful'"
 
       # 빌드된 JAR 파일을 WSL Ubuntu-22.04 서버로 복사
       - name: Copy JAR to WSL with PowerShell SCP
