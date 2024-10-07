@@ -57,11 +57,10 @@ jobs:
 
       # WSL Ubuntu에서 Docker 이미지 빌드 및 기존 컨테이너 교체
       - name: Build and Replace Docker Container on WSL
-        shell: bash
         run: |
           cd /root/
           docker stop data-transfer-engine || true
           docker rm data-transfer-engine || true
           docker build -t data-transfer-engine:latest .
           docker run -d --name data-transfer-engine -p 8889:8888 data-transfer-engine:latest
-          EOF
+      
