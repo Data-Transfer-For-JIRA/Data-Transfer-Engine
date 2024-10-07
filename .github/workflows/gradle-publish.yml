@@ -17,7 +17,16 @@ jobs:
     steps:
       # 소스 코드 체크 아웃
       - uses: actions/checkout@v4
-
+      # 캐시 설정 - Gradle 캐시 사용
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
       # JDK 11 설치
       - name: Set up JDK 11
         uses: actions/setup-java@v4
@@ -30,14 +39,9 @@ jobs:
         run: ./gradlew build
 
       # 빌드된 JAR 파일을 WSL Ubuntu-22.04 서버로 복사
-      - name: SCP JAR to WSL Server
-        uses: appleboy/scp-action@master
-        with:
-          host: "192.168.219.143"
-          username: "root"
-          #key: ${{ secrets.SSH_PRIVATE_KEY }}  # GitHub Secrets에 SSH 키 저장
-          source: "./build/libs/Data-Transfer-Engine.jar"
-          target: "/root/"
+      - name: Copy JAR to WSL with PowerShell SCP
+        run: |
+          powershell.exe scp -o StrictHostKeyChecking=no ./build/libs/Data-Transfer-Engine.jar root@192.168.219.143:/root/
 
       # WSL Ubuntu에서 Docker 이미지 빌드 및 기존 컨테이너 교체
       - name: Build and Replace Docker Container on WSL
