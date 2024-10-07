@@ -41,7 +41,6 @@ jobs:
           }
           $env:PRIVATE_KEY = "${{ secrets.SSH_PRIVATE_KEY }}"
           $env:PRIVATE_KEY | Out-File -FilePath $HOME\.ssh\id_rsa -Encoding ascii
-          icacls $HOME\.ssh\id_rsa /inheritance:r /grant:r "$($env:USERNAME):(F)"
 
 
       # Gradle로 프로젝트 빌드 (JAR 파일 생성)
