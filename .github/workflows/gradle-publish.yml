@@ -36,9 +36,12 @@ jobs:
 
       - name: Set up SSH key
         run: |
-          if [ ! -d ~/.ssh ]; then mkdir -p ~/.ssh; fi
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          if (-Not (Test-Path -Path $HOME\.ssh)) {
+          New-Item -Type Directory -Path $HOME\.ssh
+          }
+          $env:PRIVATE_KEY = "${{ secrets.SSH_PRIVATE_KEY }}"
+          $env:PRIVATE_KEY | Out-File -FilePath $HOME\.ssh\id_rsa -Encoding ascii
+          icacls $HOME\.ssh\id_rsa /inheritance:r /grant:r "$($env:USERNAME):(F)"
 
 
       # Gradle로 프로젝트 빌드 (JAR 파일 생성)
