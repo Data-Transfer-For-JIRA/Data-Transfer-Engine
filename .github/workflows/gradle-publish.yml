@@ -29,10 +29,17 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
 
-      # 빌드된 JAR 파일을 WSL Ubuntu-22.04 서버로 복사
-      - name: Copy JAR to WSL Ubuntu-22.04
-        run: |
-          scp -o StrictHostKeyChecking=no -r ./build/libs/Data-Transfer-Engine.jar root@192.168.219.143:/home/test/app/
+      # JAR 파일 압축
+      - name: Compress files before SCP
+        run: tar -czvf Data-Transfer-Engine.tar.gz ./build/libs/Data-Transfer-Engine.jar
+
+      # 압축 파일을 서버에 전송
+      - name: Copy compressed file to server
+        run: scp -o StrictHostKeyChecking=no -r Data-Transfer-Engine.tar.gz root@192.168.219.143:/home/test/app/
+
+      # 서버에서 압축 파일 해제
+      - name: Extract files on server
+        run: ssh root@192.168.219.143 'tar -xzvf /home/test/app/Data-Transfer-Engine.tar.gz -C /home/test/app/'
 
       # WSL Ubuntu에서 Docker 이미지 빌드 및 기존 컨테이너 교체
       - name: Build and Replace Docker Container on WSL
@@ -40,8 +47,10 @@ jobs:
           ssh -o StrictHostKeyChecking=no root@192.168.219.143 << EOF
           cd /home/test/app/
           
-          docker stop data-transfer-engine || true
-          docker rm data-transfer-engine || true
+          if docker ps -a --format '{{.Names}}' | grep -Eq "^data-transfer-engine\$"; then
+            docker stop data-transfer-engine
+            docker rm data-transfer-engine
+          fi
           
           docker build -t data-transfer-engine:latest .
           
