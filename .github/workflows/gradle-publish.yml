@@ -42,10 +42,6 @@ jobs:
           $env:PRIVATE_KEY = "${{ secrets.SSH_PRIVATE_KEY }}"
           $env:PRIVATE_KEY | Out-File -FilePath $HOME\.ssh\id_rsa -Encoding ascii
 
-#      - name: Test SSH connection
-#        run: |
-#          ssh -o StrictHostKeyChecking=no root@192.168.219.143 "echo 'SSH connection successful'"
-
       # Gradle로 프로젝트 빌드 (JAR 파일 생성)
       - name: Build with Gradle
         run: ./gradlew build
@@ -59,7 +55,7 @@ jobs:
       - name: Build and Replace Docker Container on WSL
         shell: bash
         run: |
-          ssh -o StrictHostKeyChecking=no -p 22 root@192.168.219.143"
+          ssh -o StrictHostKeyChecking=no -p 22 root@192.168.219.143 "
             cd /root/ && \
             docker stop data-transfer-engine || true && \
             docker rm data-transfer-engine || true && \
