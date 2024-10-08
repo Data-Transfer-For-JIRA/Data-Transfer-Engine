@@ -51,5 +51,4 @@ public interface PlatformProject {
 
     Page<BACKUP_ISSUE_Entity> 프로젝트에_생성된_티켓_정보_조회(String jiraProjectKey , int page, int size);
 
-    CompletableFuture<Void> 지라_프로젝트이름_수정() throws Exception;
 }

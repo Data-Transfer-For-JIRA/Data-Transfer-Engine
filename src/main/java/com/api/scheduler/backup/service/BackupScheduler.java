@@ -3,6 +3,9 @@ package com.api.scheduler.backup.service;
 import java.util.concurrent.CompletableFuture;
 
 public interface BackupScheduler {
+
+    CompletableFuture<Void> 지라_프로젝트이름_수정() throws Exception;
+
     /* 프로젝트 정보 백업 스케줄러*/
     CompletableFuture<Void> 지라프로젝트_백업() throws Exception;
 

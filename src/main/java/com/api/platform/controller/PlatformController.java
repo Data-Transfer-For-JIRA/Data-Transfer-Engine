@@ -129,16 +129,4 @@ public class PlatformController {
         return platformProject.프로젝트에_생성된_티켓_정보_조회(jiraProjectKey,page,size);
     }
 
-
-    @ResponseBody
-    @RequestMapping(
-            value={"/project/name"},
-            method={RequestMethod.PUT}
-    )
-    public void 지라_프로젝트이름_수정() throws Exception {
-
-        logger.info("[::PlatformController::] 지라 프로젝트 이름 일괄 수정");
-
-        platformProject.지라_프로젝트이름_수정();
-    }
 }

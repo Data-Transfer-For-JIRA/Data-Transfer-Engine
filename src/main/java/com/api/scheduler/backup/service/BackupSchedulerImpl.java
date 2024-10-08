@@ -19,6 +19,7 @@ import com.jira.issue.model.dto.weblink.SearchWebLinkDTO;
 import com.jira.issue.model.entity.PJ_PG_SUB_Entity;
 import com.jira.issue.service.JiraIssue;
 import com.jira.project.model.dao.TB_JML_JpaRepository;
+import com.jira.project.model.dto.CreateProjectDTO;
 import com.jira.project.model.dto.ProjectDTO;
 import com.jira.project.model.entity.TB_JML_Entity;
 import com.jira.project.service.JiraProject;
@@ -83,14 +84,104 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    private static final String[] prefixFormat = {
+            "ED-P_WSS_",
+            "ED-M_WSS_",
+            "ED-P_",
+            "ED-M_"
+    };
+
+    @Async
+    @Override
+    @Transactional
+    public CompletableFuture<Void> 지라_프로젝트이름_수정() throws Exception {
+        logger.info("[::BackupSchedulerImpl::] 지라 프로젝트 이름 벌크 수정 스케줄러");
+        int page = 0;
+        int size = 100;
+        Pageable pageable = PageRequest.of(page, size);
+        Page<TB_JML_Entity> 프로젝트_페이지;
+        do {
+            프로젝트_페이지 = TB_JML_JpaRepository.findAll(pageable);
+            List<TB_JML_Entity> 모든_프로젝트 = 프로젝트_페이지.getContent();
+            List<CompletableFuture<Void>> futures = 모든_프로젝트.stream()
+                    .map(프로젝트 -> {
+                        try {
+                            return 지라프로젝트_JML테이블_업데이트(프로젝트);
+                        } catch (Exception e) {
+                            logger.error("프로젝트 이름 업데이트 중 오류 발생 프로젝트 키: {} \n 로그: {}",프로젝트.getKey(),e.getMessage());
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .collect(Collectors.toList());
+
+            // 모든 비동기 작업이 완료될 때까지 대기
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+            pageable = 프로젝트_페이지.nextPageable();
+        } while (프로젝트_페이지.hasNext());
+
+        return CompletableFuture.completedFuture(null);
+
+    }
+
+    @Async
+    private CompletableFuture<Void> 지라프로젝트_JML테이블_업데이트(TB_JML_Entity 프로젝트) throws Exception {
+        Date currentTime = new Date();
+        String message = "[" + 프로젝트.getKey() + "] - " + currentTime + " - ";
+
+        if (!StringUtils.equals(프로젝트.getKey(), "TED779")) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        try {
+
+            // DB에 저장된 프로젝트 정보
+            String 저장된_프로젝트_이름 = 프로젝트.getJiraProjectName();
+            String 프로젝트_이름 = null;
+
+            // prefixFormat에 있는 접두사 제거
+            for (String prefix : prefixFormat) {
+                if (저장된_프로젝트_이름.startsWith(prefix)) {
+                    프로젝트_이름 = 저장된_프로젝트_이름.substring(prefix.length());
+                    break;
+                }
+            }
+
+            boolean isUpdated = false;
+            CreateProjectDTO 업데이트_정보 = new CreateProjectDTO();
+            업데이트_정보.setKey(프로젝트.getKey());
+
+            // 프로젝트 이름 업데이트
+            if (!StringUtils.equals(저장된_프로젝트_이름, 프로젝트_이름)) {
+                업데이트_정보.setName(프로젝트_이름);
+                message += " 프로젝트 이름이 " + 저장된_프로젝트_이름 + "에서 "+프로젝트_이름 + "로 업데이트 되었습니다. \n";
+                isUpdated = true;
+            }
+
+            if (isUpdated) {
+                Map<String, String> result = jiraProject.updateProjectInfo(업데이트_정보);
+                if (result != null && StringUtils.equals(result.get("projectResult"), "UPDATE_SUCCESS")) {
+                    SaveLog.SchedulerResult("BACKUP\\PROJECT\\SUCCESS",message,currentTime);
+                } else {
+                    SaveLog.SchedulerResult("BACKUP\\PROJECT\\FAIL",message,currentTime);
+                }
+            }
+
+        } catch (Exception e) {
+            message += e.getMessage()+"프로젝트 이름 업데이트 중 오류 발생";
+            SaveLog.SchedulerResult("BACKUP\\PROJECT\\FAIL",message,currentTime);
+            logger.error(message);
+            throw new Exception(e.getMessage());
+        }
+        return CompletableFuture.completedFuture(null);
+    }
+
     /*
     *  프로젝트 백업은 프로젝트 이름, 담당자 정보, 업데이트 시간 정보를 백업 및 업데이트 진행
     *  프로젝트 코드 추가
     * */
-    @Async
     @Override
-    @Transactional
-    public  CompletableFuture<Void> 지라프로젝트_백업() throws Exception{
+    public  CompletableFuture<Void> 지라프로젝트_백업() throws Exception {
         logger.info("[::BackupSchedulerImpl::] 지라 프로젝트 정보 벌크 백업 스케줄러");
         int page = 0;
         int size = 100;
@@ -119,10 +210,15 @@ public class BackupSchedulerImpl implements BackupScheduler {
         return CompletableFuture.completedFuture(null);
 
     }
-    @Async
-    private CompletableFuture<Void>  지라프로젝트_JML테이블_업데이트(String 지라_프로젝트_키, TB_JML_Entity 프로젝트) throws Exception {
+
+    @Transactional
+    private CompletableFuture<Void> 지라프로젝트_JML테이블_업데이트(String 지라_프로젝트_키, TB_JML_Entity 프로젝트) throws Exception {
         Date currentTime = new Date();
         String message = "[" + 지라_프로젝트_키 + "] - " + currentTime + " - ";
+
+        if (!StringUtils.equals(지라_프로젝트_키, "TED779")) {
+            return CompletableFuture.completedFuture(null);
+        }
 
         try {
 
@@ -130,6 +226,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
             String 저장된_프로젝트_이름 = 프로젝트.getJiraProjectName();
             String 저장된_프로젝트_코드 = 프로젝트.getProjectCode();
             String 저장된_담당자 = 프로젝트.getJiraProjectLeader();
+            logger.info("기존 프로젝트 정보: {}, {}, {}", 저장된_프로젝트_이름, 저장된_프로젝트_코드, 저장된_담당자);
 
             // 지라에서 조회한 프로젝트 정보
             ProjectDTO 조회한_프로젝트_정보 = jiraProject.getJiraProjectInfoByJiraKey(지라_프로젝트_키);
@@ -170,36 +267,40 @@ public class BackupSchedulerImpl implements BackupScheduler {
             if (StringUtils.isEmpty(가공한_담당자_이름)) {
                 가공한_담당자_이름 = "epage div";
             }
+            logger.info("지라 프로젝트 정보: {}, {}, {}", 프로젝트_이름, 프로젝트_코드, 가공한_담당자_이름);
 
             // 변경된 부분만 업데이트
             boolean isUpdated = false;
-            TB_JML_Entity 업데이트_정보 = TB_JML_JpaRepository.findByKey(지라_프로젝트_키); // 기존 데이터 조회
 
             // 프로젝트 이름 업데이트
             if (!StringUtils.equals(저장된_프로젝트_이름, 프로젝트_이름)) {
-                업데이트_정보.setJiraProjectName(프로젝트_이름);
+                프로젝트.setJiraProjectName(프로젝트_이름);
                 message += " 프로젝트 이름이 " + 저장된_프로젝트_이름 + "에서 "+프로젝트_이름 + "로 업데이트 되었습니다. \n";
+                isUpdated = true;
+            }
+            // 프로젝트 코드 업데이트
+            if (!StringUtils.equals(저장된_프로젝트_코드, 프로젝트_코드)) {
+                프로젝트.setProjectCode(프로젝트_코드);
+                message += " 프로젝트 코드가 " + 저장된_프로젝트_코드 + "에서 " + 프로젝트_코드 + "로 업데이트 되었습니다. \n";
                 isUpdated = true;
             }
             // 담당자 정보 업데이트
             if (!StringUtils.equals(저장된_담당자, 가공한_담당자_이름)) {
-                업데이트_정보.setJiraProjectLeader(가공한_담당자_이름);
+                프로젝트.setJiraProjectLeader(가공한_담당자_이름);
                 message += " 프로젝트 담당자 정보가 " + 저장된_담당자 + "에서 " + 가공한_담당자_이름 + "로 업데이트 되었습니다. \n";
                 isUpdated = true;
             }
-
-            // 프로젝트 코드 업데이트
-            if (!StringUtils.equals(저장된_프로젝트_코드, 프로젝트_코드)) {
-                업데이트_정보.setProjectCode(프로젝트_코드);
-                message += " 프로젝트 코드가 " + 저장된_프로젝트_코드 + "에서 " + 프로젝트_코드 + "로 업데이트 되었습니다. \n";
-                isUpdated = true;
-            }
+            logger.info("isUpdated 상태: {}", isUpdated);
 
             if (isUpdated) { // 변경 사항 있을 때 업데이트
-                업데이트_정보.setUpdateIssueFlag(true);
-                TB_JML_JpaRepository.save(업데이트_정보);
+                프로젝트.setUpdateIssueFlag(true);
+                TB_JML_JpaRepository.save(프로젝트);
                 SaveLog.SchedulerResult("BACKUP\\PROJECT\\SUCCESS",message,currentTime);
+            } else {
+                logger.info("변경된 사항이 없어 업데이트를 수행하지 않았습니다.");
             }
+
+            logger.info("업데이트 정보: {}", 프로젝트.toString());
 
         } catch (Exception e) {
             message += e.getMessage()+"프로젝트 정보 업데이트 중 오류 발생";

@@ -14,6 +14,23 @@ public class BackupController {
     @Autowired
     BackupScheduler backupScheduler;
 
+    /*
+     *  프로젝트 이름 동기화 API
+     *  프로젝트 이름 앞의 prefix를 제거 및 수정
+     *  대상 디비: TB_JML
+     * */
+    @ResponseBody
+    @RequestMapping(
+            value={"/project/name"},
+            method={RequestMethod.PUT}
+    )
+    public void 지라_프로젝트이름_수정() throws Exception {
+
+        logger.info("[::BackupController::] 지라 프로젝트 이름 일괄 수정");
+
+        backupScheduler.지라_프로젝트이름_수정();
+    }
+
     /*------------------------------------젠킨스 스케줄러에 등록되는 API------------------------------------*/
     /*
     *  프로젝트 정보(담당자,이름, 프로젝트 코드) 백업 스케줄러 API
