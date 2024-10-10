@@ -216,10 +216,10 @@ public class BackupSchedulerImpl implements BackupScheduler {
         Date currentTime = new Date();
         String message = "[" + 지라_프로젝트_키 + "] - " + currentTime + " - ";
 
-        if (!StringUtils.equals(지라_프로젝트_키, "TED779")) {
+        /*if (!StringUtils.equals(지라_프로젝트_키, "TED779")) {
             return CompletableFuture.completedFuture(null);
         }
-
+        */
         try {
 
             // DB에 저장된 프로젝트 정보
@@ -295,7 +295,6 @@ public class BackupSchedulerImpl implements BackupScheduler {
             if (isUpdated) { // 변경 사항 있을 때 업데이트
                 프로젝트.setUpdateIssueFlag(true);
                 TB_JML_JpaRepository.save(프로젝트);
-                SaveLog.SchedulerResult("BACKUP\\PROJECT\\SUCCESS",message,currentTime);
             } else {
                 logger.info("변경된 사항이 없어 업데이트를 수행하지 않았습니다.");
             }
@@ -304,7 +303,6 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
         } catch (Exception e) {
             message += e.getMessage()+"프로젝트 정보 업데이트 중 오류 발생";
-            SaveLog.SchedulerResult("BACKUP\\PROJECT\\FAIL",message,currentTime);
             logger.error(message);
             throw new Exception(e.getMessage());
         }
