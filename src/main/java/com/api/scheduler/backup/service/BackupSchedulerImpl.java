@@ -93,7 +93,6 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
     @Async
     @Override
-    @Transactional
     public CompletableFuture<Void> 지라_프로젝트이름_수정() throws Exception {
         logger.info("[::BackupSchedulerImpl::] 지라 프로젝트 이름 벌크 수정 스케줄러");
         int page = 0;
@@ -124,14 +123,10 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
     }
 
-    @Async
+    @Transactional
     private CompletableFuture<Void> 지라프로젝트_JML테이블_업데이트(TB_JML_Entity 프로젝트) throws Exception {
         Date currentTime = new Date();
         String message = "[" + 프로젝트.getKey() + "] - " + currentTime + " - ";
-
-        if (!StringUtils.equals(프로젝트.getKey(), "TED779")) {
-            return CompletableFuture.completedFuture(null);
-        }
 
         try {
 
@@ -147,12 +142,16 @@ public class BackupSchedulerImpl implements BackupScheduler {
                 }
             }
 
+            if (프로젝트_이름 == null) {
+                logger.info("프로젝트 이름에 접두사가 없습니다. --> {}", 저장된_프로젝트_이름);
+            }
+
             boolean isUpdated = false;
             CreateProjectDTO 업데이트_정보 = new CreateProjectDTO();
             업데이트_정보.setKey(프로젝트.getKey());
 
             // 프로젝트 이름 업데이트
-            if (!StringUtils.equals(저장된_프로젝트_이름, 프로젝트_이름)) {
+            if (프로젝트_이름 != null && !StringUtils.equals(저장된_프로젝트_이름, 프로젝트_이름)) {
                 업데이트_정보.setName(프로젝트_이름);
                 message += " 프로젝트 이름이 " + 저장된_프로젝트_이름 + "에서 "+프로젝트_이름 + "로 업데이트 되었습니다. \n";
                 isUpdated = true;
@@ -161,15 +160,14 @@ public class BackupSchedulerImpl implements BackupScheduler {
             if (isUpdated) {
                 Map<String, String> result = jiraProject.updateProjectInfo(업데이트_정보);
                 if (result != null && StringUtils.equals(result.get("projectResult"), "UPDATE_SUCCESS")) {
-                    SaveLog.SchedulerResult("BACKUP\\PROJECT\\SUCCESS",message,currentTime);
+                    logger.info(message);
                 } else {
-                    SaveLog.SchedulerResult("BACKUP\\PROJECT\\FAIL",message,currentTime);
+                    logger.info("프로젝트 이름 업데이트에 실패했습니다. {} --실패--> {}", 저장된_프로젝트_이름, 프로젝트_이름);
                 }
             }
 
         } catch (Exception e) {
             message += e.getMessage()+"프로젝트 이름 업데이트 중 오류 발생";
-            SaveLog.SchedulerResult("BACKUP\\PROJECT\\FAIL",message,currentTime);
             logger.error(message);
             throw new Exception(e.getMessage());
         }
@@ -181,7 +179,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
     *  프로젝트 코드 추가
     * */
     @Override
-    public  CompletableFuture<Void> 지라프로젝트_백업() throws Exception {
+    public CompletableFuture<Void> 지라프로젝트_백업() throws Exception {
         logger.info("[::BackupSchedulerImpl::] 지라 프로젝트 정보 벌크 백업 스케줄러");
         int page = 0;
         int size = 100;
