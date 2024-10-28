@@ -94,7 +94,10 @@ public class PlatformProjectImpl implements PlatformProject {
     @Autowired
     private WebClientUtils webClientUtils;
 
-    @Override
+    private static final String JIRA_PROJECT_PREFIX = "P_";
+    private static final String JIRA_MAINTENANCE_PREFIX = "M_";
+
+    /*@Override
     public Map<String, String> platformCreateProject(BaseDTO baseDTO) throws Exception {
 
         BaseDTO.EssentialDTO essentialDTO = baseDTO.getEssential();
@@ -187,7 +190,7 @@ public class PlatformProjectImpl implements PlatformProject {
             result.put("result", "프로젝트 생성 실패");
             return result;
         }
-    }
+    }*/
 
     /*
     *  플랫폼으로 수정하기위해 프로젝트 데이터 조회
@@ -482,18 +485,18 @@ public class PlatformProjectImpl implements PlatformProject {
     }
 
     @Override
-    public Map<String, String> platformCreateProject(String jiraProjectCode, String projectFlag, String projectName, String projectCode, String assignees) throws Exception {
+    public Map<String, String> platformCreateProject(String jiraProjectCode, String projectFlag, String projectName, String projectCode, String assignees, String salesManager) throws Exception {
 
         Map<String, String> result = new HashMap<>();
         CreateProjectDTO createProjectDTO = new CreateProjectDTO();
         String jiraProjectName = "";
 
         if (projectFlag.equals("P")) { // 프로젝트
-            jiraProjectName = "ED-P_" + projectName;
+            jiraProjectName = JIRA_PROJECT_PREFIX + projectName;
             createProjectDTO.setName(jiraProjectName);
             createProjectDTO.setExistingProjectId(projectConfig.projectTemplate);
         } else { // 유지보수
-            jiraProjectName = "ED-M_" + projectName;
+            jiraProjectName = JIRA_MAINTENANCE_PREFIX + projectName;
             createProjectDTO.setName(jiraProjectName);
             createProjectDTO.setExistingProjectId(projectConfig.maintenanceTemplate);
         }
@@ -521,7 +524,7 @@ public class PlatformProjectImpl implements PlatformProject {
                         result.put("result", "프로젝트 생성 성공");
 
                         try {
-                            jiraProject.saveSuccessData(jiraProjectCode, res.getProjectId(), projectCode, projectName, finalJiraProjectName, projectFlag, assignees); // DB 저장
+                            jiraProject.saveSuccessData(jiraProjectCode, res.getProjectId(), projectCode, projectName, finalJiraProjectName, projectFlag, assignees, salesManager); // DB 저장
                             logger.info("[::platformCreateProject::] DB 저장 완료");
                         } catch (Exception e) {
                             logger.error("[::platformCreateProject::] DB 저장 실패");
@@ -577,7 +580,7 @@ public class PlatformProjectImpl implements PlatformProject {
         // 담당자 설정
         String assignees = setAssignees(assignee, subAssignee);
         // 프로젝트 생성
-        Map<String, String> createInfo = platformCreateProject(jiraProjectCode, projectFlag, projectName, projectCode, assignees);
+        Map<String, String> createInfo = platformCreateProject(jiraProjectCode, projectFlag, projectName, projectCode, assignees, salesManager);
 
         String createProjectFlag = createInfo.get("result");
         String jiraProjectName = createInfo.get("jiraProjectName");
@@ -749,9 +752,9 @@ public class PlatformProjectImpl implements PlatformProject {
 
         if (프로젝트_이름 != null) {
             if ("P".equals(baseDTO.getEssential().getProjectFlag())) {
-                프로젝트_이름 = "ED-P_" + 프로젝트_이름;
+                프로젝트_이름 = JIRA_PROJECT_PREFIX + 프로젝트_이름;
             } else {
-                프로젝트_이름 = "ED-M_" + 프로젝트_이름;
+                프로젝트_이름 = JIRA_MAINTENANCE_PREFIX + 프로젝트_이름;
             }
             if (!프로젝트_이름.isEmpty() && !프로젝트_이름.equals(기존_프로젝트_이름)) {
                 업데이트_정보.setName(프로젝트_이름);

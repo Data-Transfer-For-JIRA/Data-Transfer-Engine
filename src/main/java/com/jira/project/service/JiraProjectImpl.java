@@ -84,7 +84,7 @@ public class JiraProjectImpl implements JiraProject {
                     // 프로젝트 생성
                     CreateProjectResponseDTO Response = createJiraProject(projectInfo);
 
-                    saveSuccessData(Response.getProjectKey() , Response.getProjectId(),projectCode,projectName,projectInfo.getName(),flag,assignees); // 템플릿을 통한 생성 방법
+                    saveSuccessData(Response.getProjectKey() , Response.getProjectId(),projectCode,projectName,projectInfo.getName(),flag,assignees, null); // 템플릿을 통한 생성 방법
                     // 디비 이관 flag 변경
                     checkMigrateFlag(projectCode);
 
@@ -185,7 +185,7 @@ public class JiraProjectImpl implements JiraProject {
         }
     }
 
-    public void saveSuccessData(String key, String id , String projectCode , String projectName , String jiraProjectName, String flag , String projectAssignees) throws Exception{
+    public void saveSuccessData(String key, String id , String projectCode , String projectName , String jiraProjectName, String flag , String projectAssignees, String salesManager) throws Exception{
 
         logger.info("JIRA 프로젝트 생성 결과 저장");
         TB_JML_Entity save_success_data  = new TB_JML_Entity();
@@ -196,6 +196,8 @@ public class JiraProjectImpl implements JiraProject {
         save_success_data.setJiraProjectName(jiraProjectName);
         save_success_data.setFlag(flag);
         save_success_data.setProjectAssignees(projectAssignees);
+        save_success_data.setJiraProjectLeader(projectAssignees);
+        save_success_data.setJiraProjectSalesManager(salesManager);
         TB_JML_JpaRepository.save(save_success_data);
     }
     public void checkMigrateFlag(String projectCode){

@@ -24,7 +24,7 @@ public class PlatformController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @ResponseBody
+    /*@ResponseBody
     @RequestMapping(
             value = {"/project"},
             method = {RequestMethod.POST}
@@ -32,7 +32,7 @@ public class PlatformController {
     public Map<String, String> platformCreateProject(@RequestBody BaseDTO baseDTO) throws Exception {
         logger.info("[::PlatformController::] 플랫폼을 통한 프로젝트 생성");
         return platformProject.platformCreateProject(baseDTO);
-    }
+    }*/
 
     @ResponseBody
     @RequestMapping(

@@ -42,6 +42,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
 
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
@@ -1013,12 +1014,12 @@ public class JiraIssueImpl implements JiraIssue {
     @Override
     public String getBaseIssueKeyByJiraKey(String jiraKey) {
 
-        TB_JML_Entity projectInfo  = TB_JML_JpaRepository.findByKey(jiraKey);
+        TB_JML_Entity projectInfo = TB_JML_JpaRepository.findByKey(jiraKey);
         String issueType = "";
 
-        if(projectInfo.getFlag().equals("P")){
+        if (projectInfo.getFlag().equals("P")) {
             issueType = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "프로젝트 기본 정보").getId();
-        }else{
+        } else {
             issueType = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "유지보수 기본 정보").getId();
         }
 
@@ -1027,19 +1028,40 @@ public class JiraIssueImpl implements JiraIssue {
         String endpoint = "/rest/api/3/search?jql=" + jql + "&fields=" + fields;
 
         return webClientUtils.get(endpoint, String.class)
-                .map(responseString -> {
-                    // JSON 문자열 파싱
-                    JSONObject jsonObject = new JSONObject(responseString);
-                    JSONArray issues = jsonObject.getJSONArray("issues");
-                    if (issues != null && issues.length() > 0) {
-                        // 첫 번째 이슈 객체에서 key 값을 추출
-                        JSONObject firstIssue = issues.getJSONObject(0);
-                        logger.info("[::TransferIssueImpl::] getBaseIssueKey 기본 정보 이슈키 -> " + firstIssue.getString("key"));
-                        return firstIssue.getString("key");
-                    } else {
-                        // 이슈가 없는 경우
-                        return null;
+                .flatMap(responseString -> {
+                    if (responseString == null) {
+                        logger.error("Jira 응답이 null입니다. endpoint: " + endpoint);
+                        return Mono.empty(); // null 대신 Mono.empty() 사용
                     }
+
+                    try {
+                        // JSON 문자열 파싱
+                        JSONObject jsonObject = new JSONObject(responseString);
+                        JSONArray issues = jsonObject.optJSONArray("issues"); // optJSONArray로 null 안전하게 처리
+                        if (issues != null && issues.length() > 0) {
+                            // 첫 번째 이슈 객체에서 key 값을 추출
+                            JSONObject firstIssue = issues.optJSONObject(0);
+                            if (firstIssue != null) {
+                                String issueKey = firstIssue.optString("key", null);
+                                if (issueKey != null) {
+                                    logger.info("[::TransferIssueImpl::] getBaseIssueKey 기본 정보 이슈키 -> " + issueKey);
+                                    return Mono.just(issueKey);
+                                }
+                            }
+                        }
+
+                        // 이슈가 없는 경우
+                        logger.warn("이슈가 존재하지 않습니다. jiraKey: " + jiraKey + ", jql: " + jql);
+                        return Mono.empty(); // null 대신 Mono.empty() 반환
+                    } catch (Exception e) {
+                        logger.error("JSON 파싱 중 오류 발생: " + e.getMessage(), e);
+                        return Mono.empty(); // JSON 파싱 오류 시 Mono.empty() 반환
+                    }
+                })
+                .onErrorResume(e -> {
+                    // 예외 발생 시 로그 남기기
+                    logger.error("Jira API 호출 중 오류 발생: " + e.getMessage(), e);
+                    return Mono.empty(); // 오류 발생 시 Mono.empty() 반환
                 })
                 .block(); // 동기적으로 결과를 기다림
     }

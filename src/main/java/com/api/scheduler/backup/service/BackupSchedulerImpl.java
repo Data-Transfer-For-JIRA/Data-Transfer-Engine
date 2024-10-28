@@ -232,6 +232,10 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
             // 기본 정보 이슈 티켓 조회 (프로젝트 코드 및 담당자 조회)
             String 기본정보_이슈키 = jiraIssue.getBaseIssueKeyByJiraKey(지라_프로젝트_키);
+            if (기본정보_이슈키 == null) {
+                logger.error(":: 지라프로젝트_JML테이블_업데이트 :: 기본정보_이슈키가 null입니다. 프로젝트 키: " + 지라_프로젝트_키);
+                return CompletableFuture.completedFuture(null);
+            }
             SearchIssueDTO<SearchProjectInfoDTO> 프로젝트_기본정보;
             SearchIssueDTO<SearchMaintenanceInfoDTO> 유지보수_기본정보;
             String 담당자_이름 = null;
@@ -1044,4 +1048,109 @@ public class BackupSchedulerImpl implements BackupScheduler {
         return false;
     }
 
+    public boolean updateSalesManager(String 지라_프로젝트키, String 기존_영업_담당자, String 실제_영업_담당자) throws Exception {
+
+        String 담당자_이름 = null;
+        if (실제_영업_담당자 != null) {
+            담당자_이름 = account.이름_추출(실제_영업_담당자);
+            if (StringUtils.isBlank(담당자_이름)) {
+                담당자_이름 = "epage div";
+            }
+        }
+        logger.info(":: 영업 담당자 업데이트 :: {}, {}, {}", 지라_프로젝트키, 기존_영업_담당자, 담당자_이름);
+
+        if (!StringUtils.equals(담당자_이름, 기존_영업_담당자)) { // 디비 데이터와 비교해서 다르면 저장 및 업데이트
+
+            TB_JML_Entity 업데이트_대상_프로젝트 = TB_JML_JpaRepository.findByKey(지라_프로젝트키);
+
+            업데이트_대상_프로젝트.setJiraProjectSalesManager(담당자_이름);
+
+            TB_JML_JpaRepository.save(업데이트_대상_프로젝트);
+
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void updateJMLSalesManager() throws Exception{
+        try {
+            int page = 0;
+            final int size = 100; // 한 페이지당 항목 수, 조정 가능
+
+            while (true) {
+                try {
+                    Pageable pageable = PageRequest.of(page, size);
+                    Page<TB_JML_Entity> entityPage = TB_JML_JpaRepository.findAll(pageable);
+
+                    if (!entityPage.hasContent()) {
+                        break; // 더 이상 처리할 데이터가 없으면 반복 종료
+                    }
+
+                    entityPage.forEach(entity -> {
+                        try {
+                            Date currentTime = new Date();
+                            String scheduler_result_success = null;
+
+                            // 디비 조회
+                            String 지라_프로젝트키 = entity.getKey();
+                            String 기존_영업_담당자 = entity.getJiraProjectSalesManager();
+
+                            /*if (!StringUtils.equals(지라_프로젝트키, "TED779")) {
+                                return;
+                            }*/
+
+                            // 지라 조회
+                            String 기본정보_이슈키 = jiraIssue.getBaseIssueKeyByJiraKey(entity.getKey());
+                            String 실제_영업_담당자;
+                            if (기본정보_이슈키 == null) {
+                                logger.error(":: 영업 담당자 할당 스케줄러 :: 기본정보_이슈키가 null입니다. 프로젝트 키: " + entity.getKey());
+                                return;
+                            }
+
+                            if (StringUtils.equals(entity.getFlag(), "M")) {
+                                SearchIssueDTO<SearchMaintenanceInfoDTO> 조회결과 = jiraIssue.getMaintenanceIssue(기본정보_이슈키);
+                                if (조회결과 == null || 조회결과.getFields() == null) {
+                                    throw new Exception("유효한 조회 결과가 없습니다. 프로젝트 키: " + 지라_프로젝트키 + ", 이슈 키: " + 기본정보_이슈키);
+                                }
+                                실제_영업_담당자 = Optional.ofNullable(조회결과)
+                                        .map(result -> result.getFields())
+                                        .map(fields -> fields.getSalesManager())
+                                        .map(salesManager -> salesManager.getDisplayName())
+                                        .orElse(null);
+                            } else {
+                                SearchIssueDTO<SearchProjectInfoDTO> 조회결과 = jiraIssue.getProjectIssue(기본정보_이슈키);
+                                if (조회결과 == null || 조회결과.getFields() == null) {
+                                    throw new Exception("유효한 조회 결과가 없습니다. 프로젝트 키: " + 지라_프로젝트키 + ", 이슈 키: " + 기본정보_이슈키);
+                                }
+                                실제_영업_담당자 = Optional.ofNullable(조회결과)
+                                        .map(result -> result.getFields())
+                                        .map(fields -> fields.getSalesManager())
+                                        .map(salesManager -> salesManager.getDisplayName())
+                                        .orElse(null);
+                            }
+
+                            logger.info(":: 영업 담당자 백업 스케줄러 :: 프로젝트 키 : " + 지라_프로젝트키 + ", 기본 정보 이슈 키 : " + 기본정보_이슈키 + ", 기존 영업 담당자 : " + 기존_영업_담당자 + ", 실제 영업 담당자 : " + 실제_영업_담당자);
+                            Boolean 담당자_업데이트 = updateSalesManager(지라_프로젝트키, 기존_영업_담당자, 실제_영업_담당자);
+
+                            if (담당자_업데이트) {
+                                logger.info(":: 영업 담당자 백업 스케줄러 :: [" + 지라_프로젝트키 + "] 해당 프로젝트의 영업 담당자는 " + 실제_영업_담당자 + "로 재할당되었습니다.");
+                            }
+                        } catch (Exception e) {
+                            logger.error(":: 영업 담당자 할당 스케줄러 :: 오류 발생 "+ e.getMessage());
+                            throw new RuntimeException(e);
+                        }
+                    });
+
+                    page++; // 다음 페이지로
+                } catch (Exception e) {
+                    logger.error(":: 영업 담당자 할당 스케줄러 :: 오류 발생 " + e.getMessage());
+                    throw new Exception(e);
+                }
+            }
+        } catch (Exception e) {
+            logger.error(":: 영업 담당자 할당 스케줄러 :: 오류 발생 "+ e.getMessage());
+            throw new Exception(e);
+        }
+    }
 }

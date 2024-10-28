@@ -145,4 +145,16 @@ public class BackupController {
         logger.info("[::BackupController::] 지라 이슈 데이터 백업 스케줄러 종로 소요시간: {}",소요시간);
     }
 
+
+    @ResponseBody
+    @RequestMapping(
+            value={"/project/salesmanager"},
+            method={RequestMethod.PUT}
+    )
+    public void 영업담당자_업데이트() throws Exception{
+
+        logger.info("[::BackupController::] 영업 담당자 백업 스케줄러");
+
+        backupScheduler.updateJMLSalesManager();
+    }
 }

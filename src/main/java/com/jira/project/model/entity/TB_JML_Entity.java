@@ -50,6 +50,9 @@ public class TB_JML_Entity {
     @Column(name = "JP_LEADER")
     private String jiraProjectLeader;
 
+    @Column(name = "JP_SALES_MANAGER")
+    private String jiraProjectSalesManager;
+
     @PrePersist
     public void prePersist() {
         LocalDateTime now = LocalDateTime.now();
