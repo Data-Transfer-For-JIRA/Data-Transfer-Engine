@@ -24,4 +24,6 @@ public interface BackupScheduler {
     void updateJMLProjectLeader() throws Exception;
 
     void updateJMLSalesManager() throws Exception;
+
+    void updateProjectNamePrefix() throws Exception;
 }

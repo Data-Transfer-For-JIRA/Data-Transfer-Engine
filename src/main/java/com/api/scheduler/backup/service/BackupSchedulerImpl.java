@@ -91,6 +91,10 @@ public class BackupSchedulerImpl implements BackupScheduler {
             "ED-M_"
     };
 
+    private static final String JIRA_PROJECT_PREFIX = "P_";
+    private static final String JIRA_MAINTENANCE_PREFIX = "M_";
+    private static final Pattern REMOVE_PREFIX = Pattern.compile("ED-P_|ED-M_|WSS_|EM-|P_|M_");
+
     @Async
     @Override
     public CompletableFuture<Void> 지라_프로젝트이름_수정() throws Exception {
@@ -1151,6 +1155,63 @@ public class BackupSchedulerImpl implements BackupScheduler {
         } catch (Exception e) {
             logger.error(":: 영업 담당자 할당 스케줄러 :: 오류 발생 "+ e.getMessage());
             throw new Exception(e);
+        }
+    }
+
+    @Override
+    public void updateProjectNamePrefix() throws Exception {
+
+        int page = 0;
+        final int size = 100; // 한 페이지당 항목 수, 조정 가능
+
+        while (true) {
+                Pageable pageable = PageRequest.of(page, size);
+                Page<TB_JML_Entity> entityPage = TB_JML_JpaRepository.findAll(pageable);
+
+                if (!entityPage.hasContent()) {
+                    break; // 더 이상 처리할 데이터가 없으면 반복 종료
+                }
+
+                entityPage.forEach(entity -> {
+                    try {
+                        prefixUpdate(entity);
+                    } catch (Exception e) {
+                        logger.error(":: 프로젝트 이름 prefix 세팅 스케줄러 :: 오류 발생 " + e.getMessage());
+                    }
+                });
+
+                page++;
+        }
+    }
+
+    public void prefixUpdate(TB_JML_Entity 프로젝트) throws Exception {
+
+        Date currentTime = new Date();
+        String message = "[" + 프로젝트.getKey() + "] - " + currentTime + " - ";
+
+        String newPrefix = Optional.ofNullable(프로젝트.getFlag())
+                .filter(flag -> "P".equals(flag))
+                .map(flag -> JIRA_PROJECT_PREFIX)
+                .orElse(JIRA_MAINTENANCE_PREFIX);
+
+        String 기존_프로젝트명 = Optional.ofNullable(프로젝트.getJiraProjectName()).orElse("");
+        String 새로운_프로젝트명 = REMOVE_PREFIX.matcher(기존_프로젝트명).replaceAll("").trim();
+        새로운_프로젝트명 = newPrefix + 새로운_프로젝트명;
+
+        // 프로젝트 이름 업데이트
+        if (!StringUtils.equals(기존_프로젝트명, 새로운_프로젝트명)) {
+            CreateProjectDTO 업데이트_정보 = new CreateProjectDTO();
+            업데이트_정보.setKey(프로젝트.getKey());
+            업데이트_정보.setName(새로운_프로젝트명);
+
+            message += " 프로젝트 이름이 " + 기존_프로젝트명 + "에서 "+새로운_프로젝트명 + "로 업데이트 되었습니다. \n";
+
+            Map<String, String> result = jiraProject.updateProjectInfo(업데이트_정보);
+            if (result != null && StringUtils.equals(result.get("projectResult"), "UPDATE_SUCCESS")) {
+                logger.info(message);
+            } else {
+                logger.info("프로젝트 이름 업데이트에 실패했습니다. {} --실패--> {}", 기존_프로젝트명, 새로운_프로젝트명);
+            }
         }
     }
 }
