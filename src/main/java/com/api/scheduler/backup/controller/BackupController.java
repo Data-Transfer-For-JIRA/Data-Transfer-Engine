@@ -163,7 +163,7 @@ public class BackupController {
             value = {"/project/projectNamePrefix"},
             method = {RequestMethod.PUT}
     )
-    public void upDateProjectNamePrefix() throws Exception {
+    public void updateProjectNamePrefix() throws Exception {
         logger.info("[::PlatformController::] 프로젝트 이름 prefix 업데이트");
         backupScheduler.updateProjectNamePrefix();
     }

@@ -93,7 +93,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
     private static final String JIRA_PROJECT_PREFIX = "P_";
     private static final String JIRA_MAINTENANCE_PREFIX = "M_";
-    private static final Pattern REMOVE_PREFIX = Pattern.compile("ED-P_|ED-M_|WSS_|EM-|P_|M_");
+    private static final Pattern REMOVE_PREFIX = Pattern.compile("ED-P_|ED-M_|WSS_|EP-|EM-|P_|M_|\\?");
 
     @Async
     @Override
