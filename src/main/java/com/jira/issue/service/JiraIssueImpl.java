@@ -1262,7 +1262,7 @@ public class JiraIssueImpl implements JiraIssue {
     }
 
     @Override
-    public Boolean addMentionAndComment(String issueIdOrKey, String targetUser ,String contents) throws Exception{
+    public Boolean addMentionAndComment(String issueIdOrKey, String targetUser ,String contents, String ...url) throws Exception{
         try {
             logger.info("[::JiraIssueImpl::] addMentionAndComment");
 
@@ -1281,13 +1281,24 @@ public class JiraIssueImpl implements JiraIssue {
                     .build();
 
             AddCommentDTO.TextContent textContent = AddCommentDTO.TextContent.builder()
-                    .text(contents)
+                    .text(contents+"\n")
                     .type("text")
                     .build();
+
+            AddCommentDTO.Attrs urlAttr = new AddCommentDTO.Attrs();
+            urlAttr.setUrl(url[0]);
+            AddCommentDTO.TextContent urlContent = new AddCommentDTO.TextContent();
+            if(url != null){
+                urlContent = AddCommentDTO.TextContent.builder()
+                        .attrs(urlAttr)
+                        .type("inlineCard")
+                        .build();
+            }
 
             List<AddCommentDTO.TextContent> textContentList = new ArrayList<>();
             textContentList.add(mentionContent);
             textContentList.add(textContent);
+            textContentList.add(urlContent);
 
             AddCommentDTO.Content content = AddCommentDTO.Content.builder()
                     .type("paragraph")

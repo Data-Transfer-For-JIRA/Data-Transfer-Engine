@@ -34,7 +34,6 @@ import com.jira.project.model.entity.TB_JLL_Entity;
 import com.jira.project.model.entity.TB_JML_Entity;
 import com.jira.project.service.JiraProjectImpl;
 import com.utils.ConvertHtmlToADF;
-import com.utils.SaveLog;
 import com.utils.WebClientUtils;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -49,17 +48,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Service("platformProject")
@@ -1314,9 +1310,9 @@ public class PlatformProjectImpl implements PlatformProject {
 
             if(!key.isEmpty() || key != null){
                 if(flag.equals("P")){
-                    jiraIssue.addMentionAndComment(key,salesManager,"프로젝트 인력 배정 보드에 이슈가 생성되었습니다.");
+                    jiraIssue.addMentionAndComment(key,salesManager,"프로젝트 인력 배정 보드에 이슈가 생성되었습니다.",responseIssueDTO.getSelf());
                 }else{
-                    jiraIssue.addMentionAndComment(key,salesManager,"유지보수 인력 배정 보드에 이슈가 생성되었습니다.");
+                    jiraIssue.addMentionAndComment(key,salesManager,"유지보수 인력 배정 보드에 이슈가 생성되었습니다.",responseIssueDTO.getSelf());
                 }
                 logger.info("[::platformCreateProject::] 인력배정 이슈 생성 성공");
             }

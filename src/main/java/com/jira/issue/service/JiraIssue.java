@@ -90,5 +90,5 @@ public interface JiraIssue {
     /*
      *
      * */
-    Boolean addMentionAndComment(String issueIdOrKey, String targetUser ,String contents) throws Exception;
+    Boolean addMentionAndComment(String issueIdOrKey, String targetUser ,String contents, String ...url) throws Exception;
 }

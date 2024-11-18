@@ -59,5 +59,6 @@ public class AddCommentDTO {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Attrs{
         private String id;
+        private String url;
     }
 }
