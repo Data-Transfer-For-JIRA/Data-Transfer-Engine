@@ -71,7 +71,7 @@ public class AccountImpl implements Account {
         AdminInfoDTO info = getAdminInfo(1);
 
         WebClient webClient = WebClientUtils.createJiraWebClient(info.getUrl(), info.getId(), info.getToken());
-        String endpoint = "https://markany.atlassian.net/rest/api/3/users/search?startAt=0&maxResults=500";
+        String endpoint = "https://markany.atlassian.net/rest/api/3/users/search?startAt=0&maxResults=1000";
 
         //List<UserInfoDTO> response = WebClientUtils.get(webClient, endpoint, new ParameterizedTypeReference<List<UserInfoDTO>>() {}).block();
         int bufferSize = 50; // 버퍼 크기
