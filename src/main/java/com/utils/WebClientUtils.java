@@ -25,6 +25,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.ByteArrayInputStream;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
@@ -95,6 +96,10 @@ public class WebClientUtils {
     * 보안 또는 권한 문제: 어떤 경우에는 요청한 URL이 직접 접근할 수 없는 위치에 있거나, 접근 권한이 없을 때, 서버가 이를 다른 안전한 위치로 리디렉션 시킬 수 있습니다.
     * */
     public void downloadImage(String uri, String fileName) {
+        if (uri == null || uri.isEmpty()) {
+            logger.error(":: 이미지 다운로드 오류 :: URI가 null 또는 비어 있습니다.");
+            return;
+        }
         String destinationFile = projectConfig.imageSavePath+ fileName;
 
         // 허용된 이미지 확장자 목록
@@ -124,11 +129,13 @@ public class WebClientUtils {
             // 응답 본문에서 로케이션 값을 확인함
             String redirectUri = responseSpec.toBodilessEntity() // 응답 본문 제외 헤더 데이터만 수신
                     .flatMap(responseEntity -> {
-                        if (responseEntity.getStatusCode().is3xxRedirection()) { // 리다이렉션 여부 확인 303에러 발생 (웹클라언트는 리다이렉션 해주지 않음)
-                            return Mono.just(responseEntity.getHeaders().getLocation().toString()); // 로케이션 값 반환
-                        } else {
-                            return Mono.empty();
+                        if (responseEntity.getStatusCode().is3xxRedirection()) {
+                            URI location = responseEntity.getHeaders().getLocation();
+                            if (location != null) {
+                                return Mono.just(location.toString());
+                            }
                         }
+                        return Mono.empty();
                     }).block();
 
             byte[] imageBytes;
