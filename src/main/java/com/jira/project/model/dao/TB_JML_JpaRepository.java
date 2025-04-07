@@ -42,4 +42,11 @@ public interface TB_JML_JpaRepository extends JpaRepository<TB_JML_Entity,String
             "LEFT JOIN BACKUP_BASEINFO_M_Entity bm ON j.key = bm.지라_프로젝트_키 " +
             "WHERE bp.계약사 LIKE %:keyword% OR bm.계약사 LIKE %:keyword%")
     List<TB_JML_Entity> findByContractorLike(@Param("keyword") String keyword);
+
+    @Query(value = "SELECT * FROM TB_JML WHERE M_DATE >= '2024-01-01'", nativeQuery = true)
+    List<TB_JML_Entity> findProjectDateAfter2024();
+
+
+    List<TB_JML_Entity> findByMigratedDateBetween(LocalDateTime startOfDay, LocalDateTime endOfDay);
+
 }

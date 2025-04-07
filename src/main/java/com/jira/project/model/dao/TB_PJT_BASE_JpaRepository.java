@@ -10,7 +10,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@Repository
 public interface TB_PJT_BASE_JpaRepository extends JpaRepository<TB_PJT_BASE_Entity,String> {
     /*
     시간 기준 내림 차순 메서드 추가
@@ -51,4 +50,5 @@ public interface TB_PJT_BASE_JpaRepository extends JpaRepository<TB_PJT_BASE_Ent
     List<TB_PJT_BASE_Entity> findNonNullAndNonEmptyRelatedProjects();
 
 
+    TB_PJT_BASE_Entity findByProjectName(String projectName);
 }

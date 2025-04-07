@@ -19,9 +19,12 @@ public class TB_PJT_BASE_Entity {
     private String projectCode;
     // 프로젝트 코드
 
-    @GeneratedValue(strategy = GenerationType.IDENTITY) //unique key
     @Column(unique = true , name = "BS_PJTNAME")
     private String projectName;
+    // 프로젝트 이름
+
+    @Column(unique = true , name = "BS_PJTNAME_DEV")
+    private String projectNameDev;
     // 프로젝트 이름
 
     @Column(name = "BS_PJTFLAG")
