@@ -96,6 +96,12 @@ public class WebClientUtils {
     * 보안 또는 권한 문제: 어떤 경우에는 요청한 URL이 직접 접근할 수 없는 위치에 있거나, 접근 권한이 없을 때, 서버가 이를 다른 안전한 위치로 리디렉션 시킬 수 있습니다.
     * */
     public void downloadImage(String uri, String fileName) {
+
+        if (fileName == null || fileName.isBlank()) {
+            logger.error(":: 이미지 다운로드 오류 :: 파일 이름이 없습니다.");
+            return;
+        }
+
         if (uri == null || uri.isEmpty()) {
             logger.error(":: 이미지 다운로드 오류 :: URI가 null 또는 비어 있습니다.");
             return;

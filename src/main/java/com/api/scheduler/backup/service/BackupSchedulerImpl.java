@@ -854,22 +854,30 @@ public class BackupSchedulerImpl implements BackupScheduler {
             Pattern 이미지테그_패턴 = Pattern.compile("<img\\s+[^>]*src=\"([^\"]+)\"");
             Matcher 이미지테그_속성값 = 이미지테그_패턴.matcher(상세_내용);
 
-            Pattern 이미지이름_패턴 = Pattern.compile("alt=\"(.*?)\"");
-            Matcher 이미지이름_속성값 = 이미지이름_패턴.matcher(상세_내용);
+            // alt 속성은 항상 존재하지 않을 수 있으므로, 해당 부분은 img 태그에서 같이 뽑자
+            Pattern 전체_이미지태그_패턴 = Pattern.compile("<img\\s+[^>]*>");
+            Matcher 이미지태그들 = 전체_이미지태그_패턴.matcher(상세_내용);
 
-            while (이미지테그_속성값.find() && 이미지이름_속성값.find()) {
-                String srcValue = 이미지테그_속성값.group(1); // src 속성의 값을 추출
-                String 요청_경로 = baseUrl + srcValue; // src 값이 절대 경로인지 확인
+            while (이미지테그_속성값.find() && 이미지태그들.find()) {
+                String srcValue = 이미지테그_속성값.group(1);
+                String 요청_경로 = baseUrl + srcValue;
 
-                String 파일_이름 = 이슈_키 + "-" + 이미지이름_속성값.group(1); // 이미지_이름
+                String 이미지태그 = 이미지태그들.group();
+                String 파일_이름 = 이슈_키 + "-image";
+
+                Matcher altMatcher = Pattern.compile("alt=\"(.*?)\"").matcher(이미지태그);
+                if (altMatcher.find() && !altMatcher.group(1).isBlank()) {
+                    파일_이름 = 이슈_키 + "-" + altMatcher.group(1);
+                }
+
                 webClientForImage.downloadImage(요청_경로, 파일_이름);
-
-                저장된이미지_경로목록.add(요청_경로); // 최종 URL 리스트에 추가
+                저장된이미지_경로목록.add(요청_경로);
             }
         }
 
-        return 저장된이미지_경로목록; // 저장된 이미지 경로 목록 반환
+        return 저장된이미지_경로목록;
     }
+
     private Date 일자변환기(String 일자) throws Exception {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
         try {
