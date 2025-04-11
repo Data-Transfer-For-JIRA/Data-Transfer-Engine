@@ -1,5 +1,6 @@
 package com.jira.issue.model.dto.search;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.jira.issue.model.dto.FieldDTO;
 import lombok.*;
@@ -13,6 +14,7 @@ import java.util.Date;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SearchRenderedIssue {
 
@@ -28,6 +30,7 @@ public class SearchRenderedIssue {
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class RenderedFields {
         String description;
@@ -39,6 +42,7 @@ public class SearchRenderedIssue {
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Fields {
 
@@ -61,6 +65,7 @@ public class SearchRenderedIssue {
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Assignee {
         String displayName;
@@ -72,6 +77,7 @@ public class SearchRenderedIssue {
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Field {
         private String id;

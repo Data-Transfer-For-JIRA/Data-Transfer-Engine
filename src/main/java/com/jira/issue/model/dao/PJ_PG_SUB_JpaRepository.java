@@ -26,4 +26,5 @@ public interface PJ_PG_SUB_JpaRepository extends JpaRepository<PJ_PG_SUB_Entity,
     @Query("SELECT COALESCE(MAX(p.projectId), 0) FROM PJ_PG_SUB_Entity p WHERE p.projectCode = :projectCode")
     int findMaxProjectId(@Param("projectCode") String projectCode);
 
+    boolean existsByCreationDateAndIssueContent(Date creationDate, String issueContent);
 }

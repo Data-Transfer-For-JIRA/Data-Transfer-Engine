@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 
 public interface TB_PJT_BASE_JpaRepository extends JpaRepository<TB_PJT_BASE_Entity,String> {
@@ -51,4 +52,9 @@ public interface TB_PJT_BASE_JpaRepository extends JpaRepository<TB_PJT_BASE_Ent
 
 
     TB_PJT_BASE_Entity findByProjectName(String projectName);
+
+    @Query("SELECT p FROM TB_PJT_BASE_Entity p WHERE TRIM(p.projectName) = :name")
+    TB_PJT_BASE_Entity findByTrimmedProjectName(@Param("name") String name);
+
+
 }

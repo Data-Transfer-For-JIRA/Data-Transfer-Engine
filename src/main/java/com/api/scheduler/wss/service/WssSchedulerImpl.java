@@ -13,7 +13,6 @@ import com.jira.project.model.dao.TB_JML_JpaRepository;
 import com.jira.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.jira.project.model.entity.TB_JML_Entity;
 import com.jira.project.model.entity.TB_PJT_BASE_Entity;
-import io.swagger.v3.oas.annotations.servers.Server;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,12 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-
-import static com.mysql.cj.conf.PropertyKey.logger;
+import java.util.*;
 
 @AllArgsConstructor
 @Service("WssScheduler")
@@ -143,37 +137,83 @@ public class WssSchedulerImpl implements WssScheduler{
     }
 
 
-    private PJ_PG_SUB_Entity saveIssue(BACKUP_ISSUE_Entity 이슈, TB_JML_Entity 프로젝트) throws Exception{
+    private PJ_PG_SUB_Entity saveIssue(BACKUP_ISSUE_Entity 이슈, TB_JML_Entity 프로젝트) throws Exception {
         if (이슈 == null) return null;
+
         try {
+            // 1. WSS에서 넘어온 프로젝트 이름 기반 조회
             String wssProjectName = 프로젝트.getWssProjectName();
-            // WSS에서 생성되어 지라로 이관된 경우 프로젝트 코드가 변경된 가능성이 있음
-            // 따라서, JML에서 가져온 프로젝트 이름으로 WSS에서 프로젝트 코드를 조회
-            TB_PJT_BASE_Entity table = tb_pjt_base_jpaRepository.findByProjectName(wssProjectName);
+            String wssProjectCode = 프로젝트.getProjectCode();
+            String projectKey = 프로젝트.getKey();
 
-            String wssProjectCode = table.getProjectCode();
+            // 2. 프로젝트 코드로 먼저 조회 시도
+            Optional<TB_PJT_BASE_Entity> table = Optional.empty();
+            if (wssProjectCode != null && !wssProjectCode.isBlank()) {
+                table = tb_pjt_base_jpaRepository.findById(wssProjectCode);
+            }
 
+            // 3. 없으면 프로젝트 이름으로 재조회
+            if (table.isEmpty() && wssProjectName != null) {
+                table = Optional.ofNullable(tb_pjt_base_jpaRepository.findByTrimmedProjectName(wssProjectName));
+            }
+
+            // 4. 프로젝트 키(예외 케이스)로 마지막 조회 시도
+            if (table.isEmpty() && projectKey != null) {
+                table = tb_pjt_base_jpaRepository.findById(projectKey);
+            }
+
+            // 5. 여전히 못 찾으면 예외 처리
+            if (table.isEmpty()) {
+                throw new RuntimeException("[중요!!] 해당 프로젝트 정보를 찾을 수 없습니다 프로젝트키 ---> " + 프로젝트.getKey());
+            }
+
+            // 6. 조회 성공 → 코드 확보
+            wssProjectCode = table.get().getProjectCode();
+
+            // 7. 프로젝트 ID 생성
             int maxProjectId = pj_pg_sub_jpaRepository.findMaxProjectId(wssProjectCode);
-            int nextProjectId = (maxProjectId != 0) ? maxProjectId + 1 : 1; // 1부터 시작
+            int nextProjectId = (maxProjectId != 0) ? maxProjectId + 1 : 1;
 
+            // 8. 이슈 상세 내용 + 링크 구성
+            String issueLink = "https://markany.atlassian.net/jira/core/projects/" +
+                    프로젝트.getKey() +
+                    "/board?groupBy=status&selectedIssue=" +
+                    getTrimmedJiraKey(이슈.get지라_이슈_키());
 
-            String issueLink = "https://markany.atlassian.net/jira/core/projects/"+프로젝트.getKey()+"/board?groupBy=status&selectedIssue="+getTrimmedJiraKey(이슈.get지라_이슈_키());
-            String 상세내용 = 이슈.get지라_이슈_제목()+"<br>"+이슈.get상세내용()+"<br>"+issueLink;
+            String 상세내용 = String.format("%s<br><br>%s<br><br>%s",
+                    safe(이슈.get지라_이슈_제목()),
+                    safe(이슈.get상세내용()),
+                    issueLink
+            );
 
+            // 9. 중복 체크
+            Date 등록일 = 이슈.getCreateDate() != null ? 이슈.getCreateDate() : new Date();
+            if (pj_pg_sub_jpaRepository.existsByCreationDateAndIssueContent(등록일, 상세내용)) {
+                logger.info(" 중복된 이슈입니다. ====> 이슈 키: " + 이슈.get지라_이슈_키());
+                return null;
+            }
+
+            // 10. 이슈 엔티티 생성 및 저장
             PJ_PG_SUB_Entity 이슈_엔티티 = PJ_PG_SUB_Entity.builder()
                     .projectId(String.valueOf(nextProjectId))
                     .projectCode(wssProjectCode)
-                    .creationDate(이슈.getCreateDate())
-                    .writer(이슈.get담당자())
+                    .creationDate(이슈.getCreateDate() != null ? 이슈.getCreateDate() : new Date())
+                    .writer(이슈.get담당자() != null ? 이슈.get담당자() : "담당자 없음")
                     .issueContent(상세내용)
                     .subNoticeFlag(false)
                     .issueMigrateFlag(true)
                     .build();
 
             return pj_pg_sub_jpaRepository.save(이슈_엔티티);
-        }catch (Exception e){
-            throw new Exception("이슈 저장 중 오류 발생 "+e.getMessage());
+
+        } catch (Exception e) {
+            logger.error("이슈 저장 중 오류"); // 로그 남기기
+            throw new Exception("이슈 저장 중 오류 발생");
         }
+    }
+
+    private String safe(String value) {
+        return value != null ? value : "";
     }
 
     public String getTrimmedJiraKey(String jiraKey) {
@@ -186,8 +226,6 @@ public class WssSchedulerImpl implements WssScheduler{
             return jiraKey;
         }
     }
-
-
 
     private TB_PJT_BASE_Entity saveWssProjectInfo(TB_JML_Entity 프로젝트) throws Exception {
         if (프로젝트 == null || 프로젝트.getKey() == null || 프로젝트.getFlag() == null) {

@@ -1398,7 +1398,7 @@ public class JiraIssueImpl implements JiraIssue {
         try {
             String endpoint = "/rest/api/3/search?jql=project="+지라프로젝트_키+"&startAt=" + 검색_시작_지점 + "&maxResults=" + 검색_최대_개수+ "&expand=renderedFields";
 
-            프로젝트에_생성된_이슈데이터 조회결과 =  webClientUtils.getLargeResponse(endpoint,프로젝트에_생성된_이슈데이터.class);
+            프로젝트에_생성된_이슈데이터 조회결과 =  webClientUtils.getLargeResponse(endpoint,new ParameterizedTypeReference<프로젝트에_생성된_이슈데이터>() {});
 
             return 조회결과;
 

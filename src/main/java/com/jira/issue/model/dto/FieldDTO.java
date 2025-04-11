@@ -1,6 +1,7 @@
 package com.jira.issue.model.dto;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import lombok.*;
@@ -40,6 +41,7 @@ public class FieldDTO {
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Project {
         String key;

@@ -108,7 +108,7 @@ public class WebClientUtils {
                 .bodyToMono(elementTypeRef);
     }
 
-    public <T> T getLargeResponse(String uri, Class<T> responseType) {
+    public <T> T getLargeResponse(String uri, ParameterizedTypeReference<T> responseTypeRef) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         try {
@@ -127,7 +127,7 @@ public class WebClientUtils {
 
             String body = outputStream.toString(StandardCharsets.UTF_8);
             ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.readValue(body, responseType); // JSON 파싱
+            return objectMapper.readValue(body, objectMapper.getTypeFactory().constructType(responseTypeRef.getType()));
 
         } catch (Exception e) {
             logger.error(":: 대용량 GET 응답 처리 실패 :: {}", e.getMessage(), e);
