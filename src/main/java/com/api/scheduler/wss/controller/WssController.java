@@ -46,14 +46,22 @@ public class WssController {
 
     //=================================================이  슈===========================================================
 
-
-    @PostMapping("/sync/Issue")
-    public List<PJ_PG_SUB_Entity>  syncIssue(@RequestParam String jiraProjectKey) throws Exception {
+    // 단일 프로젝트 동기화
+    @PostMapping("/sync/singleIssue")
+    public List<PJ_PG_SUB_Entity>  syncSingleIssue(@RequestParam String jiraProjectKey) throws Exception {
         logger.info("sync issue data");
-        return wssScheduler.syncIssue(jiraProjectKey);
+        return wssScheduler.syncSingleIssue(jiraProjectKey);
+    }
+
+    // 전체 프로젝트 동기화
+    @PostMapping("/sync/allIssue")
+    public List<PJ_PG_SUB_Entity>  syncAllIssue() throws Exception {
+        logger.info("sync issue data");
+        return wssScheduler.syncAllIssue();
     }
 
     // 지라에 생성된 프로젝트 일별 동기화
+
 
 
     // 지라에 생성된 이슈 일별 동기화

@@ -99,7 +99,7 @@ public class WssSchedulerImpl implements WssScheduler{
     * */
     @Override
     @Transactional
-    public List<PJ_PG_SUB_Entity> syncIssue(String jiraProjectKey) throws Exception{
+    public List<PJ_PG_SUB_Entity> syncSingleIssue(String jiraProjectKey) throws Exception{
         logger.info("단일 이슈 동기화 시작");
 
         // 1. 프로젝트 키 조회해야함
@@ -121,6 +121,26 @@ public class WssSchedulerImpl implements WssScheduler{
         return 저장한_이슈목록;
     }
 
+
+    @Override
+    @Transactional
+    public List<PJ_PG_SUB_Entity> syncAllIssue() throws Exception {
+        logger.info("모든 이슈 동기화 시작");
+        List<BACKUP_ISSUE_Entity> 이슈목록 = backup_issue_jpaRepository.findAll();
+        List<PJ_PG_SUB_Entity> 저장한_이슈목록 = new ArrayList<>();
+
+        이슈목록.parallelStream().forEach(이슈 -> {
+            try {
+                TB_JML_Entity 프로젝트 = tb_jml_jpaRepository.findById(이슈.getJiraProjectKey()).orElse(null);
+                PJ_PG_SUB_Entity saveResult = saveIssue(이슈, 프로젝트);
+                저장한_이슈목록.add(saveResult);
+            } catch (Exception e) {
+                throw new RuntimeException("이슈 저장 중 오류 발생: " + 이슈.get지라_이슈_키(), e);
+            }
+        });
+
+        return 저장한_이슈목록;
+    }
 
 
     private PJ_PG_SUB_Entity saveIssue(BACKUP_ISSUE_Entity 이슈, TB_JML_Entity 프로젝트) throws Exception{
@@ -265,12 +285,14 @@ public class WssSchedulerImpl implements WssScheduler{
                     .createdDate(createdDate)
                     .client(Objects.requireNonNullElse(유지보수정보.get고객사(), "고객사 정보 없음"))
                     .contractor(Objects.requireNonNullElse(유지보수정보.get계약사(), "계약사 정보 없음"))
-                    .salesManager(Objects.requireNonNullElse(salesManager, null))
-                    .assignedEngineer(Objects.requireNonNullElse(projectLeader, null))
+                    .salesManager(Objects.requireNonNullElse(salesManager, "영업담당자 없음"))
+                    .assignedEngineer(Objects.requireNonNullElse(projectLeader, "프로젝트 담당자 없음"))
                     .contract("계약".equals(유지보수정보.get계약_여부()) ? "1" : "0")
-                    .inspectionType(Objects.requireNonNullElse(유지보수정보.get점검_방법(), "") + " " + Objects.requireNonNullElse(유지보수정보.get점검_주기(), ""))
+                    .inspectionType(
+                            (유지보수정보.get점검_방법() != null ? 유지보수정보.get점검_방법() : "") +  (유지보수정보.get점검_주기() != null ? " " + 유지보수정보.get점검_주기() : "")
+                    )
                     .contractStartDate(유지보수정보.get유지보수_시작일() != null ? 유지보수정보.get유지보수_시작일() : new Date())
-                    .contractEndDate(유지보수정보.get유지보수_종료일() != null ? 유지보수정보.get유지보수_종료일() : new Date())
+                    .contractEndDate(유지보수정보.get유지보수_종료일() != null ? 유지보수정보.get유지보수_종료일() :  new Date())
                     .migrateFlag(true)
                     .issueMigrateFlag(true)
                     .build();

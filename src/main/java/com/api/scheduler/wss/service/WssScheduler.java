@@ -15,5 +15,8 @@ public interface WssScheduler {
 
 
     // =================================================이슈===========================================================
-    List<PJ_PG_SUB_Entity>  syncIssue(String jiraProjectKey) throws Exception;
+
+    List<PJ_PG_SUB_Entity>  syncSingleIssue(String jiraProjectKey) throws Exception;
+
+    List<PJ_PG_SUB_Entity>  syncAllIssue() throws Exception;
 }
