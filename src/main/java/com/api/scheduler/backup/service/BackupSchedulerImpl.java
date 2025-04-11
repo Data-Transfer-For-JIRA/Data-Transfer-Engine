@@ -736,7 +736,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
         try{
             지라이슈_처리(프로젝트);
         }catch (Exception e){
-            logger.error("[::지라이슈_저장::] 장애 발생 {}",e.getMessage());
+            logger.error("[::지라이슈_저장::] 최종 저장 장애 발생 --->"+e.getMessage());
         }
     }
 
@@ -751,7 +751,6 @@ public class BackupSchedulerImpl implements BackupScheduler {
             List<SearchRenderedIssue> 전체이슈_목록 = new ArrayList<>();
 
             String 프로젝트_키 =프로젝트.getKey();
-            String wss_프로젝트_코드 = 프로젝트.getProjectCode();
 
             while (!isLast) {
                 프로젝트에_생성된_이슈데이터 전체이슈_조회 = jiraIssue.프로젝트에_생성된_이슈조회(프로젝트_키,검색_시작_지점,검색_최대_개수);
@@ -767,21 +766,18 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
             전체이슈_목록.parallelStream()
                     .forEach(지라이슈 -> {
-                        String 이슈유형_아이디 = 지라이슈.getFields().getIssuetype().getId();
-                        if (지라이슈.getFields().getSummary().contains("WSS HISTORY")) {
-                            // WSS에서 넘어온 데이터 처리 -> 기존 디비에 저장된 데이터 긁어오기
-                            try {
-                                WSS이슈데이터_이관(지라이슈,프로젝트_키,wss_프로젝트_코드);
-                            }catch (Exception e){
-                                logger.error("::[:: 지라이슈_처리 ::]::WSS 이슈 데이터 이관시 오류 발생"+e.getMessage());
-                                throw new RuntimeException(e);
-                            }
+
+                        String 본문 = Optional.ofNullable(지라이슈.getRenderedFields().getDescription()).orElse("");
+
+                        if (지라이슈.getFields().getSummary().contains("WSS HISTORY") ||
+                                (본문 != null && containsAtLeastTwo(본문))) {
+                            return;
                         } else {
                             try {
                                 지라이슈_저장(지라이슈,프로젝트_키);
-                                지라이슈_댓글저장(지라이슈.getKey()); //todo 코멘트 체크해서 가져오기
+                                지라이슈_댓글저장(지라이슈.getKey());
                             } catch (Exception e) {
-                                logger.error("::[:: 지라이슈_처리 ::]::일반 이슈 저장시 오류 발생"+e.getMessage());
+                                logger.error("::[:: 지라이슈_처리 ::]::일반 이슈 저장시 오류 발생  ------> 이슈 키 : "+지라이슈.getKey()+" 오류 내용 ----> " +e.getMessage());
                                 throw new RuntimeException(e);
                             }
                         }
@@ -792,6 +788,17 @@ public class BackupSchedulerImpl implements BackupScheduler {
         }
 
         return CompletableFuture.completedFuture(null);
+    }
+
+    public boolean containsAtLeastTwo(String text) {
+
+        String target = "====================================================================";
+
+        int firstIndex = text.indexOf(target);
+        if (firstIndex == -1) return false;
+
+        int secondIndex = text.indexOf(target, firstIndex + target.length());
+        return secondIndex != -1;
     }
 
     private BACKUP_ISSUE_Entity 지라이슈_저장(SearchRenderedIssue 지라이슈, String 프로젝트_키) throws Exception{
@@ -946,8 +953,8 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
             return BACKUP_ISSUE_COMMENT_JpaRepository.saveAll(댓글_저장_리스트);
         }catch (Exception e){
-            logger.error("::[::지라이슈_댓글저장::]::댓글 저장 중 오류 발생.");
-            throw new Exception("댓글 저장 중 오류 발생");
+            logger.error("::[::지라이슈_댓글저장::]::댓글 저장 중 오류 발생. 저장 오류 발생한 이슈 키 : "+지라이슈_키);
+            throw new RuntimeException("댓글 저장 중 오류 발생");
         }
     }
 
@@ -975,8 +982,8 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
             return BACKUP_ISSUE_COMMENT_JpaRepository.saveAll(댓글_저장_리스트);
         }catch (Exception e){
-            logger.error("::[::지라이슈_댓글저장::]::댓글 저장 중 오류 발생.");
-            throw new Exception("댓글 저장 중 오류 발생");
+            logger.error("::[::지라이슈_댓글저장::]::댓글 저장 중 오류 발생. 저장 오류 발생한 이슈 키 : "+지라이슈_키);
+            throw new RuntimeException("댓글 저장 중 오류 발생");
         }
     }
 
