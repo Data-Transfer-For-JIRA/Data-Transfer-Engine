@@ -6,6 +6,7 @@ import com.jira.account.service.Account;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.netty.handler.ssl.SslContextBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,13 +19,16 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -40,6 +44,7 @@ public class WebClientUtils {
 
     private final WebClient webClientForImage;
 
+    @Autowired
     private ProjectConfig projectConfig;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -52,20 +57,33 @@ public class WebClientUtils {
 
     public static WebClient createJiraWebClient(String baseUrl, String jiraId, String apiToken) {
 
+        HttpClient httpClient = HttpClient.create()
+                .secure(sslContextSpec -> sslContextSpec.sslContext(
+                        SslContextBuilder.forClient().protocols("TLSv1.2")
+                ));
+
         return WebClient.builder()
                 .baseUrl(baseUrl)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader("Authorization", "Basic " + getBase64Credentials(jiraId, apiToken))
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();
     }
 
     public static WebClient createJiraWebClientForImage(String baseUrl, String jiraId, String apiToken) {
 
+        HttpClient httpClient = HttpClient.create()
+                .secure(sslContextSpec -> sslContextSpec.sslContext(
+                        SslContextBuilder.forClient().protocols("TLSv1.2")
+                ));
+
+
         return WebClient.builder()
                 .baseUrl(baseUrl)
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.ALL_VALUE)
                 .defaultHeader("Authorization", "Basic " + getBase64Credentials(jiraId, apiToken))
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();
     }
 
@@ -89,6 +107,34 @@ public class WebClientUtils {
                 .retrieve()
                 .bodyToMono(elementTypeRef);
     }
+
+    public <T> T getLargeResponse(String uri, Class<T> responseType) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        try {
+            Flux<DataBuffer> dataBufferFlux = webClient.get()
+                    .uri(uri)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .retrieve()
+                    .bodyToFlux(DataBuffer.class);
+
+            dataBufferFlux.doOnNext(dataBuffer -> {
+                byte[] bytes = new byte[dataBuffer.readableByteCount()];
+                dataBuffer.read(bytes);
+                outputStream.write(bytes, 0, bytes.length);
+                DataBufferUtils.release(dataBuffer); // Netty 메모리 누수 방지
+            }).blockLast(); // 스트림 모두 수신될 때까지 블로킹
+
+            String body = outputStream.toString(StandardCharsets.UTF_8);
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(body, responseType); // JSON 파싱
+
+        } catch (Exception e) {
+            logger.error(":: 대용량 GET 응답 처리 실패 :: {}", e.getMessage(), e);
+            throw new RuntimeException("대용량 데이터 조회 실패", e);
+        }
+    }
+
 
     /*
     * 서버의 정책: 특정 리소스에 접근하려면 인증 또는 특정 조건이 필요할 때 서버가 리소스에 직접 접근하는 것을 막고, 대신 다른 URL로 리디렉션하도록 설정될 수 있습니다.
@@ -120,7 +166,7 @@ public class WebClientUtils {
 
         // 확장자가 허용된 이미지 확장자인지 확인
         if (!allowedExtensions.contains(fileExtension)) {
-            logger.error(":: 이미지 다운로드 오류 :: 지원되지 않는 파일 확장자: {}", fileExtension);
+            logger.error(":: 이미지 다운로드 오류 :: 지원되지 않는 파일 확장자: ----> {}", fileExtension);
             return;
         }
 
@@ -170,7 +216,7 @@ public class WebClientUtils {
                 logger.error(":: 이미지 다운로드 오류 :: 수신된 데이터가 없음");
             }
         } catch (Exception e) {
-            logger.error(":: 이미지 다운로드 오류::");
+            logger.error(":: 이미지 다운로드 오류:: ---> 종료 {}", e.getMessage());
         }
     }
 
