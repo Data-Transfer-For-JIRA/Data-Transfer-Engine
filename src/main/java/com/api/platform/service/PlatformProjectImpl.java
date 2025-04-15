@@ -23,6 +23,7 @@ import com.jira.issue.model.dto.create.ProjectInfoDTO;
 import com.jira.issue.model.dto.search.SearchIssueDTO;
 import com.jira.issue.model.dto.search.SearchMaintenanceInfoDTO;
 import com.jira.issue.model.dto.search.SearchProjectInfoDTO;
+import com.jira.issue.model.dto.weblink.CreateWebLinkDTO;
 import com.jira.issue.model.dto.weblink.RequestWeblinkDTO;
 import com.jira.issue.service.JiraIssueImpl;
 import com.jira.project.model.dao.TB_JLL_JpaRepository;
@@ -521,6 +522,9 @@ public class PlatformProjectImpl implements PlatformProject {
 
                         try {
                             jiraProject.saveSuccessData(jiraProjectCode, res.getProjectId(), projectCode, projectName, finalJiraProjectName, projectFlag, assignees, salesManager); // DB 저장
+
+                            result.put("jiraProjectKey",res.getProjectKey());
+
                             logger.info("[::platformCreateProject::] DB 저장 완료");
                         } catch (Exception e) {
                             logger.error("[::platformCreateProject::] DB 저장 실패");
@@ -580,6 +584,7 @@ public class PlatformProjectImpl implements PlatformProject {
 
         String createProjectFlag = createInfo.get("result");
         String jiraProjectName = createInfo.get("jiraProjectName");
+        String jiraProjectKey=  createInfo.get("jiraProjectKey");
 
         if (createProjectFlag.equals("프로젝트 생성 성공")) {
 
@@ -587,7 +592,7 @@ public class PlatformProjectImpl implements PlatformProject {
             if (projectFlag.equals("P")) { // 프로젝트 타입
 
                 if(commonDTO.getAllocationFlag()){
-                    createStaffAllocationIssue(description,projectName,projectFlag,salesManager);
+                    createStaffAllocationIssue(description,projectName,projectFlag,salesManager,jiraProjectKey);
                 }
 
                 ProjectInfoDTO.ProjectInfoDTOBuilder<?, ?> projectBuilder = ProjectInfoDTO.builder();
@@ -626,7 +631,7 @@ public class PlatformProjectImpl implements PlatformProject {
             else {
 
                 if(commonDTO.getAllocationFlag()){
-                    createStaffAllocationIssue(description,projectName,projectFlag,salesManager);
+                    createStaffAllocationIssue(description,projectName,projectFlag,salesManager,jiraProjectKey);
                 }
 
                 MaintenanceInfoDTO.MaintenanceInfoDTOBuilder<?, ?> maintenanceBuilder = MaintenanceInfoDTO.builder();
@@ -1256,7 +1261,7 @@ public class PlatformProjectImpl implements PlatformProject {
         return returnMessage;
     }
 
-    private void createStaffAllocationIssue(String description, String projectName, String flag, String salesManager)throws Exception{
+    private void createStaffAllocationIssue(String description, String projectName, String flag, String salesManager,String jiraProjectKey)throws Exception{
 
         logger.info("[::platformCreateProject::] 인력배정 이슈 생성 시작");
 
@@ -1308,11 +1313,19 @@ public class PlatformProjectImpl implements PlatformProject {
 
             String key = responseIssueDTO.getKey();
 
+            RequestWeblinkDTO requestWeblinkDTO = new RequestWeblinkDTO();
+            requestWeblinkDTO.setJiraKey(jiraProjectKey);
+            requestWeblinkDTO.setIssueIdOrKey(responseIssueDTO.getKey());
+            requestWeblinkDTO.setTitle(projectName);
+
+            jiraIssue.createWebLink(requestWeblinkDTO);
+
             if(!key.isEmpty() || key != null){
                 if(flag.equals("P")){
-                    jiraIssue.addMentionAndComment(key,salesManager,"프로젝트 인력 배정 보드에 이슈가 생성되었습니다.",responseIssueDTO.getSelf());
+
+                    jiraIssue.addMentionAndComment(key,salesManager,"프로젝트 인력 배정 보드에 이슈가 생성되었습니다.");
                 }else{
-                    jiraIssue.addMentionAndComment(key,salesManager,"유지보수 인력 배정 보드에 이슈가 생성되었습니다.",responseIssueDTO.getSelf());
+                    jiraIssue.addMentionAndComment(key,salesManager,"유지보수 인력 배정 보드에 이슈가 생성되었습니다.");
                 }
                 logger.info("[::platformCreateProject::] 인력배정 이슈 생성 성공");
             }
