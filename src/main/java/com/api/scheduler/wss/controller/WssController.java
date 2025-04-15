@@ -37,12 +37,6 @@ public class WssController {
         logger.info("sync single project data");
         return wssScheduler.syncSingleProject(jiraProjectKey);
     }
-    // 스케줄러: 프로젝트 동기화
-    @PostMapping("/schedule/project")
-    public void syncProjectByScheduler() throws Exception {
-        logger.info("스케줄러를 통한 프로젝트 정보 WSS로 동기화");
-        wssScheduler.syncProjectByScheduler();
-    }
 
     //=================================================이  슈===========================================================
 
@@ -60,10 +54,21 @@ public class WssController {
         return wssScheduler.syncAllIssue();
     }
 
-    // 지라에 생성된 프로젝트 일별 동기화
+    //=================================================스케줄러===========================================================
+
+    // 스케줄러: 프로젝트 동기화 (일별)
+    @PostMapping("/schedule/project")
+    public void syncProjectByScheduler() throws Exception {
+        logger.info("스케줄러를 통한 프로젝트 정보 WSS로 동기화");
+        wssScheduler.syncProjectByScheduler();
+    }
 
 
-
-    // 지라에 생성된 이슈 일별 동기화
+    // 스케줄러: 지라에 생성된 이슈 일별 동기화
+    @PostMapping("/schedule/Issue")
+    public void syncIssueByScheduler() throws Exception {
+        logger.info("스케줄러를 통한 이슈 정보 WSS로 동기화");
+        wssScheduler.syncIssueByScheduler();
+    }
 
 }

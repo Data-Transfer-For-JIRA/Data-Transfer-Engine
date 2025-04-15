@@ -67,27 +67,6 @@ public class WssSchedulerImpl implements WssScheduler{
     }
 
 
-    @Override
-    @Transactional
-    public void syncProjectByScheduler() throws Exception {
-        logger.info("스케줄러를 통한 프로젝트 정보 WSS로 동기화");
-        LocalDate today = LocalDate.now();
-
-        LocalDateTime startOfDay = today.atStartOfDay(); // 오늘 00:00:00
-        LocalDateTime endOfDay = today.atTime(LocalTime.MAX); // 오늘 23:59:59.999999999
-
-        List<TB_JML_Entity> 프로젝트_목록 = tb_jml_jpaRepository.findByMigratedDateBetween(startOfDay,endOfDay);
-
-        프로젝트_목록.parallelStream().forEach(프로젝트 -> {
-            try {
-                saveWssProjectInfo(프로젝트);
-            } catch (Exception e) {
-                throw new RuntimeException("프로젝트 저장 중 오류 발생: " + 프로젝트.getKey(), e);
-            }
-        });
-
-    }
-
     /*
     *  프로젝트에 생성된 이슈 백업 데이터를 WSS에 저장 합니다.
     * */
@@ -134,6 +113,49 @@ public class WssSchedulerImpl implements WssScheduler{
         });
 
         return 저장한_이슈목록;
+    }
+
+
+    @Override
+    @Transactional
+    public void syncProjectByScheduler() throws Exception {
+        logger.info("스케줄러를 통한 프로젝트 정보 WSS로 동기화");
+        LocalDate today = LocalDate.now();
+
+        LocalDateTime startOfDay = today.atStartOfDay(); // 오늘 00:00:00
+        LocalDateTime endOfDay = today.atTime(LocalTime.MAX); // 오늘 23:59:59.999999999
+
+        List<TB_JML_Entity> 프로젝트_목록 = tb_jml_jpaRepository.findByMigratedDateBetween(startOfDay,endOfDay);
+
+        프로젝트_목록.parallelStream().forEach(프로젝트 -> {
+            try {
+                saveWssProjectInfo(프로젝트);
+            } catch (Exception e) {
+                throw new RuntimeException("프로젝트 저장 중 오류 발생: " + 프로젝트.getKey(), e);
+            }
+        });
+
+    }
+
+    @Override
+    @Transactional
+    public void syncIssueByScheduler() throws Exception {
+        logger.info("스케줄러를 통한 이슈 정보 WSS로 동기화");
+        LocalDate today = LocalDate.now();
+
+        LocalDateTime startOfDay = today.atStartOfDay(); // 오늘 00:00:00
+        LocalDateTime endOfDay = today.atTime(LocalTime.MAX); // 오늘 23:59:59.999999999
+
+        List<BACKUP_ISSUE_Entity> 이슈목록 = backup_issue_jpaRepository.findByCreateDateBetween(startOfDay,endOfDay);
+        이슈목록.parallelStream().forEach(이슈 -> {
+            try {
+                TB_JML_Entity 프로젝트 = tb_jml_jpaRepository.findById(이슈.getJiraProjectKey()).orElse(null);
+                PJ_PG_SUB_Entity saveResult = saveIssue(이슈, 프로젝트);
+            } catch (Exception e) {
+                throw new RuntimeException("이슈 저장 중 오류 발생: " + 이슈.get지라_이슈_키(), e);
+            }
+        });
+
     }
 
 

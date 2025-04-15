@@ -7,11 +7,11 @@ import java.util.List;
 
 public interface WssScheduler {
 
+    // =================================================프로젝트===========================================================
+    
     void syncAllProjectData() throws Exception;
 
     TB_PJT_BASE_Entity syncSingleProject(String jiraProjectKey) throws Exception;
-
-    void syncProjectByScheduler() throws Exception;
 
 
     // =================================================이슈===========================================================
@@ -19,4 +19,11 @@ public interface WssScheduler {
     List<PJ_PG_SUB_Entity>  syncSingleIssue(String jiraProjectKey) throws Exception;
 
     List<PJ_PG_SUB_Entity>  syncAllIssue() throws Exception;
+    
+    
+    // =================================================스케줄러===========================================================
+
+    void syncProjectByScheduler() throws Exception;
+
+    void syncIssueByScheduler() throws Exception;
 }
