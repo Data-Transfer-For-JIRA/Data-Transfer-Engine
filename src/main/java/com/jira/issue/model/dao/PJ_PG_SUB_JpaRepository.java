@@ -27,4 +27,6 @@ public interface PJ_PG_SUB_JpaRepository extends JpaRepository<PJ_PG_SUB_Entity,
     int findMaxProjectId(@Param("projectCode") String projectCode);
 
     boolean existsByCreationDateAndIssueContent(Date creationDate, String issueContent);
+
+    PJ_PG_SUB_Entity findByJiraIssueKey(String jiraIssueKey);
 }

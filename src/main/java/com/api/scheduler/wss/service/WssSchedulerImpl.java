@@ -163,76 +163,94 @@ public class WssSchedulerImpl implements WssScheduler{
         if (이슈 == null) return null;
 
         try {
-            // 1. WSS에서 넘어온 프로젝트 이름 기반 조회
+            String jiraIssueKey = 이슈.get지라_이슈_키();
+            PJ_PG_SUB_Entity 기존_이슈 = pj_pg_sub_jpaRepository.findByJiraIssueKey(jiraIssueKey);
+
+            // [1] 프로젝트 조회 및 코드 확보
             String wssProjectName = 프로젝트.getWssProjectName();
             String wssProjectCode = 프로젝트.getProjectCode();
             String projectKey = 프로젝트.getKey();
 
-            // 2. 프로젝트 코드로 먼저 조회 시도
-            Optional<TB_PJT_BASE_Entity> table = Optional.empty();
-            if (wssProjectCode != null && !wssProjectCode.isBlank()) {
-                table = tb_pjt_base_jpaRepository.findById(wssProjectCode);
-            }
-
-            // 3. 없으면 프로젝트 이름으로 재조회
-            if (table.isEmpty() && wssProjectName != null) {
-                table = Optional.ofNullable(tb_pjt_base_jpaRepository.findByTrimmedProjectName(wssProjectName));
-            }
-
-            // 4. 프로젝트 키(예외 케이스)로 마지막 조회 시도
-            if (table.isEmpty() && projectKey != null) {
-                table = tb_pjt_base_jpaRepository.findById(projectKey);
-            }
-
-            // 5. 여전히 못 찾으면 예외 처리
-            if (table.isEmpty()) {
+            Optional<TB_PJT_BASE_Entity> 프로젝트정보 = findProjectEntity(wssProjectCode, wssProjectName, projectKey);
+            if (프로젝트정보.isEmpty()) {
                 throw new RuntimeException("[중요!!] 해당 프로젝트 정보를 찾을 수 없습니다 프로젝트키 ---> " + 프로젝트.getKey());
             }
+            wssProjectCode = 프로젝트정보.get().getProjectCode();
 
-            // 6. 조회 성공 → 코드 확보
-            wssProjectCode = table.get().getProjectCode();
+            // [2] 이슈 상세내용 및 링크 구성
+            String issueLink = buildIssueLink(프로젝트.getKey(), 이슈.get지라_이슈_키());
+            String 상세내용 = formatIssueContent(이슈.get지라_이슈_제목(), 이슈.get상세내용(), issueLink);
+            Date 등록일 = (이슈.getCreateDate() != null) ? 이슈.getCreateDate() : new Date();
 
-            // 7. 프로젝트 ID 생성
-            int maxProjectId = pj_pg_sub_jpaRepository.findMaxProjectId(wssProjectCode);
-            int nextProjectId = (maxProjectId != 0) ? maxProjectId + 1 : 1;
-
-            // 8. 이슈 상세 내용 + 링크 구성
-            String issueLink = "https://markany.atlassian.net/jira/core/projects/" +
-                    프로젝트.getKey() +
-                    "/board?groupBy=status&selectedIssue=" +
-                    getTrimmedJiraKey(이슈.get지라_이슈_키());
-
-            String 상세내용 = String.format("%s<br><br>%s<br><br>%s",
-                    safe(이슈.get지라_이슈_제목()),
-                    safe(이슈.get상세내용()),
-                    issueLink
-            );
-
-            // 9. 중복 체크
-            Date 등록일 = 이슈.getCreateDate() != null ? 이슈.getCreateDate() : new Date();
-            if (pj_pg_sub_jpaRepository.existsByCreationDateAndIssueContent(등록일, 상세내용)) {
-                logger.info(" 중복된 이슈입니다. ====> 이슈 키: " + 이슈.get지라_이슈_키());
+            // [3] 중복 체크 (신규 생성 케이스만)
+            if (기존_이슈 == null && pj_pg_sub_jpaRepository.existsByCreationDateAndIssueContent(등록일, 상세내용)) {
+                logger.info("중복된 이슈입니다 ====> 이슈 키: " + 이슈.get지라_이슈_키());
                 return null;
             }
 
-            // 10. 이슈 엔티티 생성 및 저장
-            PJ_PG_SUB_Entity 이슈_엔티티 = PJ_PG_SUB_Entity.builder()
-                    .projectId(String.valueOf(nextProjectId))
-                    .projectCode(wssProjectCode)
-                    .creationDate(이슈.getCreateDate() != null ? 이슈.getCreateDate() : new Date())
-                    .writer(이슈.get담당자() != null ? 이슈.get담당자() : "담당자 없음")
-                    .issueContent(상세내용)
-                    .subNoticeFlag(false)
-                    .issueMigrateFlag(true)
-                    .build();
-
-            return pj_pg_sub_jpaRepository.save(이슈_엔티티);
+            // [4] 저장 또는 업데이트
+            if (기존_이슈 != null) {
+                logger.info("이슈 업데이트: " + jiraIssueKey);
+                기존_이슈.setCreationDate(이슈.get업데이트일());
+                기존_이슈.setIssueContent(상세내용);
+                return pj_pg_sub_jpaRepository.save(기존_이슈);
+            } else {
+                logger.info("이슈 저장: " + jiraIssueKey);
+                int nextProjectId = getNextProjectId(wssProjectCode);
+                PJ_PG_SUB_Entity 새_이슈 = buildNewIssueEntity(이슈, wssProjectCode, nextProjectId, 상세내용, 등록일);
+                return pj_pg_sub_jpaRepository.save(새_이슈);
+            }
 
         } catch (Exception e) {
-            logger.error("이슈 저장 중 오류"); // 로그 남기기
-            throw new Exception("이슈 저장 중 오류 발생");
+            logger.error("이슈 저장 중 오류", e);
+            throw new Exception("이슈 저장 중 오류 발생", e);
         }
     }
+
+    private Optional<TB_PJT_BASE_Entity> findProjectEntity(String code, String name, String key) {
+        if (code != null && !code.isBlank()) {
+            Optional<TB_PJT_BASE_Entity> byCode = tb_pjt_base_jpaRepository.findById(code);
+            if (byCode.isPresent()) return byCode;
+        }
+        if (name != null) {
+            TB_PJT_BASE_Entity byName = tb_pjt_base_jpaRepository.findByTrimmedProjectName(name);
+            if (byName != null) return Optional.of(byName);
+        }
+        if (key != null) {
+            return tb_pjt_base_jpaRepository.findById(key);
+        }
+        return Optional.empty();
+    }
+
+    private String buildIssueLink(String projectKey, String jiraIssueKey) {
+        return "https://markany.atlassian.net/jira/core/projects/" +
+                projectKey +
+                "/board?groupBy=status&selectedIssue=" +
+                getTrimmedJiraKey(jiraIssueKey);
+    }
+
+    private String formatIssueContent(String 제목, String 상세내용, String 링크) {
+        return String.format("%s<br><br>%s<br><br>%s", safe(제목), safe(상세내용), 링크);
+    }
+
+    private int getNextProjectId(String projectCode) {
+        int maxProjectId = pj_pg_sub_jpaRepository.findMaxProjectId(projectCode);
+        return (maxProjectId != 0) ? maxProjectId + 1 : 1;
+    }
+
+    private PJ_PG_SUB_Entity buildNewIssueEntity(BACKUP_ISSUE_Entity 이슈, String projectCode, int projectId, String 상세내용, Date 등록일) {
+        return PJ_PG_SUB_Entity.builder()
+                .projectId(String.valueOf(projectId))
+                .projectCode(projectCode)
+                .creationDate(등록일)
+                .writer(이슈.get담당자() != null ? 이슈.get담당자() : "담당자 없음")
+                .issueContent(상세내용)
+                .subNoticeFlag(false)
+                .issueMigrateFlag(true)
+                .jiraIssueKey(이슈.get지라_이슈_키())
+                .build();
+    }
+
 
     private String safe(String value) {
         return value != null ? value : "";

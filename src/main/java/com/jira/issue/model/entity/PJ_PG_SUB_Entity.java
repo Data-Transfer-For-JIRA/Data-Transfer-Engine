@@ -39,6 +39,9 @@ public class PJ_PG_SUB_Entity {
     @Column(name = "MI_FLAG")
     private Boolean issueMigrateFlag;
 
+    @Column(name = "JIRA_ISSUE_KEY")
+    private String jiraIssueKey;
+
     @Getter
     @Setter
     @EqualsAndHashCode
