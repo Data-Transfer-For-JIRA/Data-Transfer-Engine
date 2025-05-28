@@ -17,13 +17,16 @@ import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 
-import javax.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.*;
+
 
 @AllArgsConstructor
 @Service("WssScheduler")
@@ -96,21 +99,21 @@ public class WssSchedulerImpl implements WssScheduler{
 
 
     @Override
-    @Transactional
     public List<PJ_PG_SUB_Entity> syncAllIssue() throws Exception {
         logger.info("모든 이슈 동기화 시작");
+
         List<BACKUP_ISSUE_Entity> 이슈목록 = backup_issue_jpaRepository.findAll();
         List<PJ_PG_SUB_Entity> 저장한_이슈목록 = new ArrayList<>();
 
-        이슈목록.parallelStream().forEach(이슈 -> {
+        for (BACKUP_ISSUE_Entity 이슈 : 이슈목록) {
             try {
                 TB_JML_Entity 프로젝트 = tb_jml_jpaRepository.findById(이슈.getJiraProjectKey()).orElse(null);
-                PJ_PG_SUB_Entity saveResult = saveIssue(이슈, 프로젝트);
-                저장한_이슈목록.add(saveResult);
+                PJ_PG_SUB_Entity result = saveIssue(이슈, 프로젝트);
+                if (result != null) 저장한_이슈목록.add(result);
             } catch (Exception e) {
-                throw new RuntimeException("이슈 저장 중 오류 발생: " + 이슈.get지라_이슈_키(), e);
+                logger.error("이슈 저장 중 오류 발생: " + 이슈.get지라_이슈_키(), e);
             }
-        });
+        }
 
         return 저장한_이슈목록;
     }
@@ -158,48 +161,57 @@ public class WssSchedulerImpl implements WssScheduler{
 
     }
 
-
-    private PJ_PG_SUB_Entity saveIssue(BACKUP_ISSUE_Entity 이슈, TB_JML_Entity 프로젝트) throws Exception {
+    @Transactional
+    public PJ_PG_SUB_Entity saveIssue(BACKUP_ISSUE_Entity 이슈, TB_JML_Entity 프로젝트) throws Exception {
         if (이슈 == null) return null;
 
         try {
             String jiraIssueKey = 이슈.get지라_이슈_키();
-            PJ_PG_SUB_Entity 기존_이슈 = pj_pg_sub_jpaRepository.findByJiraIssueKey(jiraIssueKey);
 
-            // [1] 프로젝트 조회 및 코드 확보
+            if (프로젝트 == null) {
+                throw new RuntimeException("[중요] 프로젝트 정보를 찾을 수 없습니다: " + 이슈.getJiraProjectKey());
+            }
+
             String wssProjectName = 프로젝트.getWssProjectName();
             String wssProjectCode = 프로젝트.getProjectCode();
             String projectKey = 프로젝트.getKey();
 
             Optional<TB_PJT_BASE_Entity> 프로젝트정보 = findProjectEntity(wssProjectCode, wssProjectName, projectKey);
             if (프로젝트정보.isEmpty()) {
-                throw new RuntimeException("[중요!!] 해당 프로젝트 정보를 찾을 수 없습니다 프로젝트키 ---> " + 프로젝트.getKey());
+                throw new RuntimeException("[중요!!] 프로젝트 정보를 찾을 수 없습니다. 프로젝트 키: " + projectKey);
             }
             wssProjectCode = 프로젝트정보.get().getProjectCode();
 
-            // [2] 이슈 상세내용 및 링크 구성
-            String issueLink = buildIssueLink(프로젝트.getKey(), 이슈.get지라_이슈_키());
-            String 상세내용 = formatIssueContent(이슈.get지라_이슈_제목(), 이슈.get상세내용(), issueLink);
-            Date 등록일 = (이슈.getCreateDate() != null) ? 이슈.getCreateDate() : new Date();
+            String issueLink = buildIssueLink(projectKey, jiraIssueKey);
+            String 상세내용 = formatIssueContent(
+                    Optional.ofNullable(이슈.get지라_이슈_제목()).orElse(""),
+                    Optional.ofNullable(이슈.get상세내용()).orElse(""),
+                    issueLink
+            );
+            Date 등록일 = Optional.ofNullable(이슈.getCreateDate()).orElse(new Date());
 
-            // [3] 중복 체크 (신규 생성 케이스만)
-            if (기존_이슈 == null && pj_pg_sub_jpaRepository.existsByCreationDateAndIssueContent(등록일, 상세내용)) {
-                logger.info("중복된 이슈입니다 ====> 이슈 키: " + 이슈.get지라_이슈_키());
+
+            PJ_PG_SUB_Entity 기존_이슈 = pj_pg_sub_jpaRepository.findByJiraIssueKey(jiraIssueKey);
+
+            if (기존_이슈 != null) {
+                logger.info("이미 존재하는 이슈입니다. 업데이트 진행 ===> {}", jiraIssueKey);
+                기존_이슈.setCreationDate(Optional.ofNullable(이슈.get업데이트일()).orElse(등록일));
+                기존_이슈.setIssueContent(상세내용);
+                return pj_pg_sub_jpaRepository.save(기존_이슈);
+            }
+
+            // 중복 이슈 여부 검사
+            boolean 중복여부 = pj_pg_sub_jpaRepository.existsByCreationDateAndIssueContent(등록일, 상세내용);
+            if (중복여부) {
+                logger.info("중복된 이슈입니다. 저장 건너뜀 ===> 이슈 키: {}", jiraIssueKey);
                 return null;
             }
 
-            // [4] 저장 또는 업데이트
-            if (기존_이슈 != null) {
-                logger.info("이슈 업데이트: " + jiraIssueKey);
-                기존_이슈.setCreationDate(이슈.get업데이트일());
-                기존_이슈.setIssueContent(상세내용);
-                return pj_pg_sub_jpaRepository.save(기존_이슈);
-            } else {
-                logger.info("이슈 저장: " + jiraIssueKey);
-                int nextProjectId = getNextProjectId(wssProjectCode);
-                PJ_PG_SUB_Entity 새_이슈 = buildNewIssueEntity(이슈, wssProjectCode, nextProjectId, 상세내용, 등록일);
-                return pj_pg_sub_jpaRepository.save(새_이슈);
-            }
+            logger.info("새 이슈 저장 ===> {}", jiraIssueKey);
+            int nextProjectId = getNextProjectId(wssProjectCode);
+
+            PJ_PG_SUB_Entity 새_이슈 = buildNewIssueEntity(이슈, wssProjectCode, nextProjectId, 상세내용, 등록일);
+            return pj_pg_sub_jpaRepository.save(새_이슈);
 
         } catch (Exception e) {
             logger.error("이슈 저장 중 오류", e);
@@ -207,9 +219,10 @@ public class WssSchedulerImpl implements WssScheduler{
         }
     }
 
+
     private Optional<TB_PJT_BASE_Entity> findProjectEntity(String code, String name, String key) {
         if (code != null && !code.isBlank()) {
-            Optional<TB_PJT_BASE_Entity> byCode = tb_pjt_base_jpaRepository.findById(code);
+            Optional<TB_PJT_BASE_Entity> byCode = tb_pjt_base_jpaRepository.findById(code.trim());
             if (byCode.isPresent()) return byCode;
         }
         if (name != null) {
@@ -234,8 +247,8 @@ public class WssSchedulerImpl implements WssScheduler{
     }
 
     private int getNextProjectId(String projectCode) {
-        int maxProjectId = pj_pg_sub_jpaRepository.findMaxProjectId(projectCode);
-        return (maxProjectId != 0) ? maxProjectId + 1 : 1;
+        int maxId = pj_pg_sub_jpaRepository.findMaxProjectId(projectCode);
+        return maxId + 1;
     }
 
     private PJ_PG_SUB_Entity buildNewIssueEntity(BACKUP_ISSUE_Entity 이슈, String projectCode, int projectId, String 상세내용, Date 등록일) {

@@ -130,19 +130,13 @@ public class BackupController {
             value={"/normal-issue"},
             method={RequestMethod.POST}
     )
-    public void 지라이슈_백업(@RequestParam String 지라이슈_키) throws Exception{
+    public void 지라이슈_백업(@RequestParam String 지라프로젝트_키) throws Exception{
 
         long 시작시간 = System.currentTimeMillis();
 
-        logger.info("[::BackupController::] 지라 이슈 백업 스케줄러 -------> {}",지라이슈_키);
+        logger.info("[::BackupController::] 지라 이슈 백업 스케줄러 -------> {}",지라프로젝트_키);
 
-        backupScheduler.지라이슈_저장(지라이슈_키);
-
-        long 종료시간 = System.currentTimeMillis();
-
-        long 소요시간 = 종료시간 - 시작시간;
-
-        logger.info("[::BackupController::] 지라 이슈 데이터 백업 스케줄러 종로 소요시간: {}",소요시간);
+        backupScheduler.지라이슈_저장(지라프로젝트_키);
     }
 
 
@@ -164,7 +158,30 @@ public class BackupController {
             method = {RequestMethod.PUT}
     )
     public void updateProjectNamePrefix() throws Exception {
-        logger.info("[::PlatformController::] 프로젝트 이름 prefix 업데이트");
+        logger.info("[::BackupController::] 프로젝트 이름 prefix 업데이트");
         backupScheduler.updateProjectNamePrefix();
+    }
+
+    /*
+     *  TB_JML 테이블의 데이터와 지라 프로젝트간 싱크 일지
+     * */
+    @ResponseBody
+    @RequestMapping(
+            value = {"/sync/project"},
+            method = {RequestMethod.PUT}
+    )
+    public void syncProject() throws Exception {
+        logger.info("[::BackupController::] JML 프로젝트 테이블 정보 업데이트");
+        backupScheduler.syncProject();
+    }
+
+    @ResponseBody
+    @RequestMapping(
+            value = {"/sync/singleProject"},
+            method = {RequestMethod.PUT}
+    )
+    public void syncSingleProject(@RequestParam String jiraKey) throws Exception {
+        logger.info("[::BackupController::] JML 프로젝트 테이블 정보 업데이트 (단일 프로젝트)");
+        backupScheduler.syncSingleProject(jiraKey);
     }
 }

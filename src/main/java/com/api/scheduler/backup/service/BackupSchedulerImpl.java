@@ -41,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -690,38 +691,30 @@ public class BackupSchedulerImpl implements BackupScheduler {
      *  - wss 이슈를 제외한 나머지 이슈중 업데이트가 있는 이슈를 조회하여 백업
      *  - 삭제 된것이 있는지 확인 필요 이슈키도 저장 updated >= startOfDay() OR created >= startOfDay()
      * */
-    @Async
     @Override
     @Transactional
-    public CompletableFuture<Void> 지라이슈_벌크_백업() throws Exception {
+    public void 지라이슈_벌크_백업() throws Exception {
         logger.info("[::BackupSchedulerImpl::] 지라 이슈 벌크 백업 스케줄러");
+
         int page = 0;
         int size = 100;
         Pageable pageable = PageRequest.of(page, size);
 
         Page<TB_JML_Entity> 프로젝트_페이지;
+
         do {
             프로젝트_페이지 = TB_JML_JpaRepository.findAll(pageable);
             List<TB_JML_Entity> 모든_프로젝트 = 프로젝트_페이지.getContent();
-            List<CompletableFuture<Void>> futures = 모든_프로젝트.stream()
-                    .map(프로젝트 -> {
-                        try {
-                            return 지라이슈_처리(프로젝트);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
-                    .collect(Collectors.toList());
 
-            // 모든 비동기 작업이 완료될 때까지 대기
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            for (TB_JML_Entity 프로젝트 : 모든_프로젝트) {
+                지라이슈_처리(프로젝트);
+            }
 
             pageable = 프로젝트_페이지.nextPageable();
         } while (프로젝트_페이지.hasNext());
 
-        return CompletableFuture.completedFuture(null);
+        logger.info("[::BackupSchedulerImpl::] 지라 이슈 벌크 백업 완료");
     }
-
     @Override
     @Transactional
     public void 지라이슈_저장(String 지라프로젝트_키) throws Exception{
@@ -740,55 +733,52 @@ public class BackupSchedulerImpl implements BackupScheduler {
         }
     }
 
-    @Async
-    private CompletableFuture<Void> 지라이슈_처리(TB_JML_Entity 프로젝트) throws Exception{
 
+    private void 지라이슈_처리(TB_JML_Entity 프로젝트) {
+        String 프로젝트_키 = 프로젝트.getKey();
+        List<SearchRenderedIssue> 전체이슈_목록 = new ArrayList<>();
+        logger.info("[::지라이슈_저장::] 프로젝트에 생성된 이슈 정보 저장 : 프로젝트 키 = "+프로젝트_키);
         try {
             int 검색_시작_지점 = 0;
             int 검색_최대_개수 = 50;
             boolean isLast = false;
-            // 1. 프로젝트에 걸린 모든 이슈 조회
-            List<SearchRenderedIssue> 전체이슈_목록 = new ArrayList<>();
-
-            String 프로젝트_키 =프로젝트.getKey();
 
             while (!isLast) {
-                프로젝트에_생성된_이슈데이터 전체이슈_조회 = jiraIssue.프로젝트에_생성된_이슈조회(프로젝트_키,검색_시작_지점,검색_최대_개수);
+                프로젝트에_생성된_이슈데이터 이슈_조회결과 =
+                        jiraIssue.프로젝트에_생성된_이슈조회(프로젝트_키, 검색_시작_지점, 검색_최대_개수);
 
-                전체이슈_목록.addAll(전체이슈_조회.getIssues());
+                전체이슈_목록.addAll(이슈_조회결과.getIssues());
 
-                if (검색_시작_지점 + 검색_최대_개수 >= 전체이슈_조회.getTotal()) {
+                if (검색_시작_지점 + 검색_최대_개수 >= 이슈_조회결과.getTotal()) {
                     isLast = true;
                 } else {
                     검색_시작_지점 += 검색_최대_개수;
                 }
             }
 
-            전체이슈_목록.parallelStream()
-                    .forEach(지라이슈 -> {
-
-                        String 본문 = Optional.ofNullable(지라이슈.getRenderedFields().getDescription()).orElse("");
-
-                        if (지라이슈.getFields().getSummary().contains("WSS HISTORY") ||
-                                (본문 != null && containsAtLeastTwo(본문))) {
-                            return;
-                        } else {
-                            try {
-                                지라이슈_저장(지라이슈,프로젝트_키);
-                                지라이슈_댓글저장(지라이슈.getKey());
-                            } catch (Exception e) {
-                                logger.error("::[:: 지라이슈_처리 ::]::일반 이슈 저장시 오류 발생  ------> 이슈 키 : "+지라이슈.getKey()+" 오류 내용 ----> " +e.getMessage());
-                                throw new RuntimeException(e);
-                            }
-                        }
-                    });
-
-        }catch(Exception e){
-            logger.error("[::지라이슈_처리::] 장애 발생 {}",e.getMessage());
+        } catch (Exception e) {
+            logger.error("이슈 조회 중 오류 발생 - 프로젝트 키: {}, 메시지: {}", 프로젝트_키, e.getMessage());
+            return;
         }
 
-        return CompletableFuture.completedFuture(null);
+        for (SearchRenderedIssue 지라이슈 : 전체이슈_목록) {
+            try {
+                String 본문 = Optional.ofNullable(지라이슈.getRenderedFields())
+                        .map(f -> f.getDescription())
+                        .orElse("");
+
+                if (!지라이슈.getFields().getSummary().contains("WSS HISTORY")
+                        && (본문 == null || !containsAtLeastTwo(본문))) {
+                    지라이슈_저장(지라이슈, 프로젝트_키);
+                    지라이슈_댓글저장(지라이슈.getKey());
+                }
+
+            } catch (Exception e) {
+                logger.error("이슈 저장 중 오류 - 이슈 키: {}, 메시지: {}", 지라이슈.getKey(), e.getMessage());
+            }
+        }
     }
+
 
     public boolean containsAtLeastTwo(String text) {
 
@@ -817,8 +807,11 @@ public class BackupSchedulerImpl implements BackupScheduler {
         String 상세_내용 = null;
         if (지라이슈.getRenderedFields() != null) {
             상세_내용 = 지라이슈.getRenderedFields().getDescription();
-            
-            이미지_저장(상세_내용,지라_이슈_키);
+            try {
+                이미지_저장(상세_내용, 지라_이슈_키);
+            } catch (Exception e) {
+                logger.warn("[::지라이슈_저장::] 이미지 저장 실패 - 이슈 키: {}, 메시지: {}", 지라_이슈_키, e.getMessage());
+            }
         }
 
         String 지라_이슈_제목 = null;
@@ -1229,4 +1222,77 @@ public class BackupSchedulerImpl implements BackupScheduler {
             }
         }
     }
+
+    @Override
+    public CompletableFuture<Void> syncProject() {
+        logger.info("[::BackupSchedulerImpl::] 지라 프로젝트 수정 스케줄러 시작");
+        int page = 0;
+        int size = 100;
+
+        while (true) {
+            Page<TB_JML_Entity> 페이지 = TB_JML_JpaRepository.findAll(PageRequest.of(page, size));
+            List<TB_JML_Entity> 프로젝트들 = 페이지.getContent();
+
+            List<CompletableFuture<Void>> futures = 프로젝트들.stream()
+                    .map(프로젝트 -> 프로젝트_정보_업데이트_및_삭제(프로젝트)
+                            .exceptionally(e -> {
+                                logger.error("프로젝트 처리 중 예외 발생 - 키: {}", 프로젝트.getKey(), e);
+                                return null;
+                            }))
+                    .collect(Collectors.toList());
+
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+            if (!페이지.hasNext()) break;
+            page++;
+        }
+
+        logger.info("[::BackupSchedulerImpl::] 지라 프로젝트 이름 벌크 수정 스케줄러 완료");
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Override
+    public void syncSingleProject(String jiraKey) throws Exception{
+
+        logger.info("[::BackupSchedulerImpl::] 단일 지라 프로젝트 이름 동기화 시작: {}", jiraKey);
+        TB_JML_Entity 프로젝트 = TB_JML_JpaRepository.findByKey(jiraKey);
+
+        if (프로젝트 == null) {
+            logger.error("프로젝트 조회 실패: {}", jiraKey);
+            throw new Exception("프로젝트 조회 실패: " + jiraKey);
+        }
+
+        try {
+            프로젝트_정보_업데이트_및_삭제(프로젝트).join();
+            logger.info("[::BackupSchedulerImpl::] 단일 지라 프로젝트 이름 동기화 완료: {}", jiraKey);
+        } catch (Exception e) {
+            logger.error("단일 프로젝트 동기화 중 예외 발생 - 키: {}", jiraKey, e);
+            throw e;
+        }
+
+    }
+
+    @Async
+    private CompletableFuture<Void> 프로젝트_정보_업데이트_및_삭제(TB_JML_Entity 프로젝트) {
+        return CompletableFuture.runAsync(() -> {
+            String 프로젝트_키 = 프로젝트.getKey();
+            try {
+                ProjectDTO project = jiraProject.getJiraProjectInfoByJiraKey(프로젝트_키);
+                if (project == null) {
+                    logger.warn("프로젝트 조회 실패: {}", 프로젝트_키);
+                    return;
+                }
+
+                String 저장할_이름 = 담당자_이름_편집하기(project.getLead().getDisplayName());
+                프로젝트.setJiraProjectLeader(저장할_이름);
+                프로젝트.setJiraProjectName(project.getName());
+
+                TB_JML_JpaRepository.save(프로젝트);
+            } catch (Exception e) {
+                logger.warn("예외 발생 - 삭제 처리됨: {}", 프로젝트_키, e);
+                TB_JML_JpaRepository.delete(프로젝트);
+            }
+        });
+    }
+
 }

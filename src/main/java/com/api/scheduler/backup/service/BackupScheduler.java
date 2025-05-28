@@ -15,9 +15,9 @@ public interface BackupScheduler {
     /* 기본 정보 벌크 백업 스케줄러*/
     CompletableFuture<Void> 지라기본정보_벌크_백업() throws Exception;
     /* 이슈 백업 벌크 스케줄러*/
-    CompletableFuture<Void> 지라이슈_벌크_백업() throws Exception;
+    void 지라이슈_벌크_백업() throws Exception;
 
-    void 지라이슈_저장(String 지라이슈_키) throws Exception;
+    void 지라이슈_저장(String 지라프로젝트_키) throws Exception;
 
     Boolean 기본정보이슈_저장(String 지라_키,String 프로젝트_유형) throws Exception;
 
@@ -26,4 +26,8 @@ public interface BackupScheduler {
     void updateJMLSalesManager() throws Exception;
 
     void updateProjectNamePrefix() throws Exception;
+
+    CompletableFuture<Void> syncProject() throws Exception;
+
+    void syncSingleProject(String jiraKey) throws Exception;
 }
