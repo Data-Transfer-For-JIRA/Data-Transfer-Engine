@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 
 import org.springframework.transaction.annotation.Transactional;
+
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -149,7 +151,10 @@ public class WssSchedulerImpl implements WssScheduler{
         LocalDateTime startOfDay = today.atStartOfDay(); // 오늘 00:00:00
         LocalDateTime endOfDay = today.atTime(LocalTime.MAX); // 오늘 23:59:59.999999999
 
-        List<BACKUP_ISSUE_Entity> 이슈목록 = backup_issue_jpaRepository.findByCreateDateBetween(startOfDay,endOfDay);
+        Date startDate = Timestamp.valueOf(startOfDay);
+        Date endDate = Timestamp.valueOf(endOfDay);
+
+        List<BACKUP_ISSUE_Entity> 이슈목록 = backup_issue_jpaRepository.findByCreateDateBetween(startDate,endDate);
         이슈목록.parallelStream().forEach(이슈 -> {
             try {
                 TB_JML_Entity 프로젝트 = tb_jml_jpaRepository.findById(이슈.getJiraProjectKey()).orElse(null);

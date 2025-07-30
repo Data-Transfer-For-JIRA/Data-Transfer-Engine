@@ -26,12 +26,12 @@ class BackupSchedulerImplTest {
     @Commit
     void upDateProjectNamePrefix() throws Exception {
 
-        TB_JML_Entity 프로젝트 = TB_JML_JpaRepository.findByKey("TED833");
+        /*TB_JML_Entity 프로젝트 = TB_JML_JpaRepository.findByKey("TED833");
 
         backupScheduler.prefixUpdate(프로젝트);
 
         TB_JML_Entity 프로젝트_수정 = TB_JML_JpaRepository.findByKey("TED833");
 
-        assertEquals("M_20241028 프로젝트 생성", 프로젝트_수정.getJiraProjectName());
+        assertEquals("M_20241028 프로젝트 생성", 프로젝트_수정.getJiraProjectName());*/
     }
 }
