@@ -991,7 +991,7 @@ public class JiraIssueImpl implements JiraIssue {
 
         String jql = "project=" + jiraProjectCode + " AND issuetype=" + issueType;
         String fields = "key";
-        String endpoint = "/rest/api/3/search?jql=" + jql + "&fields=" + fields;
+        String endpoint = "/rest/api/3/search/jql?jql=" + jql + "&fields=" + fields;
 
         return webClientUtils.get(endpoint, String.class)
                 .map(responseString -> {
@@ -1025,7 +1025,7 @@ public class JiraIssueImpl implements JiraIssue {
 
         String jql = "project=" + jiraKey + " AND issuetype=" + issueType;
         String fields = "key";
-        String endpoint = "/rest/api/3/search?jql=" + jql + "&fields=" + fields;
+        String endpoint = "/rest/api/3/search/jql?jql=" + jql + "&fields=" + fields;
 
         return webClientUtils.get(endpoint, String.class)
                 .flatMap(responseString -> {
@@ -1373,7 +1373,7 @@ public class JiraIssueImpl implements JiraIssue {
             Date currentDate = new Date();
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
             logger.info("{} 오늘 생성 및 이슈 조회",dateFormat.format(currentDate) );
-            String endpoint = "/rest/api/3/search?jql=(updated >= startOfDay() OR created >= startOfDay()) AND (category = \"전자문서사업부 유지보수\" OR category = \"전자문서사업부 프로젝트\")";
+            String endpoint = "/rest/api/3/search/jql?jql=(updated >= startOfDay() OR created >= startOfDay()) AND (category = \"전자문서사업부 유지보수\" OR category = \"전자문서사업부 프로젝트\")";
             오늘_생성및_업데이트된_이슈데이터 조회결과 =  webClientUtils.get(endpoint,new ParameterizedTypeReference<오늘_생성및_업데이트된_이슈데이터>() {}).block();
 
             return 조회결과;
@@ -1386,7 +1386,7 @@ public class JiraIssueImpl implements JiraIssue {
     @Override
     public 프로젝트에_생성된_이슈데이터 프로젝트에_생성된_이슈조회(String 지라프로젝트_키, int 검색_시작_지점, int 검색_최대_개수) throws Exception{
         try {
-            String endpoint = "/rest/api/3/search?jql=project="+지라프로젝트_키+"&startAt=" + 검색_시작_지점 + "&maxResults=" + 검색_최대_개수+ "&expand=renderedFields";
+            String endpoint = "/rest/api/3/search/jql?jql=project="+지라프로젝트_키+"&startAt=" + 검색_시작_지점 + "&maxResults=" + 검색_최대_개수+ "&expand=renderedFields";
 
             프로젝트에_생성된_이슈데이터 조회결과 =  webClientUtils.getLargeResponse(endpoint,new ParameterizedTypeReference<프로젝트에_생성된_이슈데이터>() {});
 

@@ -191,6 +191,7 @@ public class PlatformProjectImpl implements PlatformProject {
 
     /*
     *  플랫폼으로 수정하기위해 프로젝트 데이터 조회
+    *  프로젝트 조회 > 프로젝트 선택 시 호출
     * */
     @Override
     public BaseDTO platformGetProject(String projectFlag, String jiraKey) throws Exception {
