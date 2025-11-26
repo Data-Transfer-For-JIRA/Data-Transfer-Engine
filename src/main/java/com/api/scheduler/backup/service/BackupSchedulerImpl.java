@@ -326,14 +326,22 @@ public class BackupSchedulerImpl implements BackupScheduler {
         List<String> 댓글_이슈키목록 = new ArrayList<>();
 
         // 오늘 생성 및 업데이트 된 이슈 조회 (댓글 생성 및 업데이트된 경우도 포함)
-        List<SearchIssueDTO<FieldDTO>> 이슈목록 = jiraIssue.오늘_업데이트및_생성된이슈들().getIssues();
+        List<오늘_생성및_업데이트된_이슈데이터_jql.IssueId> 오늘_생성및_업데이트된_아이디_목록 = jiraIssue.오늘_업데이트및_생성된이슈들().getIssues();
         //이슈목록.forEach(issue -> System.out.println(issue));
 
         String 프로젝트_기본정보 = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "프로젝트 기본 정보").getId();
         String 유지보수_기본정보  = FieldInfo.ofLabel(FieldInfoCategory.ISSUE_TYPE, "유지보수 기본 정보").getId();
 
         // 생성 업데이트 된 키 목록 분류
-        이슈목록.forEach(issue -> {
+        오늘_생성및_업데이트된_아이디_목록.forEach(issueId -> {
+
+            SearchRenderedIssue issue;
+            try {
+                issue = jiraIssue.이슈_조회(issueId.getId());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
             댓글_이슈키목록.add(issue.getKey());
             if (issue.getFields().getIssuetype().getId().equals(프로젝트_기본정보) ) {
                 프로젝트기본정보_이슈키목록.add(issue.getKey());
@@ -717,7 +725,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
     }
     @Override
     @Transactional
-    public void 지라이슈_저장(String 지라프로젝트_키) throws Exception{
+    public void 프로젝트키로_지라이슈_저장(String 지라프로젝트_키) throws Exception{
         logger.info("[::지라이슈_저장::] 단일 프로젝트 지라 이슈 저장 스케줄러");
         TB_JML_Entity 프로젝트 = TB_JML_JpaRepository.findByKey(지라프로젝트_키);
 
@@ -734,7 +742,7 @@ public class BackupSchedulerImpl implements BackupScheduler {
     }
 
 
-    private void 지라이슈_처리(TB_JML_Entity 프로젝트) {
+    private void 지라이슈_처리(TB_JML_Entity 프로젝트) throws Exception {
         String 프로젝트_키 = 프로젝트.getKey();
         List<SearchRenderedIssue> 전체이슈_목록 = new ArrayList<>();
         logger.info("[::지라이슈_저장::] 프로젝트에 생성된 이슈 정보 저장 : 프로젝트 키 = "+프로젝트_키);
@@ -760,17 +768,22 @@ public class BackupSchedulerImpl implements BackupScheduler {
             logger.error("이슈 조회 중 오류 발생 - 프로젝트 키: {}, 메시지: {}", 프로젝트_키, e.getMessage());
             return;
         }
+        String wss_프로젝트_코드 = 프로젝트.getProjectCode();
 
-        for (SearchRenderedIssue 지라이슈 : 전체이슈_목록) {
+        for (SearchRenderedIssue 지라이슈_데이터 : 전체이슈_목록) {
+            SearchRenderedIssue 지라이슈 = jiraIssue.이슈_조회(지라이슈_데이터.getKey());
             try {
+
                 String 본문 = Optional.ofNullable(지라이슈.getRenderedFields())
                         .map(f -> f.getDescription())
                         .orElse("");
 
                 if (!지라이슈.getFields().getSummary().contains("WSS HISTORY")
                         && (본문 == null || !containsAtLeastTwo(본문))) {
-                    지라이슈_저장(지라이슈, 프로젝트_키);
-                    지라이슈_댓글저장(지라이슈.getKey());
+                    BACKUP_ISSUE_Entity 저장된_이슈 = 지라이슈_저장(지라이슈, 프로젝트_키);
+                    List<BACKUP_ISSUE_COMMENT_Entity> 저장된_댓글 = 지라이슈_댓글저장(지라이슈.getKey());
+
+
                 }
 
             } catch (Exception e) {

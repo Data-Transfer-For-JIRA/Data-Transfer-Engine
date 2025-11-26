@@ -108,7 +108,7 @@ public class JiraIssueController {
             value = {"/today"},
             method = {RequestMethod.GET}
     )
-    public 오늘_생성및_업데이트된_이슈데이터 오늘_업데이트및_생성된이슈들() throws Exception{
+    public 오늘_생성및_업데이트된_이슈데이터_jql 오늘_업데이트및_생성된이슈들() throws Exception{
         logger.info(":: JiraIssueController :: 오늘_업데이트및_생성된이슈들");
         return jiraIssue.오늘_업데이트및_생성된이슈들();
     }

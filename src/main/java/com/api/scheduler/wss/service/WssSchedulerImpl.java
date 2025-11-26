@@ -143,7 +143,6 @@ public class WssSchedulerImpl implements WssScheduler{
     }
 
     @Override
-    @Transactional
     public void syncIssueByScheduler() throws Exception {
         logger.info("스케줄러를 통한 이슈 정보 WSS로 동기화");
         LocalDate today = LocalDate.now();
@@ -155,24 +154,30 @@ public class WssSchedulerImpl implements WssScheduler{
         Date endDate = Timestamp.valueOf(endOfDay);
 
         List<BACKUP_ISSUE_Entity> 이슈목록 = backup_issue_jpaRepository.findByCreateDateBetween(startDate,endDate);
-        이슈목록.parallelStream().forEach(이슈 -> {
+
+        for (BACKUP_ISSUE_Entity 이슈 : 이슈목록) {
+            String jiraIssueKey = 이슈.get지라_이슈_키();
             try {
                 TB_JML_Entity 프로젝트 = tb_jml_jpaRepository.findById(이슈.getJiraProjectKey()).orElse(null);
-                PJ_PG_SUB_Entity saveResult = saveIssue(이슈, 프로젝트);
+
+                PJ_PG_SUB_Entity saved = saveIssue(이슈, 프로젝트);
+
+                logger.debug("이슈 동기화 완료 - jiraIssueKey={}, savedId={}",
+                        jiraIssueKey, saved != null ? saved.getJiraIssueKey() : null);
+
             } catch (Exception e) {
-                throw new RuntimeException("이슈 저장 중 오류 발생: " + 이슈.get지라_이슈_키(), e);
+                logger.error("이슈 동기화 실패 - jiraIssueKey={}", jiraIssueKey, e);
             }
-        });
+        }
+
+        logger.info("스케줄러 이슈 동기화 완료");
 
     }
 
-    @Transactional
     public PJ_PG_SUB_Entity saveIssue(BACKUP_ISSUE_Entity 이슈, TB_JML_Entity 프로젝트) throws Exception {
         if (이슈 == null) return null;
-
+        String jiraIssueKey = 이슈.get지라_이슈_키();
         try {
-            String jiraIssueKey = 이슈.get지라_이슈_키();
-
             if (프로젝트 == null) {
                 throw new RuntimeException("[중요] 프로젝트 정보를 찾을 수 없습니다: " + 이슈.getJiraProjectKey());
             }
@@ -219,8 +224,8 @@ public class WssSchedulerImpl implements WssScheduler{
             return pj_pg_sub_jpaRepository.save(새_이슈);
 
         } catch (Exception e) {
-            logger.error("이슈 저장 중 오류", e);
-            throw new Exception("이슈 저장 중 오류 발생", e);
+            logger.error("이슈 저장 중 오류 - jiraIssueKey={}", jiraIssueKey, e);
+            throw e;
         }
     }
 

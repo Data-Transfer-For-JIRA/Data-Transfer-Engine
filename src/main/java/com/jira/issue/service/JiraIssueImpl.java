@@ -1368,13 +1368,13 @@ public class JiraIssueImpl implements JiraIssue {
     *  초
     * */
     @Override
-    public 오늘_생성및_업데이트된_이슈데이터 오늘_업데이트및_생성된이슈들()throws Exception{
+    public 오늘_생성및_업데이트된_이슈데이터_jql 오늘_업데이트및_생성된이슈들()throws Exception{
         try {
             Date currentDate = new Date();
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
             logger.info("{} 오늘 생성 및 이슈 조회",dateFormat.format(currentDate) );
             String endpoint = "/rest/api/3/search/jql?jql=(updated >= startOfDay() OR created >= startOfDay()) AND (category = \"전자문서사업부 유지보수\" OR category = \"전자문서사업부 프로젝트\")";
-            오늘_생성및_업데이트된_이슈데이터 조회결과 =  webClientUtils.get(endpoint,new ParameterizedTypeReference<오늘_생성및_업데이트된_이슈데이터>() {}).block();
+            오늘_생성및_업데이트된_이슈데이터_jql 조회결과 =  webClientUtils.get(endpoint,new ParameterizedTypeReference<오늘_생성및_업데이트된_이슈데이터_jql>() {}).block();
 
             return 조회결과;
 

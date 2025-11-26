@@ -17,7 +17,7 @@ public interface BackupScheduler {
     /* 이슈 백업 벌크 스케줄러*/
     void 지라이슈_벌크_백업() throws Exception;
 
-    void 지라이슈_저장(String 지라프로젝트_키) throws Exception;
+    void 프로젝트키로_지라이슈_저장(String 지라프로젝트_키) throws Exception;
 
     Boolean 기본정보이슈_저장(String 지라_키,String 프로젝트_유형) throws Exception;
 

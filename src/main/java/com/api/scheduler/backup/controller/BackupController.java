@@ -136,7 +136,7 @@ public class BackupController {
 
         logger.info("[::BackupController::] 지라 이슈 백업 스케줄러 -------> {}",지라프로젝트_키);
 
-        backupScheduler.지라이슈_저장(지라프로젝트_키);
+        backupScheduler.프로젝트키로_지라이슈_저장(지라프로젝트_키);
     }
 
 
