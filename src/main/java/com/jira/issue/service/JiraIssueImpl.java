@@ -1354,7 +1354,7 @@ public class JiraIssueImpl implements JiraIssue {
     public SearchRenderedIssue 이슈_조회(String 이슈_키)throws Exception{
         try {
             String endpoint = "/rest/api/3/issue/" + 이슈_키+"?expand=renderedFields";
-            SearchRenderedIssue 조회결과 =  webClientUtils.get(endpoint,new ParameterizedTypeReference<SearchRenderedIssue>() {}).block();
+            SearchRenderedIssue 조회결과 =  webClientUtils.getLargeResponse(endpoint,new ParameterizedTypeReference<SearchRenderedIssue>() {});
 
             return 조회결과;
 
@@ -1386,7 +1386,7 @@ public class JiraIssueImpl implements JiraIssue {
     @Override
     public 프로젝트에_생성된_이슈데이터 프로젝트에_생성된_이슈조회(String 지라프로젝트_키, int 검색_시작_지점, int 검색_최대_개수) throws Exception{
         try {
-            String endpoint = "/rest/api/3/search/jql?jql=project="+지라프로젝트_키+"&startAt=" + 검색_시작_지점 + "&maxResults=" + 검색_최대_개수+ "&expand=renderedFields";
+            String endpoint = "/rest/api/3/search/jql?jql=project="+지라프로젝트_키+"&startAt=" + 검색_시작_지점 + "&maxResults=" + 검색_최대_개수+ "&expand=renderedFields&fields=*all";
 
             프로젝트에_생성된_이슈데이터 조회결과 =  webClientUtils.getLargeResponse(endpoint,new ParameterizedTypeReference<프로젝트에_생성된_이슈데이터>() {});
 

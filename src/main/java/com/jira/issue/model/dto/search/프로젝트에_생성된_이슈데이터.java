@@ -23,6 +23,10 @@ public class 프로젝트에_생성된_이슈데이터 {
 
     Integer total;
 
+    Boolean isLast;
+
+    String nextPageToken;
+
     List<SearchRenderedIssue> issues;
 }
 

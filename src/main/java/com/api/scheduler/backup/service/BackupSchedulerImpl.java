@@ -749,6 +749,8 @@ public class BackupSchedulerImpl implements BackupScheduler {
         try {
             int 검색_시작_지점 = 0;
             int 검색_최대_개수 = 50;
+
+            String nextPageToken = null;
             boolean isLast = false;
 
             while (!isLast) {
@@ -757,11 +759,8 @@ public class BackupSchedulerImpl implements BackupScheduler {
 
                 전체이슈_목록.addAll(이슈_조회결과.getIssues());
 
-                if (검색_시작_지점 + 검색_최대_개수 >= 이슈_조회결과.getTotal()) {
-                    isLast = true;
-                } else {
-                    검색_시작_지점 += 검색_최대_개수;
-                }
+                isLast = 이슈_조회결과.getIsLast();
+                nextPageToken = 이슈_조회결과.getNextPageToken();
             }
 
         } catch (Exception e) {
