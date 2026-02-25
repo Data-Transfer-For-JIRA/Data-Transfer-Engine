@@ -14,11 +14,11 @@ import com.jira.project.model.dao.TB_PJT_BASE_JpaRepository;
 import com.jira.project.model.entity.TB_JML_Entity;
 import com.jira.project.model.entity.TB_PJT_BASE_Entity;
 import lombok.AllArgsConstructor;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
@@ -27,7 +27,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.concurrent.*;
 
 
 @AllArgsConstructor
@@ -253,7 +252,18 @@ public class WssSchedulerImpl implements WssScheduler{
     }
 
     private String formatIssueContent(String 제목, String 상세내용, String 링크) {
-        return String.format("%s<br><br>%s<br><br>%s", safe(제목), safe(상세내용), 링크);
+        return String.format("%s<br><br>%s<br><br>%s", safe(제목), removeImageTags(safe(상세내용)), 링크);
+    }
+
+    private String removeImageTags(String html) {
+        if (html == null || html.isEmpty()) return html;
+
+        Document doc = Jsoup.parse(html);
+        doc.select("span.image-wrap").remove();
+        doc.select("img").remove();
+        doc.select("p:empty").remove();
+
+        return doc.body().html();
     }
 
     private int getNextProjectId(String projectCode) {
