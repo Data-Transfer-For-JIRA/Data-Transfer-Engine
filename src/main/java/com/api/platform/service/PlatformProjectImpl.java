@@ -542,7 +542,14 @@ public class PlatformProjectImpl implements PlatformProject {
                     })
                     .doOnError(e -> {
                         // 에러 처리
-                        logger.info("[::platformCreateProject::] error 발생");
+                        logger.error("[::platformCreateProject::] error 발생");
+                        if (e instanceof WebClientResponseException) {
+                            WebClientResponseException wcEx = (WebClientResponseException) e;
+                            logger.error("[::platformCreateProject::] status: " + wcEx.getStatusCode());
+                            logger.error("[::platformCreateProject::] body: " + wcEx.getResponseBodyAsString());
+                        } else {
+                            logger.error("[::platformCreateProject::] exception: " + e.getMessage(), e);
+                        }
                         result.put("result", "프로젝트 생성 실패");
                     })
                     .block();
@@ -551,7 +558,12 @@ public class PlatformProjectImpl implements PlatformProject {
             return result;
 
         } catch (Exception ex) {
-            logger.info("[::platformCreateProject::] try-catch");
+            logger.error("[::platformCreateProject::] try-catch exception", ex);
+            if (ex instanceof WebClientResponseException) {
+                WebClientResponseException wcEx = (WebClientResponseException) ex;
+                logger.error("[::platformCreateProject::] catch status: " + wcEx.getStatusCode());
+                logger.error("[::platformCreateProject::] catch body: " + wcEx.getResponseBodyAsString());
+            }
             result.put("result", "프로젝트 생성 실패");
             return result;
         }
