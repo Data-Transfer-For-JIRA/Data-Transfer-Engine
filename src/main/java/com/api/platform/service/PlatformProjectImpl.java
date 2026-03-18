@@ -1336,9 +1336,9 @@ public class PlatformProjectImpl implements PlatformProject {
             if(!key.isEmpty() || key != null){
                 if(flag.equals("P")){
 
-                    jiraIssue.addMentionAndComment(key,salesManager,"프로젝트 인력 배정 보드에 이슈가 생성되었습니다.");
+                    jiraIssue.addMentionAndCommentWithCc(key,salesManager,"최정오","프로젝트 인력 배정 보드에 이슈가 생성되었습니다.");
                 }else{
-                    jiraIssue.addMentionAndComment(key,salesManager,"유지보수 인력 배정 보드에 이슈가 생성되었습니다.");
+                    jiraIssue.addMentionAndCommentWithCc(key,salesManager,"최정오","유지보수 인력 배정 보드에 이슈가 생성되었습니다.");
                 }
                 logger.info("[::platformCreateProject::] 인력배정 이슈 생성 성공");
             }

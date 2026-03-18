@@ -1315,6 +1315,75 @@ public class JiraIssueImpl implements JiraIssue {
         }
     }
 
+    @Override
+    public Boolean addMentionAndCommentWithCc(String issueIdOrKey, String targetUser, String ccUser, String contents) throws Exception{
+        try {
+            logger.info("[::JiraIssueImpl::] addMentionAndCommentWithCc");
+
+            String endpoint = "/rest/api/3/issue/"+issueIdOrKey+"/comment";
+
+            AddCommentDTO addComment = new AddCommentDTO();
+
+            String userId = getOneAssigneeId(targetUser);
+            String ccUserId = getOneAssigneeId(ccUser);
+
+            AddCommentDTO.Attrs attrs = new AddCommentDTO.Attrs();
+            attrs.setId(userId);
+
+            AddCommentDTO.Attrs ccAttrs = new AddCommentDTO.Attrs();
+            ccAttrs.setId(ccUserId);
+
+            AddCommentDTO.TextContent mentionContent = AddCommentDTO.TextContent.builder()
+                    .attrs(attrs)
+                    .type("mention")
+                    .build();
+
+            AddCommentDTO.TextContent textContent = AddCommentDTO.TextContent.builder()
+                    .text(" " + contents + " (CC: ")
+                    .type("text")
+                    .build();
+
+            AddCommentDTO.TextContent ccMentionContent = AddCommentDTO.TextContent.builder()
+                    .attrs(ccAttrs)
+                    .type("mention")
+                    .build();
+
+            AddCommentDTO.TextContent closingContent = AddCommentDTO.TextContent.builder()
+                    .text(")\n")
+                    .type("text")
+                    .build();
+
+            List<AddCommentDTO.TextContent> textContentList = new ArrayList<>();
+            textContentList.add(mentionContent);
+            textContentList.add(textContent);
+            textContentList.add(ccMentionContent);
+            textContentList.add(closingContent);
+
+            AddCommentDTO.Content content = AddCommentDTO.Content.builder()
+                    .type("paragraph")
+                    .content(textContentList)
+                    .build();
+
+            List<AddCommentDTO.Content> contentList = new ArrayList<>();
+            contentList.add(content);
+
+            AddCommentDTO.Body body = AddCommentDTO.Body.builder()
+                    .version(Integer.parseInt("1"))
+                    .type("doc")
+                    .content(contentList)
+                    .build();
+
+            addComment.setBody(body);
+
+            webClientUtils.post(endpoint, addComment, String.class).block();
+
+            return true;
+        }catch (Exception e){
+            logger.error(e.getMessage());
+            return false;
+        }
+    }
+
     /*
      *  유지보수_기본정보 이슈 조회
      * */
