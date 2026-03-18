@@ -1,6 +1,7 @@
 package com.jira.issue.service;
 
 import com.Application;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Disabled("수동 실행용 - Jira API 실제 호출")
 @SpringBootTest(classes = Application.class)
 class JiraIssueImplTest {
 
