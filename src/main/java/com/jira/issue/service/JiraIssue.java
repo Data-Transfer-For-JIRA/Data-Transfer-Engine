@@ -92,5 +92,5 @@ public interface JiraIssue {
      * */
     Boolean addMentionAndComment(String issueIdOrKey, String targetUser ,String contents) throws Exception;
 
-    Boolean addMentionAndCommentWithCc(String issueIdOrKey, String targetUser, String ccUser, String contents) throws Exception;
+    Boolean addMentionAndCommentWithCc(String issueIdOrKey, String targetUser, List<String> ccUsers, String contents) throws Exception;
 }

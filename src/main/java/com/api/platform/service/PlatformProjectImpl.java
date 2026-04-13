@@ -1281,10 +1281,7 @@ public class PlatformProjectImpl implements PlatformProject {
         CreateIssueDTO<?> createIssueDTO;
         FieldDTO fieldDTO = new FieldDTO();
 
-        // 담당자
-        FieldDTO.User user = FieldDTO.User.builder()
-                .accountId("63e5a5e5614cb4ba5303f921").build(); // 임팀장님 디폴트
-        fieldDTO.setAssignee(user);
+        // 담당자 - 미지정 (CC로 댓글에 추가)
 
         // 프로젝트 아이디
         String projectCode;
@@ -1335,10 +1332,9 @@ public class PlatformProjectImpl implements PlatformProject {
 
             if(!key.isEmpty() || key != null){
                 if(flag.equals("P")){
-
-                    jiraIssue.addMentionAndCommentWithCc(key,salesManager,"최정오","프로젝트 인력 배정 보드에 이슈가 생성되었습니다.");
+                    jiraIssue.addMentionAndCommentWithCc(key,salesManager, Arrays.asList("임선정","최정오"),"프로젝트 인력 배정 보드에 이슈가 생성되었습니다.");
                 }else{
-                    jiraIssue.addMentionAndCommentWithCc(key,salesManager,"최정오","유지보수 인력 배정 보드에 이슈가 생성되었습니다.");
+                    jiraIssue.addMentionAndCommentWithCc(key,salesManager, Arrays.asList("임선정","최정오"),"유지보수 인력 배정 보드에 이슈가 생성되었습니다.");
                 }
                 logger.info("[::platformCreateProject::] 인력배정 이슈 생성 성공");
             }

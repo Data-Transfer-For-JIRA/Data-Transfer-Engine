@@ -1316,7 +1316,7 @@ public class JiraIssueImpl implements JiraIssue {
     }
 
     @Override
-    public Boolean addMentionAndCommentWithCc(String issueIdOrKey, String targetUser, String ccUser, String contents) throws Exception{
+    public Boolean addMentionAndCommentWithCc(String issueIdOrKey, String targetUser, List<String> ccUsers, String contents) throws Exception{
         try {
             logger.info("[::JiraIssueImpl::] addMentionAndCommentWithCc");
 
@@ -1325,39 +1325,48 @@ public class JiraIssueImpl implements JiraIssue {
             AddCommentDTO addComment = new AddCommentDTO();
 
             String userId = getOneAssigneeId(targetUser);
-            String ccUserId = getOneAssigneeId(ccUser);
 
             AddCommentDTO.Attrs attrs = new AddCommentDTO.Attrs();
             attrs.setId(userId);
 
-            AddCommentDTO.Attrs ccAttrs = new AddCommentDTO.Attrs();
-            ccAttrs.setId(ccUserId);
+            List<AddCommentDTO.TextContent> textContentList = new ArrayList<>();
 
-            AddCommentDTO.TextContent mentionContent = AddCommentDTO.TextContent.builder()
+            // 메인 멘션
+            textContentList.add(AddCommentDTO.TextContent.builder()
                     .attrs(attrs)
                     .type("mention")
-                    .build();
+                    .build());
 
-            AddCommentDTO.TextContent textContent = AddCommentDTO.TextContent.builder()
+            // 본문
+            textContentList.add(AddCommentDTO.TextContent.builder()
                     .text(" " + contents + " (CC: ")
                     .type("text")
-                    .build();
+                    .build());
 
-            AddCommentDTO.TextContent ccMentionContent = AddCommentDTO.TextContent.builder()
-                    .attrs(ccAttrs)
-                    .type("mention")
-                    .build();
+            // CC 멘션들
+            for (int i = 0; i < ccUsers.size(); i++) {
+                String ccUserId = getOneAssigneeId(ccUsers.get(i));
+                AddCommentDTO.Attrs ccAttrs = new AddCommentDTO.Attrs();
+                ccAttrs.setId(ccUserId);
 
-            AddCommentDTO.TextContent closingContent = AddCommentDTO.TextContent.builder()
+                textContentList.add(AddCommentDTO.TextContent.builder()
+                        .attrs(ccAttrs)
+                        .type("mention")
+                        .build());
+
+                if (i < ccUsers.size() - 1) {
+                    textContentList.add(AddCommentDTO.TextContent.builder()
+                            .text(", ")
+                            .type("text")
+                            .build());
+                }
+            }
+
+            // 닫는 괄호
+            textContentList.add(AddCommentDTO.TextContent.builder()
                     .text(")\n")
                     .type("text")
-                    .build();
-
-            List<AddCommentDTO.TextContent> textContentList = new ArrayList<>();
-            textContentList.add(mentionContent);
-            textContentList.add(textContent);
-            textContentList.add(ccMentionContent);
-            textContentList.add(closingContent);
+                    .build());
 
             AddCommentDTO.Content content = AddCommentDTO.Content.builder()
                     .type("paragraph")
